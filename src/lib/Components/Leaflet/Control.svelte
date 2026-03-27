@@ -47,6 +47,6 @@
 
 <div bind:this={controlElement}>
 	{#if control}
-		{@render children?.({ control, })}
+		{@render children?.({ control })}
 	{/if}
 </div>

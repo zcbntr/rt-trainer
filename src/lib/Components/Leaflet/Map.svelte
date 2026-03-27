@@ -20,12 +20,7 @@
 		children?: import('svelte').Snippet;
 	}
 
-	let {
-		bounds = undefined,
-		view = [52.33, -1.42],
-		zoom = undefined,
-		children
-	}: Props = $props();
+	let { bounds = undefined, view = [52.33, -1.42], zoom = undefined, children }: Props = $props();
 
 	run(() => {
 		if (map) {
@@ -69,9 +64,12 @@
 	});
 </script>
 
-<link rel="stylesheet prefetch" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-crossorigin="" />
+<link
+	rel="stylesheet prefetch"
+	href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+	integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+	crossorigin=""
+/>
 
 <div class="w-full h-full" bind:this={mapElement}>
 	{#if map}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
 
-	import Map from '$lib/Components/Leaflet/Map.svelte';
+	import Map from '$lib/components/Leaflet/Map.svelte';
 	import {
 		AllAirportsStore,
 		AwaitingServerResponseStore,
@@ -22,11 +22,11 @@
 	import { plainToInstance } from 'class-transformer';
 	import type Airspace from '$lib/ts/AeronauticalClasses/Airspace';
 	import Airport from '$lib/ts/AeronauticalClasses/Airport';
-	import Marker from '$lib/Components/Leaflet/Marker.svelte';
-	import Popup from '$lib/Components/Leaflet/Popup.svelte';
-	import Polygon from '$lib/Components/Leaflet/Polygon.svelte';
+	import Marker from '$lib/components/Leaflet/Marker.svelte';
+	import Popup from '$lib/components/Leaflet/Popup.svelte';
+	import Polygon from '$lib/components/Leaflet/Polygon.svelte';
 	import { getNthPhoneticAlphabetLetter, wellesbourneMountfordCoords } from '$lib/ts/utils';
-	import Polyline from '$lib/Components/Leaflet/Polyline.svelte';
+	import Polyline from '$lib/components/Leaflet/Polyline.svelte';
 	import { Icon } from 'svelte-icons-pack';
 	import { BsAirplaneFill } from 'svelte-icons-pack/bs';
 	import { goto } from '$app/navigation';
@@ -71,7 +71,6 @@
 	OnRouteAirspacesStore.subscribe((value) => {
 		onRouteAirspaces = value;
 	});
-
 
 	const onRouteAirports: Airport[] = [];
 
@@ -189,7 +188,6 @@
 		}
 	}
 
-
 	function onPracticeClick() {
 		// Check for route validity, then redirect to scenario page with the scenario data in the URL
 		// May need to look into URL shortening for this, which would basically be a lookup table of scenario data
@@ -253,8 +251,9 @@
 		startButtonDisabled =
 			waypoints.length < 2 ||
 			onRouteAirports.length > 2 ||
-			onRouteAirports.length == 1 && (waypoints[0].type !== WaypointType.Airport &&
-			waypoints[waypoints.length - 1].type !== WaypointType.Airport) ||
+			(onRouteAirports.length == 1 &&
+				waypoints[0].type !== WaypointType.Airport &&
+				waypoints[waypoints.length - 1].type !== WaypointType.Airport) ||
 			(onRouteAirports.length == 2 &&
 				waypoints[0].type !== WaypointType.Airport &&
 				waypoints[waypoints.length - 1].type !== WaypointType.Airport) ||
@@ -510,7 +509,7 @@
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	:global(.textarea) {
 		resize: none;
 	}

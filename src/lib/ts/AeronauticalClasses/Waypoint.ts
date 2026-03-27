@@ -1,4 +1,4 @@
-import { init } from "@paralleldrive/cuid2";
+import { init } from '@paralleldrive/cuid2';
 
 const CUID = init({ length: 12 });
 

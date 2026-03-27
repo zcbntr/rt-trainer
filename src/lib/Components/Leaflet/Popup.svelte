@@ -34,7 +34,7 @@
 	});
 </script>
 
-<div class='w-40' bind:this={popupElement}>
+<div class="w-40" bind:this={popupElement}>
 	{#if open}
 		{@render children?.()}
 	{/if}

@@ -34,7 +34,6 @@
 	});
 	if (airports.length === 0) fetchAirports();
 
-
 	// Form Data
 	const formData = $state({
 		routeSeed: shortCUID(),

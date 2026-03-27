@@ -43,7 +43,7 @@
 				color: color,
 				fillColor: fillColor !== undefined ? fillColor : color,
 				fillOpacity: fillOpacity,
-				weight: weight,
+				weight: weight
 			}).addTo(map);
 			polygon?.on('click', (e) => {
 				dispatch('click', { event: e, waypoint: aeroObject, polygon: polygon });
@@ -52,7 +52,7 @@
 				dispatch('mouseover', { event: e, waypoint: aeroObject, polygon: polygon });
 			});
 			polygon?.on('mouseout', (e) => {
-				dispatch('mouseout', { event: e, waypoint: aeroObject, polygon: polygon});
+				dispatch('mouseout', { event: e, waypoint: aeroObject, polygon: polygon });
 			});
 		}
 	});

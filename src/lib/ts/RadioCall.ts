@@ -208,8 +208,14 @@ export default class RadioCall {
 			radioFrequencyPhonetics.replace('decimal', '')
 		);
 		return (
-			this.getRadioCall().replace('five ', 'fiver ').replace('nine ', 'niner ').includes(radioFrequencyPhonetics) ||
-			this.getRadioCall().replace('five ', 'fiver ').replace('nine ', 'niner ').includes(radioFrequencyPhoneticsNoDecimal)
+			this.getRadioCall()
+				.replace('five ', 'fiver ')
+				.replace('nine ', 'niner ')
+				.includes(radioFrequencyPhonetics) ||
+			this.getRadioCall()
+				.replace('five ', 'fiver ')
+				.replace('nine ', 'niner ')
+				.includes(radioFrequencyPhoneticsNoDecimal)
 		);
 	}
 

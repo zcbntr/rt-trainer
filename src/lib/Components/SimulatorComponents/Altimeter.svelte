@@ -16,8 +16,6 @@
 		}
 	});
 
-
-
 	function setAltitudeDial(altitude: number) {
 		const longArrow = document.getElementsByClassName('long-arrow')[0] as HTMLAnchorElement;
 		const shortArrow = document.getElementsByClassName('short-arrow')[0] as HTMLAnchorElement;
@@ -114,7 +112,7 @@
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	.dial-container {
 		position: relative;
 		max-width: 400px;

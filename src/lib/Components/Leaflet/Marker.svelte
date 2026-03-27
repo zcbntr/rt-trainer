@@ -54,7 +54,7 @@
 				icon,
 				rotationAngle: rotation,
 				rotationOrigin: 'center center',
-				title: aeroObject?.name,
+				title: aeroObject?.name
 			}).addTo(map);
 
 			if (draggable) marker.dragging?.enable();

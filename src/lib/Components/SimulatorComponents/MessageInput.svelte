@@ -212,7 +212,7 @@
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	.textarea {
 		resize: none;
 		overflow: auto;

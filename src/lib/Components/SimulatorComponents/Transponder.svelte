@@ -42,9 +42,6 @@
 	let displayDigitSelected: number = $state(0);
 	let mounted: boolean = $state(false);
 
-
-
-
 	// Click handlers
 	const handleIDENTButtonClick = () => {
 		if (transponderState.dialMode != 'OFF') {
@@ -190,7 +187,7 @@
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	.display-panel {
 		max-width: 600px;
 		min-width: 200px;

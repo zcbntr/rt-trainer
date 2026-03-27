@@ -62,11 +62,6 @@
 		awaitingServerResponse = value;
 	});
 
-
-
-
-
-
 	WaypointsStore.subscribe((value) => {
 		waypoints = value;
 	});
@@ -147,9 +142,7 @@
 		<hr />
 	</div>
 
-	<div
-		class="overflow-auto px-3 pb-2"
-	>
+	<div class="overflow-auto px-3 pb-2">
 		<div class="flex flex-col gap-2 px-2">
 			<div><strong>Route Waypoints</strong></div>
 			{#if waypoints.length == 0}
@@ -296,7 +289,8 @@
 
 			<div class="flex flex-col gap-1">
 				<div class="label text-sm">Maximum Flight Level (100 ft)</div>
-				<textarea id="fl-input" class="textarea" rows="1" maxlength="4" bind:value={maxFL}></textarea>
+				<textarea id="fl-input" class="textarea" rows="1" maxlength="4" bind:value={maxFL}
+				></textarea>
 			</div>
 		</div>
 
@@ -308,27 +302,27 @@
 			<Accordion>
 				<AccordionItem>
 					{#snippet lead()}
-										<WandMagicSparklesOutline />
-									{/snippet}
+						<WandMagicSparklesOutline />
+					{/snippet}
 					{#snippet summary()}
-										Auto-generate Route
-									{/snippet}
+						Auto-generate Route
+					{/snippet}
 					{#snippet content()}
-										<div class="flex flex-col gap-2">
-								<div class="label">Route Seed</div>
-								<div class="flex flex-row gap-2">
-									<textarea
-										id="route-seed-input"
-										class="textarea"
-										rows="1"
-										maxlength="20"
-										placeholder="Enter a seed"
-										bind:value={routeSeed}
-									></textarea>
-									<button
-										type="button"
-										class="btn variant-filled w-10"
-										onclick={() => {
+						<div class="flex flex-col gap-2">
+							<div class="label">Route Seed</div>
+							<div class="flex flex-row gap-2">
+								<textarea
+									id="route-seed-input"
+									class="textarea"
+									rows="1"
+									maxlength="20"
+									placeholder="Enter a seed"
+									bind:value={routeSeed}
+								></textarea>
+								<button
+									type="button"
+									class="btn variant-filled w-10"
+									onclick={() => {
 										if (awaitingServerResponse) return;
 
 										routeSeed = shortCUID();
@@ -338,17 +332,17 @@
 											element.value = routeSeed;
 										}
 									}}><RefreshOutline /></button
-									>
-								</div>
+								>
 							</div>
-									{/snippet}
+						</div>
+					{/snippet}
 				</AccordionItem>
 			</Accordion>
 		</div>
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	textarea {
 		resize: none;
 	}

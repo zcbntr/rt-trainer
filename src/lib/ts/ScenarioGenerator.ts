@@ -68,11 +68,5 @@ export function generateScenario(
 			)
 		);
 
-	return new Scenario(
-		seed,
-		waypoints,
-		airspaces,
-		airports,
-		scenarioPoints
-	);
+	return new Scenario(seed, waypoints, airspaces, airports, scenarioPoints);
 }

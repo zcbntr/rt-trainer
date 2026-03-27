@@ -34,8 +34,8 @@ export function simpleHash(str: string): number {
 /**
  * Generates a pseudo-random time of day in minutes based on a seed
  * @param seed - seed for the random number generator
- * @param min - minimum time in minutes 
- * @param max - maximum time in minutes 
+ * @param min - minimum time in minutes
+ * @param max - maximum time in minutes
  * @returns pseudo-random time in minutes
  */
 export function getSeededTimeInMinutes(seed: number, min: number, max: number): number {

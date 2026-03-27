@@ -114,7 +114,7 @@
 
 <svelte:window on:keydown={onKeyDown} on:keyup={onKeyUp} />
 
-<style lang="postcss">
+<style>
 	.transmit-button {
 		width: 50px;
 		height: 50px;

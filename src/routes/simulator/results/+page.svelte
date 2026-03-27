@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ScenarioFeedback from '$lib/Components/SimulatorComponents/ScenarioFeedback.svelte';
+	import ScenarioFeedback from '$lib/components/Simulatorcomponents/ScenarioFeedback.svelte';
 </script>
 
 <div class="p-5">

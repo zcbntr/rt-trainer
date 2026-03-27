@@ -58,10 +58,7 @@
 </script>
 
 <div class="flex flex-row {$$props.class}">
-	<div
-		id={'dial-and-frequency-container-' + id}
-		class="flex flex-col place-content-center"
-	>
+	<div id={'dial-and-frequency-container-' + id} class="flex flex-col place-content-center">
 		<div id={'dial-container-' + id} class="relative">
 			<div
 				id={'frequency-center-div-' + id}
@@ -128,7 +125,7 @@
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	.frequency-dial {
 		transition: all 0.35s ease-in-out 0s;
 		justify-content: center;

@@ -1,10 +1,10 @@
 export interface WaypointURLObject {
-    id: string;
-    type: number;
-    location: [number, number];
-    index: number;
-    name: string;
-    referenceObjectId?: string;
+	id: string;
+	type: number;
+	location: [number, number];
+	index: number;
+	name: string;
+	referenceObjectId?: string;
 }
 
 export enum EmergencyType {
@@ -15,7 +15,7 @@ export enum EmergencyType {
 
 /* Represents location, heading altitude and airSpeed of the aircraft. Term borrowed from robotics */
 export type Pose = {
-    position: [number, number];
+	position: [number, number];
 	trueHeading: number;
 	altitude: number;
 	airSpeed: number;

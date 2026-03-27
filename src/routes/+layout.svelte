@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
 
-	import '../app.postcss';
-	import TopAppBar from '$lib/Components/TopAppBar.svelte';
+	import TopAppBar from '$lib/components/TopAppBar.svelte';
 	import {
 		AppShell,
 		autoModeWatcher,
@@ -16,11 +15,11 @@
 	} from '@skeletonlabs/skeleton';
 	import { page } from '$app/stores';
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
-	import Navigation from '$lib/Components/NAVSidebar.svelte';
-	import ScenarioPlanSiderbar from '$lib/Components/ScenarioPlanSiderbar.svelte';
+	import Navigation from '$lib/components/NAVSidebar.svelte';
+	import ScenarioPlanSiderbar from '$lib/components/ScenarioPlanSiderbar.svelte';
 	import SvelteSeo from 'svelte-seo';
 	import 'reflect-metadata';
-	import NoScenarioDataModal from '$lib/Components/Modals/QuickGenerationModal.svelte';
+	import NoScenarioDataModal from '$lib/components/Modals/QuickGenerationModal.svelte';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
@@ -46,9 +45,9 @@
 	let showTopAppBar: boolean = $state(true);
 	let showNavigation: boolean = $state(false);
 	let showRoutePlanSidebar: boolean = $state(false);
-	let classesSidebar: string = $state();
-	let classesAppBar: string = $state();
-	let burgerButton: string = $state();
+	let classesSidebar: string = $state('');
+	let classesAppBar: string = $state('');
+	let burgerButton: string = $state('');
 
 	// Reactive Classes
 	run(() => {
@@ -60,7 +59,10 @@
 			classesAppBar = 'w-auto';
 			classesSidebar = 'w-0';
 			burgerButton = 'lg:hidden';
-		} else if ($page.url.pathname.includes('/simulator') || $page.url.pathname.includes('/results')) {
+		} else if (
+			$page.url.pathname.includes('/simulator') ||
+			$page.url.pathname.includes('/results')
+		) {
 			// If on scenario page hide sidebar and show burger button
 			showTopAppBar = true;
 			showNavigation = true;
@@ -119,46 +121,41 @@
 <!-- App Shell -->
 <AppShell slotSidebarLeft="bg-surface-500/5 appbar {classesSidebar}" slotHeader={classesAppBar}>
 	{#snippet header()}
-	
-			<!-- App Bar -->
-			{#if showTopAppBar}
-				<TopAppBar {burgerButton} enabled={true} on:burgerButtonClicked={drawerOpen} />
-			{/if}
-		
+		<!-- App Bar -->
+		{#if showTopAppBar}
+			<TopAppBar {burgerButton} enabled={true} on:burgerButtonClicked={drawerOpen} />
+		{/if}
 	{/snippet}
 	{#snippet sidebarLeft()}
-	
-			<!-- Navigation -->
-			{#if showNavigation}
-				<Navigation />
-			{:else if showRoutePlanSidebar}
-				<ScenarioPlanSiderbar />
-			{/if}
-		
+		<!-- Navigation -->
+		{#if showNavigation}
+			<Navigation />
+		{:else if showRoutePlanSidebar}
+			<ScenarioPlanSiderbar />
+		{/if}
 	{/snippet}
 	{#snippet pageFooter()}
-	
-			{#if $page.url.pathname === '/'}
-				<div class="flex flex-col place-items-center grow-0 p-2">
-					<p class="text-slate-600">
-						Homepage image by <a
-							href="https://pixabay.com/users/clker-free-vector-images-3736/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=26563"
-							>Clker-Free-Vector-Images</a
-						>
-						from
-						<a
-							href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=26563"
-							>Pixabay</a
-						>
-					</p>
-				</div>
-			{/if}
+		{#if $page.url.pathname === '/'}
+			<div class="flex flex-col place-items-center grow-0 p-2">
+				<p class="text-slate-600">
+					Homepage image by <a
+						href="https://pixabay.com/users/clker-free-vector-images-3736/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=26563"
+						>Clker-Free-Vector-Images</a
+					>
+					from
+					<a
+						href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=26563"
+						>Pixabay</a
+					>
+				</p>
+			</div>
+		{/if}
 	{/snippet}
 	<!-- Page Route Content -->
 	{@render children?.()}
 </AppShell>
 
-<style lang="postcss">
+<style>
 	@font-face {
 		font-family: 'DSEG7ClassicMini';
 		font-style: normal;

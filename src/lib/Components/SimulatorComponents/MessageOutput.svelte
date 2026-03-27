@@ -11,7 +11,7 @@
 	} from '$lib/stores';
 	import { SlideToggle, popup, type PopupSettings } from '@skeletonlabs/skeleton';
 	interface Props {
-		[key: string]: any
+		[key: string]: any;
 	}
 
 	let { ...props }: Props = $props();
@@ -136,7 +136,7 @@
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	.textarea {
 		resize: none;
 		overflow: hidden;

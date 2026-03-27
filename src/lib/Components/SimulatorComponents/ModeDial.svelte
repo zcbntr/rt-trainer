@@ -156,11 +156,7 @@
 	style="height:130px;"
 >
 	<div id={'dial-container-' + id} class="relative flex flex-col place-content-center">
-		<div
-			id={'mode-center-div-' + id}
-			class="absolute m-auto"
-			style="top: 50%; left: 50%;"
-		></div>
+		<div id={'mode-center-div-' + id} class="absolute m-auto" style="top: 50%; left: 50%;"></div>
 		<div
 			id={'mode-dial-' + id}
 			class="mode-dial w-20 h-20 flex border-2 rounded-full"
@@ -222,7 +218,7 @@
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	.mode-dial {
 		transition: all 0.35s ease-in-out 0s;
 		justify-content: center;

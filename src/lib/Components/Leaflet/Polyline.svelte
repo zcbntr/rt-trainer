@@ -10,13 +10,7 @@
 		children?: import('svelte').Snippet;
 	}
 
-	let {
-		latLngArray,
-		colour = '#FF69B4',
-		fillOpacity = 1,
-		weight = 3,
-		children
-	}: Props = $props();
+	let { latLngArray, colour = '#FF69B4', fillOpacity = 1, weight = 3, children }: Props = $props();
 
 	let polyline: L.Polyline | undefined = $state();
 	let polylineElement: HTMLElement = $state();

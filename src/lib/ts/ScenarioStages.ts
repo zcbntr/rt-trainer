@@ -18,7 +18,7 @@ export enum TakeOffStage {
 	ReadbackAfterDepartureInformation = 'Readback After Departure Information',
 	ReadbackClearance = 'Readback Clearance',
 	AcknowledgeTraffic = 'Acknowledge Traffic', // Uncontrolled aerodrome
-	AnnounceTakingOff = 'Report Taking Off', // Uncontrolled aerodrome
+	AnnounceTakingOff = 'Report Taking Off' // Uncontrolled aerodrome
 }
 
 export enum ClimbOutStage {

@@ -110,17 +110,14 @@ https://svelte.dev/e/node_invalid_placement -->
 	});
 </script>
 
-<div id={id} class="flex items-center justify-center">
+<div {id} class="flex items-center justify-center">
 	<div id={'dial-container-' + id} class="relative">
 		<div
 			id={'frequency-center-div-' + id}
 			class="absolute"
 			style="top: 50%; left: 50%; position: absolute; margin: auto;"
 		/>
-		<button
-			id={'double-frequency-dial-outer-' + id}
-			class="double-frequency-dial-outer flex"
-		>
+		<button id={'double-frequency-dial-outer-' + id} class="double-frequency-dial-outer flex">
 			<div class="absolute" style="left: 8px; top: 30%; width: 12px; pointer-events: none;">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2.97 9.43"
 					><g opacity="0.25"
@@ -229,7 +226,7 @@ https://svelte.dev/e/node_invalid_placement -->
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	.double-frequency-dial-outer {
 		width: 100px;
 		height: 100px;

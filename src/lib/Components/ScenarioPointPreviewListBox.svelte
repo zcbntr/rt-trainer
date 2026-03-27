@@ -31,12 +31,10 @@
 				on:click={handleScenarioPointChange}
 			>
 				{#snippet lead()}
-							
-						<span class="badge-icon p-4 variant-soft-secondary">
-							<MapPinOutline />
-						</span>
-					
-							{/snippet}
+					<span class="badge-icon p-4 variant-soft-secondary">
+						<MapPinOutline />
+					</span>
+				{/snippet}
 				<div class="flex flex-row gap-2">
 					<div class="flex-col place-content-center">
 						<dt class="font-bold">{scenarioPoint.stage}</dt>

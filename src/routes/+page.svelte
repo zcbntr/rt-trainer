@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { updated } from '$app/state';
-	import SvgDisplay from '$lib/Components/SVGDisplay.svelte';
+	import SvgDisplay from '$lib/components/SVGDisplay.svelte';
 	import { ClearSimulationStores } from '$lib/stores';
 </script>
 

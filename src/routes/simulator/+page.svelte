@@ -57,19 +57,19 @@
 	import { isCallsignStandardRegistration, replaceWithPhoneticAlphabet } from '$lib/ts/utils';
 	import { goto } from '$app/navigation';
 	import RadioCall from '$lib/ts/RadioCall';
-	import Polyline from '$lib/Components/Leaflet/Polyline.svelte';
-	import Polygon from '$lib/Components/Leaflet/Polygon.svelte';
-	import Popup from '$lib/Components/Leaflet/Popup.svelte';
-	import Marker from '$lib/Components/Leaflet/Marker.svelte';
+	import Polyline from '$lib/components/Leaflet/Polyline.svelte';
+	import Polygon from '$lib/components/Leaflet/Polygon.svelte';
+	import Popup from '$lib/components/Leaflet/Popup.svelte';
+	import Marker from '$lib/components/Leaflet/Marker.svelte';
 	import { WaypointType } from '$lib/ts/AeronauticalClasses/Waypoint';
 	import L from 'leaflet';
 	import Parser, { type ParseResult } from '$lib/ts/Parser';
-	import Radio from '$lib/Components/SimulatorComponents/Radio.svelte';
-	import Transponder from '$lib/Components/SimulatorComponents/Transponder.svelte';
-	import MessageOutput from '$lib/Components/SimulatorComponents/MessageOutput.svelte';
-	import MessageInput from '$lib/Components/SimulatorComponents/MessageInput.svelte';
-	import Altimeter from '$lib/Components/SimulatorComponents/Altimeter.svelte';
-	import Map from '$lib/Components/Leaflet/Map.svelte';
+	import Radio from '$lib/components/Simulatorcomponents/Radio.svelte';
+	import Transponder from '$lib/components/Simulatorcomponents/Transponder.svelte';
+	import MessageOutput from '$lib/components/Simulatorcomponents/MessageOutput.svelte';
+	import MessageInput from '$lib/components/Simulatorcomponents/MessageInput.svelte';
+	import Altimeter from '$lib/components/Simulatorcomponents/Altimeter.svelte';
+	import Map from '$lib/components/Leaflet/Map.svelte';
 
 	const modalStore = getModalStore();
 
@@ -229,7 +229,6 @@
 		}, 1000);
 	}
 
-
 	function loadScenario() {
 		try {
 			scenario = generateScenario(
@@ -296,10 +295,6 @@
 	let nullRoute: boolean = false;
 
 	const toastStore = getToastStore();
-
-
-
-
 
 	ScenarioStore.subscribe((value) => {
 		scenario = value;
@@ -730,9 +725,12 @@
 			TTSWithNoise(speechNoiseLevel);
 		}
 	});
-	let tutorialStep2 = $derived(transponderState?.dialMode == 'SBY' && radioState?.dialMode == 'SBY');
-	let tutorialStep3 =
-		$derived(radioState?.activeFrequency == scenario?.getCurrentPoint().updateData.currentTargetFrequency);
+	let tutorialStep2 = $derived(
+		transponderState?.dialMode == 'SBY' && radioState?.dialMode == 'SBY'
+	);
+	let tutorialStep3 = $derived(
+		radioState?.activeFrequency == scenario?.getCurrentPoint().updateData.currentTargetFrequency
+	);
 </script>
 
 <div class="flex" style="justify-content: center;">
@@ -743,24 +741,22 @@
 					<Stepper on:complete={onCompleteHandler} on:step={onStepHandler}>
 						<Step>
 							{#snippet header()}
-														Get Started!
-													{/snippet}
+								Get Started!
+							{/snippet}
 							Welcome to RT Trainer. This tutorial will explain how to use the simulator.
 							<br />Click
 							<span class="underline">next</span>
 							to continue.
 							{#snippet navigation()}
-													
-									<button class="btn variant-ghost-warning" onclick={cancelTutorial}
-										>Skip Tutorial</button
-									>
-								
-													{/snippet}
+								<button class="btn variant-ghost-warning" onclick={cancelTutorial}
+									>Skip Tutorial</button
+								>
+							{/snippet}
 						</Step>
 						<Step locked={!tutorialStep2}>
 							{#snippet header()}
-														Turning on your Radio Stack
-													{/snippet}
+								Turning on your Radio Stack
+							{/snippet}
 							<ul class="list-disc ml-5">
 								<li>Turn on your radio by clicking on the dial or standby (SBY) label.</li>
 								<li>Set your transponder to standby in the same way.</li>
@@ -768,14 +764,14 @@
 						</Step>
 						<Step locked={!tutorialStep3}>
 							{#snippet header()}
-														Setting Your Radio Frequency
-													{/snippet}
+								Setting Your Radio Frequency
+							{/snippet}
 							Set your radio frequency to the current target frequency shown in the message output box.
 						</Step>
 						<Step locked={!tutorialStep4}>
 							{#snippet header()}
-														Make your first Radio Call
-													{/snippet}
+								Make your first Radio Call
+							{/snippet}
 							Now you are ready to make your first radio call.
 							<ul class="list-disc ml-5">
 								<li>Type your message in the input box.</li>
@@ -789,8 +785,8 @@
 						</Step>
 						<Step>
 							{#snippet header()}
-														Well Done!
-													{/snippet}
+								Well Done!
+							{/snippet}
 							You have completed the basic tutorial. Familiarise yourself with the rest of the simulator
 							and complete the route.
 						</Step>

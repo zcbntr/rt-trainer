@@ -53,7 +53,7 @@
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	.radio-segdisplay {
 		border-style: solid;
 		border-color: white;
@@ -66,7 +66,11 @@
 
 	:global(.displayon) {
 		color: #f74;
-		text-shadow: 0 0 7px #f07c0765, 0 0 10px #f07c0765, 0 0 21px #f07c0765, 0 0 32px #f74;
+		text-shadow:
+			0 0 7px #f07c0765,
+			0 0 10px #f07c0765,
+			0 0 21px #f07c0765,
+			0 0 32px #f74;
 	}
 
 	:global(.displayoff) {
