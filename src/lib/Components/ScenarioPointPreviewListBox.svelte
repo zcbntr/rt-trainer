@@ -4,9 +4,13 @@
 	import { ListBox, ListBoxItem } from '@skeletonlabs/skeleton';
 	import { MapPinOutline } from 'flowbite-svelte-icons';
 
-	export let scenario: Scenario;
+	interface Props {
+		scenario: Scenario;
+	}
 
-	let selectedScenarioPointIndex: number = 0;
+	let { scenario }: Props = $props();
+
+	let selectedScenarioPointIndex: number = $state(0);
 
 	function handleScenarioPointChange(event: MouseEvent) {
 		const newPoint = parseInt((event.target as HTMLInputElement).value);
@@ -26,11 +30,13 @@
 				value={scenarioPoint.index}
 				on:click={handleScenarioPointChange}
 			>
-				<svelte:fragment slot="lead">
-					<span class="badge-icon p-4 variant-soft-secondary">
-						<MapPinOutline />
-					</span>
-				</svelte:fragment>
+				{#snippet lead()}
+							
+						<span class="badge-icon p-4 variant-soft-secondary">
+							<MapPinOutline />
+						</span>
+					
+							{/snippet}
 				<div class="flex flex-row gap-2">
 					<div class="flex-col place-content-center">
 						<dt class="font-bold">{scenarioPoint.stage}</dt>

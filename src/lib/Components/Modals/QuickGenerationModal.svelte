@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { AllAirportsStore, AllAirspacesStore, fetchAirports, fetchAirspaces } from '$lib/stores';
 	import type Airport from '$lib/ts/AeronauticalClasses/Airport';
 	import type Airspace from '$lib/ts/AeronauticalClasses/Airspace';
@@ -9,9 +11,13 @@
 
 	const modalStore = getModalStore();
 
-	export let parent: any;
+	interface Props {
+		parent: any;
+	}
 
-	let validSettings: boolean = false;
+	let { parent }: Props = $props();
+
+	let validSettings: boolean = $state(false);
 
 	const shortCUID = init({ length: 8 });
 
@@ -28,25 +34,13 @@
 	});
 	if (airports.length === 0) fetchAirports();
 
-	$: if (
-		formData.scenarioSeed &&
-		formData.scenarioSeed.length > 0 &&
-		formData.routeSeed &&
-		formData.routeSeed.length > 0
-	) {
-		// Enable save button
-		validSettings = true;
-	} else {
-		// Disable save button
-		validSettings = false;
-	}
 
 	// Form Data
-	const formData = {
+	const formData = $state({
 		routeSeed: shortCUID(),
 		scenarioSeed: shortCUID(),
 		hasEmergencies: true
-	};
+	});
 
 	function onFormSubmit() {
 		if ($modalStore[0].response) {
@@ -70,9 +64,23 @@
 	const cForm = 'space-y-4 rounded-container-token';
 
 	// Reactive classes
-	let cRouteSeedInput = '';
-	let cRouteSeedInputErrorMessage = 'hidden';
-	$: {
+	let cRouteSeedInput = $state('');
+	let cRouteSeedInputErrorMessage = $state('hidden');
+	run(() => {
+		if (
+			formData.scenarioSeed &&
+			formData.scenarioSeed.length > 0 &&
+			formData.routeSeed &&
+			formData.routeSeed.length > 0
+		) {
+			// Enable save button
+			validSettings = true;
+		} else {
+			// Disable save button
+			validSettings = false;
+		}
+	});
+	run(() => {
 		if (validSettings) {
 			cRouteSeedInput = '';
 			cRouteSeedInputErrorMessage = 'hidden';
@@ -80,7 +88,7 @@
 			cRouteSeedInput = 'input-error';
 			cRouteSeedInputErrorMessage = '';
 		}
-	}
+	});
 </script>
 
 {#if $modalStore[0]}
@@ -113,7 +121,7 @@
 						class="checkbox"
 						type="checkbox"
 						checked
-						on:change={() => (formData.hasEmergencies = !formData.hasEmergencies)}
+						onchange={() => (formData.hasEmergencies = !formData.hasEmergencies)}
 					/>
 					<p>Emergency Events</p>
 				</label>
@@ -127,7 +135,7 @@
 			<button
 				class="btn text-sm {parent.buttonPositive}"
 				disabled={!validSettings}
-				on:click={onFormSubmit}>Submit</button
+				onclick={onFormSubmit}>Submit</button
 			>
 		</footer>
 	</div>

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	/* Structure inspired by ShipBit's youtube tutorial https://www.youtube.com/watch?v=JFctWXEzFZw
 	
 	The coordinates used in the rest of the application are in the format [long, lat],
@@ -8,20 +10,32 @@
 	import L from 'leaflet';
 	import 'leaflet/dist/leaflet.css';
 
-	let map: L.Map | undefined;
-	let mapElement: HTMLDivElement;
+	let map: L.Map | undefined = $state();
+	let mapElement: HTMLDivElement = $state();
 
-	export let bounds: L.LatLngBounds | undefined = undefined;
-	export let view: L.LatLngExpression | undefined = [52.33, -1.42];
-	export let zoom: number | undefined = undefined;
-
-	$: if (map) {
-		if (bounds) {
-			map.fitBounds(bounds);
-		} else if (view && zoom) {
-			map.setView(view, zoom);
-		}
+	interface Props {
+		bounds?: L.LatLngBounds | undefined;
+		view?: L.LatLngExpression | undefined;
+		zoom?: number | undefined;
+		children?: import('svelte').Snippet;
 	}
+
+	let {
+		bounds = undefined,
+		view = [52.33, -1.42],
+		zoom = undefined,
+		children
+	}: Props = $props();
+
+	run(() => {
+		if (map) {
+			if (bounds) {
+				map.fitBounds(bounds);
+			} else if (view && zoom) {
+				map.setView(view, zoom);
+			}
+		}
+	});
 
 	const dispatch = createEventDispatcher();
 
@@ -61,6 +75,6 @@ crossorigin="" />
 
 <div class="w-full h-full" bind:this={mapElement}>
 	{#if map}
-		<slot />
+		{@render children?.()}
 	{/if}
 </div>

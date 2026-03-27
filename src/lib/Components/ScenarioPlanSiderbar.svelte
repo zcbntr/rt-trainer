@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import {
 		ListBox,
 		ListBoxItem,
@@ -37,45 +39,33 @@
 	const shortCUID = init({ length: 8 });
 
 	// Scenario data
-	let scenarioSeed: string = shortCUID();
+	let scenarioSeed: string = $state(shortCUID());
 	ScenarioSeedStore.set(scenarioSeed); // Set initial value
-	let hasEmergencyEvents: boolean = true;
+	let hasEmergencyEvents: boolean = $state(true);
 	HasEmergencyEventsStore.set(hasEmergencyEvents); // Set initial value
 
 	// Route data
-	let routeSeed: string = ''; // Only used for seeding the route generator
-	let waypoints: Waypoint[] = []; // Stores all the waypoints in the route
+	let routeSeed: string = $state(''); // Only used for seeding the route generator
+	let waypoints: Waypoint[] = $state([]); // Stores all the waypoints in the route
 
 	// Aeronautical data
 	let airports: Airport[] = [];
 	let airspaces: Airspace[] = [];
 
 	// Route preferences
-	let distanceUnit: string = 'Nautical Miles';
-	let maxFL: number = 30;
+	let distanceUnit: string = $state('Nautical Miles');
+	let maxFL: number = $state(30);
 
 	// Blocking new inputs during route generation
-	let awaitingServerResponse: boolean = false;
+	let awaitingServerResponse: boolean = $state(false);
 	AwaitingServerResponseStore.subscribe((value) => {
 		awaitingServerResponse = value;
 	});
 
-	$: {
-		if (routeSeed !== '') {
-			loadSeededRoute();
-		}
-	}
 
-	$: ScenarioSeedStore.set(scenarioSeed);
 
-	$: HasEmergencyEventsStore.set(hasEmergencyEvents);
 
-	$: RouteDistanceDisplayUnitStore.set(distanceUnit);
 
-	$: {
-		maxFL = Math.max(15, maxFL);
-		maxFlightLevelStore.set(maxFL);
-	}
 
 	WaypointsStore.subscribe((value) => {
 		waypoints = value;
@@ -104,7 +94,7 @@
 	}
 
 	const dragDuration: number = 200;
-	let draggingWaypoint: Waypoint | undefined = undefined;
+	let draggingWaypoint: Waypoint | undefined = $state(undefined);
 	let animatingWaypoints = new Set();
 
 	function swapWith(waypoint: Waypoint): void {
@@ -120,6 +110,24 @@
 		});
 		WaypointsStore.set(waypoints);
 	}
+	run(() => {
+		if (routeSeed !== '') {
+			loadSeededRoute();
+		}
+	});
+	run(() => {
+		ScenarioSeedStore.set(scenarioSeed);
+	});
+	run(() => {
+		HasEmergencyEventsStore.set(hasEmergencyEvents);
+	});
+	run(() => {
+		RouteDistanceDisplayUnitStore.set(distanceUnit);
+	});
+	run(() => {
+		maxFL = Math.max(15, maxFL);
+		maxFlightLevelStore.set(maxFL);
+	});
 </script>
 
 <div class="sidebar-container flex flex-col grow py-0 overflow-clip">
@@ -155,21 +163,21 @@
 			{/if}
 			<!-- for some reason the key (waypoint.index) has duplicates when coming from the route generator -->
 			{#each waypoints as waypoint (waypoint.index)}
-				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					class="card p-2 flex flex-row gap-2 place-content-center"
 					draggable="true"
 					animate:flip={{ duration: dragDuration }}
-					on:dragstart={() => {
+					ondragstart={() => {
 						draggingWaypoint = waypoint;
 					}}
-					on:dragend={() => {
+					ondragend={() => {
 						draggingWaypoint = undefined;
 					}}
-					on:dragenter={() => {
+					ondragenter={() => {
 						swapWith(waypoint);
 					}}
-					on:dragover={(e) => {
+					ondragover={(e) => {
 						e.preventDefault();
 					}}
 				>
@@ -178,7 +186,7 @@
 							🛩️{:else if waypoint.index == waypoints.length - 1}🏁{:else}🚩{/if}
 					</div>
 					<div class="flex flex-col place-content-center">
-						<textarea class="textarea" rows="1" placeholder={waypoint.name} />
+						<textarea class="textarea" rows="1" placeholder={waypoint.name}></textarea>
 					</div>
 					<button
 						class="flex flex-col place-content-center"
@@ -196,7 +204,7 @@
 					>
 						<div>
 							<button
-								on:click={() => {
+								onclick={() => {
 									WaypointsStore.update((waypoints) => {
 										waypoints = waypoints.filter((w) => w.id !== waypoint.id);
 										waypoints.forEach((waypoint, index) => {
@@ -226,11 +234,11 @@
 						maxlength="20"
 						placeholder="Enter a seed"
 						bind:value={scenarioSeed}
-					/>
+					></textarea>
 					<button
 						type="button"
 						class="btn variant-filled w-10"
-						on:click={() => {
+						onclick={() => {
 							if (awaitingServerResponse) return;
 
 							scenarioSeed = shortCUID();
@@ -250,7 +258,7 @@
 					class="checkbox"
 					type="checkbox"
 					checked
-					on:change={() => (hasEmergencyEvents = !hasEmergencyEvents)}
+					onchange={() => (hasEmergencyEvents = !hasEmergencyEvents)}
 				/>
 				<p>Emergency Events</p>
 			</label>
@@ -282,13 +290,13 @@
 							>Kilometers</ListBoxItem
 						>
 					</ListBox>
-					<div class="arrow bg-surface-100-800-token" />
+					<div class="arrow bg-surface-100-800-token"></div>
 				</div>
 			</div>
 
 			<div class="flex flex-col gap-1">
 				<div class="label text-sm">Maximum Flight Level (100 ft)</div>
-				<textarea id="fl-input" class="textarea" rows="1" maxlength="4" bind:value={maxFL} />
+				<textarea id="fl-input" class="textarea" rows="1" maxlength="4" bind:value={maxFL}></textarea>
 			</div>
 		</div>
 
@@ -299,24 +307,28 @@
 
 			<Accordion>
 				<AccordionItem>
-					<svelte:fragment slot="lead"><WandMagicSparklesOutline /></svelte:fragment>
-					<svelte:fragment slot="summary">Auto-generate Route</svelte:fragment>
-					<svelte:fragment slot="content"
-						><div class="flex flex-col gap-2">
-							<div class="label">Route Seed</div>
-							<div class="flex flex-row gap-2">
-								<textarea
-									id="route-seed-input"
-									class="textarea"
-									rows="1"
-									maxlength="20"
-									placeholder="Enter a seed"
-									bind:value={routeSeed}
-								/>
-								<button
-									type="button"
-									class="btn variant-filled w-10"
-									on:click={() => {
+					{#snippet lead()}
+										<WandMagicSparklesOutline />
+									{/snippet}
+					{#snippet summary()}
+										Auto-generate Route
+									{/snippet}
+					{#snippet content()}
+										<div class="flex flex-col gap-2">
+								<div class="label">Route Seed</div>
+								<div class="flex flex-row gap-2">
+									<textarea
+										id="route-seed-input"
+										class="textarea"
+										rows="1"
+										maxlength="20"
+										placeholder="Enter a seed"
+										bind:value={routeSeed}
+									></textarea>
+									<button
+										type="button"
+										class="btn variant-filled w-10"
+										onclick={() => {
 										if (awaitingServerResponse) return;
 
 										routeSeed = shortCUID();
@@ -326,10 +338,10 @@
 											element.value = routeSeed;
 										}
 									}}><RefreshOutline /></button
-								>
+									>
+								</div>
 							</div>
-						</div></svelte:fragment
-					>
+									{/snippet}
 				</AccordionItem>
 			</Accordion>
 		</div>

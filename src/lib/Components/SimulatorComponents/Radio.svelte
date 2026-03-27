@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import DoubleFrequencyDial from './DoubleFrequencyDial.svelte';
 	import Dial from './ModeDial.svelte';
 	import RadioDisplay from './RadioDisplay.svelte';
@@ -18,24 +20,26 @@
 	];
 
 	// Holds current radio settings
-	let radioState: RadioState = {
+	let radioState: RadioState = $state({
 		mode: 'OFF',
 		dialMode: 'OFF',
 		activeFrequency: '121.800',
 		standbyFrequency: '129.800',
 		tertiaryFrequency: '177.200'
-	};
+	});
 
-	let activeFrequency: number = 121.8;
-	let standbyFrequency: number = 129.8;
-	let tertiaryFrequency: number = 177.2;
+	let activeFrequency: number = $state(121.8);
+	let standbyFrequency: number = $state(129.8);
+	let tertiaryFrequency: number = $state(177.2);
 
-	let displayOn: boolean = false;
-	let frequencyDialEnabled: boolean = false;
-	let transmitButtonEnabled: boolean = false;
+	let displayOn: boolean = $state(false);
+	let frequencyDialEnabled: boolean = $state(false);
+	let transmitButtonEnabled: boolean = $state(false);
 	let transmitting: boolean = false;
 
-	$: RadioStateStore.set(radioState);
+	run(() => {
+		RadioStateStore.set(radioState);
+	});
 
 	// Click handlers
 	const handleCOMButtonClick = () => {
@@ -167,9 +171,9 @@
 			bind:tertiaryFrequency
 		/>
 		<div class="display-buttons-container flex flex-row grow place-content-center">
-			<button class="button" id="button-com" on:click={handleCOMButtonClick}>COM</button>
-			<button class="button" id="button-swap" on:click={handleSWAPButtonClick}>⇆</button>
-			<button class="button" id="button-nav" on:click={handleNAVButtonClick}>NAV</button>
+			<button class="button" id="button-com" onclick={handleCOMButtonClick}>COM</button>
+			<button class="button" id="button-swap" onclick={handleSWAPButtonClick}>⇆</button>
+			<button class="button" id="button-nav" onclick={handleNAVButtonClick}>NAV</button>
 		</div>
 	</div>
 	<div class="flex flex-row mx-2 order-5">

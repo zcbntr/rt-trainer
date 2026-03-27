@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { onMount } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
 
@@ -12,25 +14,38 @@
 		string?,
 		string?
 	];
-	export let Modes: ArrayMaxLength7MinLength2;
-	export let CurrentModeIndex: number = 0;
-	export let DialEnabled: boolean = false;
-	export let id: string = '';
-	let mounted: boolean = false;
+	interface Props {
+		Modes: ArrayMaxLength7MinLength2;
+		CurrentModeIndex?: number;
+		DialEnabled?: boolean;
+		id?: string;
+	}
+
+	let {
+		Modes,
+		CurrentModeIndex = $bindable(0),
+		DialEnabled = $bindable(false),
+		id = ''
+	}: Props = $props();
+	let mounted: boolean = $state(false);
 	let width: string = Modes.length > 2 ? 'w-40' : 'w-28';
 
 	const dispatch = createEventDispatcher();
 
-	$: dispatch('modeChange', CurrentModeIndex);
+	run(() => {
+		dispatch('modeChange', CurrentModeIndex);
+	});
 
-	$: if (mounted) {
-		const modeDial = document.getElementById('mode-dial-' + id) as HTMLDivElement;
-		if (DialEnabled) {
-			modeDial.classList.add('enabled');
-		} else {
-			modeDial.classList.remove('enabled');
+	run(() => {
+		if (mounted) {
+			const modeDial = document.getElementById('mode-dial-' + id) as HTMLDivElement;
+			if (DialEnabled) {
+				modeDial.classList.add('enabled');
+			} else {
+				modeDial.classList.remove('enabled');
+			}
 		}
-	}
+	});
 
 	const handleDialClick = () => {
 		const ModeDial = document.getElementById('mode-dial-' + id) as HTMLDivElement;
@@ -145,12 +160,12 @@
 			id={'mode-center-div-' + id}
 			class="absolute m-auto"
 			style="top: 50%; left: 50%;"
-		/>
+		></div>
 		<div
 			id={'mode-dial-' + id}
 			class="mode-dial w-20 h-20 flex border-2 rounded-full"
-			on:click={handleDialClick}
-			on:keydown={handleDialClick}
+			onclick={handleDialClick}
+			onkeydown={handleDialClick}
 			aria-label="Mode Dial"
 			tabindex="0"
 			role="button"
@@ -185,24 +200,24 @@
 				</div>
 
 				<div class="flex" style="top: 0px; left: 0px; width: 100%; height: 100%;">
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
 						style="width: 50%; height: 100%;"
 						aria-label="Decrement Mode"
-						on:click={decrementMode}
-						on:keypress={decrementMode}
-					/>
+						onclick={decrementMode}
+						onkeypress={decrementMode}
+					></div>
 
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
 						style="width: 50%; height: 100%"
 						aria-label="Increment Mode"
-						on:click={incrementMode}
-						on:keypress={incrementMode}
-					/>
+						onclick={incrementMode}
+						onkeypress={incrementMode}
+					></div>
 				</div>
 			{/if}
-			<div class="absolute w-0.5 h-10 bg-white center" />
+			<div class="absolute w-0.5 h-10 bg-white center"></div>
 		</div>
 	</div>
 </div>

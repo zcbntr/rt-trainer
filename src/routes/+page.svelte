@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { updated } from '$app/stores';
+	import { updated } from '$app/state';
 	import SvgDisplay from '$lib/Components/SVGDisplay.svelte';
 	import { ClearSimulationStores } from '$lib/stores';
 </script>
 
-{#if $updated}
+{#if updated.current}
 	<div class="toast">
 		<p>
 			A new version of the app is available
 
-			<button on:click={() => location.reload()}> Reload the page </button>
+			<button onclick={() => location.reload()}> Reload the page </button>
 		</p>
 	</div>
 {/if}
@@ -50,7 +50,7 @@
 			</ul>
 			<div class="flex flex-wrap gap-4">
 				<button
-					on:click={() => {
+					onclick={() => {
 						ClearSimulationStores();
 						goto('/simulator/?tutorial=true');
 					}}
@@ -58,7 +58,7 @@
 					data-sveltekit-preload-data="hover">Quick route</button
 				>
 				<button
-					on:click={() => {
+					onclick={() => {
 						ClearSimulationStores();
 						goto('/scenario-planner');
 					}}

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { onMount } from 'svelte';
 	import FrequencyDial from './FrequencyDial.svelte';
 	import Dial from './ModeDial.svelte';
@@ -26,29 +28,22 @@
 	];
 
 	// Holds current transponder state
-	let transponderState: TransponderState = {
+	let transponderState: TransponderState = $state({
 		dialMode: 'OFF',
 		frequency: '7000',
 		identEnabled: false,
 		vfrHasExecuted: false
-	};
-	let dialModeIndex: number = 0;
-	let displayOn: boolean = false;
-	let digitArr = [7, 0, 0, 0];
-	let frequency: string = '7000';
-	let frequencyDialEnabled: boolean = false;
-	let displayDigitSelected: number = 0;
-	let mounted: boolean = false;
+	});
+	let dialModeIndex: number = $state(0);
+	let displayOn: boolean = $state(false);
+	let digitArr = $state([7, 0, 0, 0]);
+	let frequency: string = $state('7000');
+	let frequencyDialEnabled: boolean = $state(false);
+	let displayDigitSelected: number = $state(0);
+	let mounted: boolean = $state(false);
 
-	$: TransponderStateStore.set(transponderState);
 
-	$: if (mounted) {
-		frequency = digitArr.join('');
-		transponderState.frequency = frequency;
-	}
 
-	// Trigger onTransponderDialModeChange when transponderDialMode changes
-	$: onTransponderDialModeChange(dialModeIndex);
 
 	// Click handlers
 	const handleIDENTButtonClick = () => {
@@ -146,6 +141,19 @@
 	onMount(() => {
 		mounted = true;
 	});
+	run(() => {
+		TransponderStateStore.set(transponderState);
+	});
+	run(() => {
+		if (mounted) {
+			frequency = digitArr.join('');
+			transponderState.frequency = frequency;
+		}
+	});
+	// Trigger onTransponderDialModeChange when transponderDialMode changes
+	run(() => {
+		onTransponderDialModeChange(dialModeIndex);
+	});
 </script>
 
 <div
@@ -165,10 +173,10 @@
 			DigitSelected={displayDigitSelected}
 		/>
 		<div class="pt-1 flex flex-row items-center gap-2">
-			<button class="button" id="button-ident" on:click={handleIDENTButtonClick}>IDENT</button>
-			<button class="button" id="button-vfr" on:click={handleVFRButtonClick}>VFR</button>
-			<button class="button" id="button-enter" on:click={handleENTERButtonClick}>ENT</button>
-			<button class="button" id="button-back" on:click={handleBACKButtonClick}>BACK</button>
+			<button class="button" id="button-ident" onclick={handleIDENTButtonClick}>IDENT</button>
+			<button class="button" id="button-vfr" onclick={handleVFRButtonClick}>VFR</button>
+			<button class="button" id="button-enter" onclick={handleENTERButtonClick}>ENT</button>
+			<button class="button" id="button-back" onclick={handleBACKButtonClick}>BACK</button>
 		</div>
 	</div>
 

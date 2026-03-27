@@ -2,13 +2,24 @@
 	import { onMount, onDestroy, getContext, setContext } from 'svelte';
 	import L from 'leaflet';
 
-	export let latLngArray: L.LatLngExpression[];
-	export let colour: string = '#FF69B4';
-	export let fillOpacity: number = 1;
-	export let weight: number = 3;
+	interface Props {
+		latLngArray: L.LatLngExpression[];
+		colour?: string;
+		fillOpacity?: number;
+		weight?: number;
+		children?: import('svelte').Snippet;
+	}
 
-	let polyline: L.Polyline | undefined;
-	let polylineElement: HTMLElement;
+	let {
+		latLngArray,
+		colour = '#FF69B4',
+		fillOpacity = 1,
+		weight = 3,
+		children
+	}: Props = $props();
+
+	let polyline: L.Polyline | undefined = $state();
+	let polylineElement: HTMLElement = $state();
 
 	const { getMap }: { getMap: () => L.Map | undefined } = getContext('map');
 	const map = getMap();
@@ -36,6 +47,6 @@
 
 <div bind:this={polylineElement}>
 	{#if polyline}
-		<slot />
+		{@render children?.()}
 	{/if}
 </div>

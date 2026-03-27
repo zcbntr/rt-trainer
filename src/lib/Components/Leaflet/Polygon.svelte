@@ -3,17 +3,30 @@
 	import L from 'leaflet';
 	import type Airspace from '$lib/ts/AeronauticalClasses/Airspace';
 
-	export let latLngArray: L.LatLngExpression[];
-	export let aeroObject: Airspace | undefined = undefined;
-	export let color: string = 'blue';
-	export let fillColor: string | undefined = undefined;
-	export let fillOpacity: number = 0.2;
-	export let weight: number = 1;
+	interface Props {
+		latLngArray: L.LatLngExpression[];
+		aeroObject?: Airspace | undefined;
+		color?: string;
+		fillColor?: string | undefined;
+		fillOpacity?: number;
+		weight?: number;
+		children?: import('svelte').Snippet;
+	}
+
+	let {
+		latLngArray,
+		aeroObject = undefined,
+		color = 'blue',
+		fillColor = undefined,
+		fillOpacity = 0.2,
+		weight = 1,
+		children
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
-	let polygon: L.Polygon | undefined;
-	let polygonElement: HTMLElement;
+	let polygon: L.Polygon | undefined = $state();
+	let polygonElement: HTMLElement = $state();
 
 	const { getMap }: { getMap: () => L.Map | undefined } = getContext('map');
 	const map = getMap();
@@ -52,6 +65,6 @@
 
 <div bind:this={polygonElement}>
 	{#if polygon}
-		<slot />
+		{@render children?.()}
 	{/if}
 </div>

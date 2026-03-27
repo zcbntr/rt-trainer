@@ -1,20 +1,31 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { onMount } from 'svelte';
 
-	export let DisplayOn: boolean = false;
-	export let mode: string = 'OFF';
-	export let DigitSelected: number = 0;
-	export let digitArr = [0, 0, 0, 0];
+	interface Props {
+		DisplayOn?: boolean;
+		mode?: string;
+		DigitSelected?: number;
+		digitArr?: any;
+	}
 
-	let mounted: boolean = false;
+	let {
+		DisplayOn = false,
+		mode = 'OFF',
+		DigitSelected = $bindable(0),
+		digitArr = [0, 0, 0, 0]
+	}: Props = $props();
 
-	$: showDisplayText = DisplayOn ? 'displayon' : 'displayoff';
-	$: {
+	let mounted: boolean = $state(false);
+
+	let showDisplayText = $derived(DisplayOn ? 'displayon' : 'displayoff');
+	run(() => {
 		if (!DisplayOn) {
 			DigitSelected = 0;
 		}
-	}
-	$: {
+	});
+	run(() => {
 		if (mounted) {
 			let oldSelectedDigit = document.querySelector('.tselected');
 			if (oldSelectedDigit != null) {
@@ -25,7 +36,7 @@
 				NewSelectedDigit.classList.add('tselected');
 			}
 		}
-	}
+	});
 
 	onMount(() => {
 		mounted = true;

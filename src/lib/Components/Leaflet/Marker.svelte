@@ -7,18 +7,32 @@
 	import type Waypoint from '$lib/ts/AeronauticalClasses/Waypoint';
 	import type Airport from '$lib/ts/AeronauticalClasses/Airport';
 
-	export let width: number;
-	export let height: number;
-	export let rotation: number = 0;
-	export let latLng: L.LatLngExpression;
-	export let aeroObject: Waypoint | Airport | undefined = undefined;
-	export let draggable: boolean = false;
-	export let iconAnchor: L.Point = L.point(width / 2 - 8, height / 2 - 8);
+	interface Props {
+		width: number;
+		height: number;
+		rotation?: number;
+		latLng: L.LatLngExpression;
+		aeroObject?: Waypoint | Airport | undefined;
+		draggable?: boolean;
+		iconAnchor?: L.Point;
+		children?: import('svelte').Snippet;
+	}
+
+	let {
+		width,
+		height,
+		rotation = 0,
+		latLng,
+		aeroObject = undefined,
+		draggable = false,
+		iconAnchor = L.point(width / 2 - 8, height / 2 - 8),
+		children
+	}: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
-	let marker: L.Marker | undefined;
-	let markerElement: HTMLElement;
+	let marker: L.Marker | undefined = $state();
+	let markerElement: HTMLElement = $state();
 
 	const { getMap }: { getMap: () => L.Map | undefined } = getContext('map');
 	const map = getMap();
@@ -71,6 +85,6 @@
 
 <div bind:this={markerElement}>
 	{#if marker}
-		<slot />
+		{@render children?.()}
 	{/if}
 </div>

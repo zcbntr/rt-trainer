@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { page } from '$app/stores';
 	import type Scenario from '$lib/ts/Scenario';
 	import type { WaypointURLObject } from '$lib/ts/ScenarioTypes';
@@ -79,10 +81,10 @@
 	let aircraftType: string = 'Cessna 172';
 
 	// Flag to check if critical data is missing and the user must be prompted to enter it
-	let criticalDataMissing: boolean = false;
+	let criticalDataMissing: boolean = $state(false);
 
 	// Scenario objects
-	let waypoints: Waypoint[] = [];
+	let waypoints: Waypoint[] = $state([]);
 	let airportIDs: string[] = [];
 
 	// Check whether the seed is specified - if not then warn user
@@ -181,18 +183,18 @@
 	}
 
 	// Load stores if not populated
-	let airspaces: Airspace[] = [];
+	let airspaces: Airspace[] = $state([]);
 	AllAirspacesStore.subscribe((value) => {
 		airspaces = value;
 	});
 	if (airspaces.length === 0) fetchAirspaces();
 
-	let onRouteAirspaces: Airspace[] = [];
+	let onRouteAirspaces: Airspace[] = $state([]);
 	OnRouteAirspacesStore.subscribe((value) => {
 		onRouteAirspaces = value;
 	});
 
-	let airports: Airport[] = [];
+	let airports: Airport[] = $state([]);
 	AllAirportsStore.subscribe((value) => {
 		airports = value;
 	});
@@ -207,7 +209,7 @@
 		waypoints = value;
 	});
 
-	let scenario: Scenario | undefined = undefined;
+	let scenario: Scenario | undefined = $state(undefined);
 
 	if (criticalDataMissing) {
 		// Set a short timeout then trigger modal to load scenario data
@@ -227,9 +229,6 @@
 		}, 1000);
 	}
 
-	$: if (!criticalDataMissing && airports.length > 0 && airspaces.length > 0) {
-		loadScenario();
-	}
 
 	function loadScenario() {
 		try {
@@ -266,11 +265,11 @@
 	});
 
 	// Simulator state and settings
-	let aircraftDetails: AircraftDetails; // Current settings of the simulator
-	let radioState: RadioState; // Current radio settings
-	let transponderState: TransponderState; // Current transponder settings
+	let aircraftDetails: AircraftDetails = $state(); // Current settings of the simulator
+	let radioState: RadioState = $state(); // Current radio settings
+	let transponderState: TransponderState = $state(); // Current transponder settings
 	let altimeterState: AltimeterState;
-	let atcMessage: string;
+	let atcMessage: string = $state();
 	let userMessage: string;
 	let currentTarget: string;
 	let currentTargetFrequency: string;
@@ -280,15 +279,15 @@
 	let currentSimConext: string;
 
 	// Page settings
-	let speechRecognitionSupported: boolean = false; // Speech recognition is not supported in all browsers e.g. firefox
-	let speechNoiseLevel: number = 0;
-	let readRecievedCalls: boolean = false;
+	let speechRecognitionSupported: boolean = $state(false); // Speech recognition is not supported in all browsers e.g. firefox
+	let speechNoiseLevel: number = $state(0);
+	let readRecievedCalls: boolean = $state(false);
 	let liveFeedback: boolean = false;
-	let tutorialStep4: boolean = false;
+	let tutorialStep4: boolean = $state(false);
 
 	// Tutorial state
-	let tutorialEnabled: boolean = false;
-	let tutorialComplete: boolean = false;
+	let tutorialEnabled: boolean = $state(false);
+	let tutorialComplete: boolean = $state(false);
 	let tutorialStep: number = 1;
 
 	// Server state
@@ -298,29 +297,9 @@
 
 	const toastStore = getToastStore();
 
-	$: if (serverNotResponding) {
-		modalStore.trigger({
-			type: 'alert',
-			title: 'Server did not respond',
-			body: 'This may be due to a bad request or the feature you are trying to use not being implemented yet. This software is still early in development, expect errors like this one.'
-		});
-	}
 
-	$: if (nullRoute) {
-		modalStore.trigger({
-			type: 'alert',
-			title: 'No Route Generated',
-			body: 'After 1000 iterations no feasible route was generated for this seed. Please try another one. The route generation is not finalised and will frequently encounter issues like this one. '
-		});
-	}
 
-	$: if (readRecievedCalls && atcMessage) {
-		TTSWithNoise(speechNoiseLevel);
-	}
 
-	$: tutorialStep2 = transponderState?.dialMode == 'SBY' && radioState?.dialMode == 'SBY';
-	$: tutorialStep3 =
-		radioState?.activeFrequency == scenario?.getCurrentPoint().updateData.currentTargetFrequency;
 
 	ScenarioStore.subscribe((value) => {
 		scenario = value;
@@ -382,15 +361,15 @@
 		tutorialEnabled = value;
 	});
 
-	let waypointPoints: number[][] = [];
+	let waypointPoints: number[][] = $state([]);
 	let bounds: L.LatLngBounds;
 	let bbox: number[] = [];
 	WaypointPointsMapStore.subscribe((value) => {
 		waypointPoints = value;
 	});
 
-	let position: number[] = [0, 0];
-	let displayHeading: number = 0;
+	let position: number[] = $state([0, 0]);
+	let displayHeading: number = $state(0);
 	let altitude: number = 0;
 	let airSpeed: number = 0;
 
@@ -723,6 +702,37 @@
 			speechRecognitionSupported = false;
 		}
 	});
+	run(() => {
+		if (!criticalDataMissing && airports.length > 0 && airspaces.length > 0) {
+			loadScenario();
+		}
+	});
+	run(() => {
+		if (serverNotResponding) {
+			modalStore.trigger({
+				type: 'alert',
+				title: 'Server did not respond',
+				body: 'This may be due to a bad request or the feature you are trying to use not being implemented yet. This software is still early in development, expect errors like this one.'
+			});
+		}
+	});
+	run(() => {
+		if (nullRoute) {
+			modalStore.trigger({
+				type: 'alert',
+				title: 'No Route Generated',
+				body: 'After 1000 iterations no feasible route was generated for this seed. Please try another one. The route generation is not finalised and will frequently encounter issues like this one. '
+			});
+		}
+	});
+	run(() => {
+		if (readRecievedCalls && atcMessage) {
+			TTSWithNoise(speechNoiseLevel);
+		}
+	});
+	let tutorialStep2 = $derived(transponderState?.dialMode == 'SBY' && radioState?.dialMode == 'SBY');
+	let tutorialStep3 =
+		$derived(radioState?.activeFrequency == scenario?.getCurrentPoint().updateData.currentTargetFrequency);
 </script>
 
 <div class="flex" style="justify-content: center;">
@@ -732,30 +742,40 @@
 				<div class="card bg-primary-900 text-white p-3 rounded-lg sm:w-7/12 sm:mx-10">
 					<Stepper on:complete={onCompleteHandler} on:step={onStepHandler}>
 						<Step>
-							<svelte:fragment slot="header">Get Started!</svelte:fragment>
+							{#snippet header()}
+														Get Started!
+													{/snippet}
 							Welcome to RT Trainer. This tutorial will explain how to use the simulator.
 							<br />Click
 							<span class="underline">next</span>
 							to continue.
-							<svelte:fragment slot="navigation">
-								<button class="btn variant-ghost-warning" on:click={cancelTutorial}
-									>Skip Tutorial</button
-								>
-							</svelte:fragment>
+							{#snippet navigation()}
+													
+									<button class="btn variant-ghost-warning" onclick={cancelTutorial}
+										>Skip Tutorial</button
+									>
+								
+													{/snippet}
 						</Step>
 						<Step locked={!tutorialStep2}>
-							<svelte:fragment slot="header">Turning on your Radio Stack</svelte:fragment>
+							{#snippet header()}
+														Turning on your Radio Stack
+													{/snippet}
 							<ul class="list-disc ml-5">
 								<li>Turn on your radio by clicking on the dial or standby (SBY) label.</li>
 								<li>Set your transponder to standby in the same way.</li>
 							</ul>
 						</Step>
 						<Step locked={!tutorialStep3}>
-							<svelte:fragment slot="header">Setting Your Radio Frequency</svelte:fragment>
+							{#snippet header()}
+														Setting Your Radio Frequency
+													{/snippet}
 							Set your radio frequency to the current target frequency shown in the message output box.
 						</Step>
 						<Step locked={!tutorialStep4}>
-							<svelte:fragment slot="header">Make your first Radio Call</svelte:fragment>
+							{#snippet header()}
+														Make your first Radio Call
+													{/snippet}
 							Now you are ready to make your first radio call.
 							<ul class="list-disc ml-5">
 								<li>Type your message in the input box.</li>
@@ -768,7 +788,9 @@
 							</ul>
 						</Step>
 						<Step>
-							<svelte:fragment slot="header">Well Done!</svelte:fragment>
+							{#snippet header()}
+														Well Done!
+													{/snippet}
 							You have completed the basic tutorial. Familiarise yourself with the rest of the simulator
 							and complete the route.
 						</Step>

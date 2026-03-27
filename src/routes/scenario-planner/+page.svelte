@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import Map from '$lib/Components/Leaflet/Map.svelte';
 	import {
 		AllAirportsStore,
@@ -38,14 +40,14 @@
 
 	let draggedWaypoint: Waypoint | undefined;
 
-	let startButtonDisabled: boolean = true;
+	let startButtonDisabled: boolean = $state(true);
 
-	let awaitingServerResponse: boolean = false;
+	let awaitingServerResponse: boolean = $state(false);
 	AwaitingServerResponseStore.subscribe((value) => {
 		awaitingServerResponse = value;
 	});
 
-	const airports: Airport[] = [];
+	const airports: Airport[] = $state([]);
 	AllAirportsStore.subscribe((value) => {
 		airports.length = 0;
 		for (const airport of value) {
@@ -60,26 +62,25 @@
 	});
 	if (airspaces.length === 0) fetchAirspaces();
 
-	let filteredAirspaces: Airspace[] = [];
+	let filteredAirspaces: Airspace[] = $state([]);
 	FilteredAirspacesStore.subscribe((value) => {
 		filteredAirspaces = value;
 	});
 
-	let onRouteAirspaces: Airspace[] = [];
+	let onRouteAirspaces: Airspace[] = $state([]);
 	OnRouteAirspacesStore.subscribe((value) => {
 		onRouteAirspaces = value;
 	});
 
-	$: durationEstimate = onRouteAirports.length * 8 + onRouteAirspaces.length * 5;
 
 	const onRouteAirports: Airport[] = [];
 
-	let waypoints: Waypoint[] = [];
+	let waypoints: Waypoint[] = $state([]);
 	WaypointsStore.subscribe((value) => {
 		waypoints = value;
 	});
 
-	let waypointPoints: number[][] = [];
+	let waypointPoints: number[][] = $state([]);
 	WaypointPointsMapStore.subscribe((value) => {
 		waypointPoints = value;
 	});
@@ -89,7 +90,7 @@
 		routeDistanceMeters = value;
 	});
 
-	let routeDistanceDisplayValue: string = '0 nm';
+	let routeDistanceDisplayValue: string = $state('0 nm');
 	RouteDistanceDisplayStore.subscribe((value) => {
 		routeDistanceDisplayValue = value;
 	});
@@ -188,21 +189,6 @@
 		}
 	}
 
-	$: {
-		// Waypoints must be at least 2 to create a scenario
-		// onRouteAirports must be at most 2 to create a scenario
-		// Airports, if there are any, must be at the start or end of the route
-		// awaitingServerResponse must be false (no route generation in progress)
-		startButtonDisabled =
-			waypoints.length < 2 ||
-			onRouteAirports.length > 2 ||
-			onRouteAirports.length == 1 && (waypoints[0].type !== WaypointType.Airport &&
-			waypoints[waypoints.length - 1].type !== WaypointType.Airport) ||
-			(onRouteAirports.length == 2 &&
-				waypoints[0].type !== WaypointType.Airport &&
-				waypoints[waypoints.length - 1].type !== WaypointType.Airport) ||
-			awaitingServerResponse;
-	}
 
 	function onPracticeClick() {
 		// Check for route validity, then redirect to scenario page with the scenario data in the URL
@@ -258,6 +244,22 @@
 
 		goto(scenarioURLString);
 	}
+	let durationEstimate = $derived(onRouteAirports.length * 8 + onRouteAirspaces.length * 5);
+	run(() => {
+		// Waypoints must be at least 2 to create a scenario
+		// onRouteAirports must be at most 2 to create a scenario
+		// Airports, if there are any, must be at the start or end of the route
+		// awaitingServerResponse must be false (no route generation in progress)
+		startButtonDisabled =
+			waypoints.length < 2 ||
+			onRouteAirports.length > 2 ||
+			onRouteAirports.length == 1 && (waypoints[0].type !== WaypointType.Airport &&
+			waypoints[waypoints.length - 1].type !== WaypointType.Airport) ||
+			(onRouteAirports.length == 2 &&
+				waypoints[0].type !== WaypointType.Airport &&
+				waypoints[waypoints.length - 1].type !== WaypointType.Airport) ||
+			awaitingServerResponse;
+	});
 </script>
 
 <div class="flex flex-col place-content-center w-full h-full">
@@ -371,7 +373,7 @@
 												<div id="waypoint-{waypoint.id}-lng">{waypoint.location[1]}</div>
 											</div>
 
-											<button class="btn variant-filled" on:click={() => deleteWaypoint(waypoint)}
+											<button class="btn variant-filled" onclick={() => deleteWaypoint(waypoint)}
 												><div class="grid grid-cols-4 gap-2 w-full">
 													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
 													<div class="col-span-3 col-start-2">Delete</div>
@@ -400,10 +402,10 @@
 											><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
 												>{waypoint.location[1]}</textarea
 											>
-											<button class="btn varient-filled" on:click={() => saveWaypointEdit(waypoint)}
+											<button class="btn varient-filled" onclick={() => saveWaypointEdit(waypoint)}
 												>Save</button
 											>
-											<button class="btn variant-filled" on:click={() => deleteWaypoint(waypoint)}
+											<button class="btn variant-filled" onclick={() => deleteWaypoint(waypoint)}
 												><div class="grid grid-cols-4 gap-2 w-full">
 													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
 													<div class="col-span-3 col-start-2">Delete</div>
@@ -433,10 +435,10 @@
 											><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
 												>{waypoint.location[1]}</textarea
 											>
-											<button class="btn varient-filled" on:click={() => saveWaypointEdit(waypoint)}
+											<button class="btn varient-filled" onclick={() => saveWaypointEdit(waypoint)}
 												>Save</button
 											>
-											<button class="btn variant-filled" on:click={() => deleteWaypoint(waypoint)}
+											<button class="btn variant-filled" onclick={() => deleteWaypoint(waypoint)}
 												><div class="grid grid-cols-4 gap-2 w-full">
 													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
 													<div class="col-span-3 col-start-2">Delete</div>
@@ -474,7 +476,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="vr h-full border border-surface-200 dark:border-surface-700" />
+			<div class="vr h-full border border-surface-200 dark:border-surface-700"></div>
 			<div class="flex flex-row place-content-center p-4">
 				<div class="flex flex-col place-content-center">
 					<div class="text-sm">Unique Airspaces</div>
@@ -483,7 +485,7 @@
 					</div>
 				</div>
 			</div>
-			<div class="vr h-full border border-surface-200 dark:border-surface-700" />
+			<div class="vr h-full border border-surface-200 dark:border-surface-700"></div>
 			<div class="flex flex-row place-content-center p-4">
 				<div class="flex flex-col place-content-center">
 					<div class="text-sm">Est. Scenario Duration</div>
@@ -498,7 +500,7 @@
 					<button
 						class="h-10 btn variant-filled text-sm"
 						disabled={startButtonDisabled}
-						on:click={onPracticeClick}><span><PlayOutline /></span><span>Start</span></button
+						onclick={onPracticeClick}><span><PlayOutline /></span><span>Start</span></button
 					>
 				</div>
 

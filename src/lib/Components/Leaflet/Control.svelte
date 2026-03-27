@@ -2,11 +2,16 @@
 	import L from 'leaflet';
 	import { getContext, onDestroy, onMount, setContext } from 'svelte';
 
-	export let position: 'topleft' | 'topright' | 'bottomleft' | 'bottomright' = 'topleft';
+	interface Props {
+		position?: 'topleft' | 'topright' | 'bottomleft' | 'bottomright';
+		children?: import('svelte').Snippet<[any]>;
+	}
+
+	let { position = 'topleft', children }: Props = $props();
 
 	/** The control instance created by this component */
-	let control: Control | undefined = undefined;
-	let controlElement: HTMLElement;
+	let control: Control | undefined = $state(undefined);
+	let controlElement: HTMLElement = $state();
 
 	class Control extends L.Control {
 		el: HTMLElement;
@@ -42,6 +47,6 @@
 
 <div bind:this={controlElement}>
 	{#if control}
-		<slot {control} />
+		{@render children?.({ control, })}
 	{/if}
 </div>

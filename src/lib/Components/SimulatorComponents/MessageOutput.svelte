@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import {
 		CurrentTargetStore,
 		MostRecentlyReceivedMessageStore,
@@ -8,11 +10,16 @@
 		SpeechNoiseStore
 	} from '$lib/stores';
 	import { SlideToggle, popup, type PopupSettings } from '@skeletonlabs/skeleton';
+	interface Props {
+		[key: string]: any
+	}
+
+	let { ...props }: Props = $props();
 
 	let currentTarget: string;
 	let currentTargetFrequency: string = '000.000';
-	let readReceivedCalls: boolean = false;
-	let speechNoiseLevel: number = 0;
+	let readReceivedCalls: boolean = $state(false);
+	let speechNoiseLevel: number = $state(0);
 
 	CurrentTargetStore.subscribe((value) => {
 		currentTarget = value;
@@ -22,13 +29,13 @@
 		currentTargetFrequency = value;
 	});
 
-	let mostRecentlyReceivedMessage: string;
+	let mostRecentlyReceivedMessage: string = $state();
 
 	MostRecentlyReceivedMessageStore.subscribe((value) => {
 		mostRecentlyReceivedMessage = value;
 	});
 
-	let currentContext: string;
+	let currentContext: string = $state();
 	CurrentScenarioContextStore.subscribe((value) => {
 		currentContext = value;
 		if (currentContext === '') {
@@ -36,9 +43,13 @@
 		}
 	});
 
-	$: SpeechOutputEnabledStore.set(readReceivedCalls);
+	run(() => {
+		SpeechOutputEnabledStore.set(readReceivedCalls);
+	});
 
-	$: SpeechNoiseStore.set(speechNoiseLevel);
+	run(() => {
+		SpeechNoiseStore.set(speechNoiseLevel);
+	});
 
 	const audioMessagesInfoTooltip: PopupSettings = {
 		event: 'hover',
@@ -54,7 +65,7 @@
 </script>
 
 <div
-	class="p-1.5 card rounded-md max-w-lg min-h-72 flex flex-col grid-cols-1 gap-1 bg-neutral-600 text-white grow {$$props.class}"
+	class="p-1.5 card rounded-md max-w-lg min-h-72 flex flex-col grid-cols-1 gap-1 bg-neutral-600 text-white grow {props.class}"
 >
 	<div
 		class="border-0 card bg-neutral-700 grow flex flex-col justify-self-stretch px-2 py-1.5 gap-2"
@@ -88,7 +99,7 @@
 							data-popup="audioMessagesInfoPopupHover"
 						>
 							<p>Audio messages read aloud when you receive a call from ATC or another aircraft.</p>
-							<div class="arrow variant-filled-secondary" />
+							<div class="arrow variant-filled-secondary"></div>
 						</div>
 					</div>
 					<div class="flex flex-row place-content-start gap-2">
@@ -116,7 +127,7 @@
 								Adds static noise to read out calls. <br />Requires Read Aloud Recieved Calls to be
 								enabled.
 							</p>
-							<div class="arrow variant-filled-secondary" />
+							<div class="arrow variant-filled-secondary"></div>
 						</div>
 					</div>
 				</div>

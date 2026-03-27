@@ -1,14 +1,28 @@
 <script lang="ts">
-	export let DisplayOn: boolean = false;
-	export let mode: string = 'COM';
-	export let activeFrequency: number = 123.17;
-	export let standbyFrequency: number = 126.41;
-	export let tertiaryFrequency: number = 177.2;
+	import { run } from 'svelte/legacy';
 
-	$: showDisplayText = DisplayOn ? 'displayon' : 'displayoff';
-	$: if (!DisplayOn) {
-		mode = 'COM';
+	interface Props {
+		DisplayOn?: boolean;
+		mode?: string;
+		activeFrequency?: number;
+		standbyFrequency?: number;
+		tertiaryFrequency?: number;
 	}
+
+	let {
+		DisplayOn = false,
+		mode = $bindable('COM'),
+		activeFrequency = 123.17,
+		standbyFrequency = 126.41,
+		tertiaryFrequency = 177.2
+	}: Props = $props();
+
+	let showDisplayText = $derived(DisplayOn ? 'displayon' : 'displayoff');
+	run(() => {
+		if (!DisplayOn) {
+			mode = 'COM';
+		}
+	});
 </script>
 
 <div
