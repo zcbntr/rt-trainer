@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
 
+	import '../app.css';
 	import TopAppBar from '$lib/components/TopAppBar.svelte';
 	import {
 		AppShell,

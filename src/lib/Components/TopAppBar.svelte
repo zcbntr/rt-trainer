@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AppBar, LightSwitch } from '@skeletonlabs/skeleton';
+	import { AppBar } from '@skeletonlabs/skeleton';
 	import { createEventDispatcher } from 'svelte';
 	import { GithubSolid } from 'flowbite-svelte-icons';
 	interface Props {
@@ -46,7 +46,6 @@
 		{/snippet}
 
 		{#snippet trail()}
-			<LightSwitch />
 			<a
 				class="btn btn-icon"
 				href="https://github.com/zcbntr/rt-trainer"
@@ -60,7 +59,11 @@
 {:else}
 	<!-- Show burger button if the appbar is not enabled -->
 	<div>
-		<button class="{burgerButton} btn btn-sm mr-4" onclick={burgerButtonClicked}>
+		<button
+			class="{burgerButton} btn btn-sm mr-4"
+			onclick={burgerButtonClicked}
+			aria-label="Toggle Navigation Drawer"
+		>
 			<span>
 				<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
 					<rect width="100" height="20" />
