@@ -4,7 +4,6 @@
 	import TopAppBar from '$lib/components/TopAppBar.svelte';
 	import {
 		AppShell,
-		autoModeWatcher,
 		initializeStores,
 		Drawer,
 		getDrawerStore,
@@ -16,7 +15,7 @@
 	import { page } from '$app/stores';
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import Navigation from '$lib/components/NAVSidebar.svelte';
-	import ScenarioPlanSiderbar from '$lib/components/ScenarioPlanSiderbar.svelte';
+	import ScenarioPlanSidebar from '$lib/components/ScenarioPlanSidebar.svelte';
 	import SvelteSeo from 'svelte-seo';
 	import 'reflect-metadata';
 	import NoScenarioDataModal from '$lib/components/Modals/QuickGenerationModal.svelte';
@@ -97,15 +96,10 @@
 	applicationName="RT Trainer"
 />
 
-<!-- Enable system theme -->
-<svelte:head
-	>{@html `<script>${autoModeWatcher.toString()} autoModeWatcher();</script>`}</svelte:head
->
-
-<!-- Navigatiton Drawer -->
+<!-- Navigation Drawer -->
 <Drawer width="w-64">
 	{#if showRoutePlanSidebar}
-		<ScenarioPlanSiderbar />
+		<ScenarioPlanSidebar />
 	{:else if showNavigation}
 		<h2 class="p-4">Navigation</h2>
 		<hr />
@@ -131,7 +125,7 @@
 		{#if showNavigation}
 			<Navigation />
 		{:else if showRoutePlanSidebar}
-			<ScenarioPlanSiderbar />
+			<ScenarioPlanSidebar />
 		{/if}
 	{/snippet}
 	{#snippet pageFooter()}
