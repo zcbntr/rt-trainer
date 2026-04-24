@@ -10,6 +10,6 @@ export default defineConfig(({ mode }) => {
 	}
 
 	return {
-		plugins: [sveltekit(), tailwindcss()]
+		plugins: [tailwindcss(), sveltekit()]
 	};
 });
