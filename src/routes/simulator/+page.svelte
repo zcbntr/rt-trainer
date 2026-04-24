@@ -2,11 +2,11 @@
 	import { run } from 'svelte/legacy';
 
 	import { page } from '$app/stores';
-	import type Scenario from '$lib/ts/Scenario';
-	import type { WaypointURLObject } from '$lib/ts/ScenarioTypes';
-	import Waypoint from '$lib/ts/AeronauticalClasses/Waypoint';
-	import type Airspace from '$lib/ts/AeronauticalClasses/Airspace';
-	import type Airport from '$lib/ts/AeronauticalClasses/Airport';
+	import type Scenario from '$lib/logic/Scenario';
+	import type { WaypointURLObject } from '$lib/logic/ScenarioTypes';
+	import Waypoint from '$lib/logic/aeronautics/Waypoint';
+	import type Airspace from '$lib/logic/aeronautics/Airspace';
+	import type Airport from '$lib/logic/aeronautics/Airport';
 	import {
 		getModalStore,
 		getToastStore,
@@ -14,8 +14,8 @@
 		Step,
 		type ModalSettings,
 		type ToastSettings
-	} from '@skeletonlabs/skeleton';
-	import { generateScenario } from '$lib/ts/ScenarioGenerator';
+	} from '@skeletonlabs/skeleton-svelte';
+	import { generateScenario } from '$lib/logic/ScenarioGenerator';
 	import 'leaflet/dist/leaflet.css';
 	import { onMount } from 'svelte';
 	import {
@@ -53,23 +53,23 @@
 		AircraftDetails,
 		RadioState,
 		AltimeterState
-	} from '$lib/ts/SimulatorTypes';
-	import { isCallsignStandardRegistration, replaceWithPhoneticAlphabet } from '$lib/ts/utils';
+	} from '$lib/logic/SimulatorTypes';
+	import { isCallsignStandardRegistration, replaceWithPhoneticAlphabet } from '$lib/logic/utils';
 	import { goto } from '$app/navigation';
-	import RadioCall from '$lib/ts/RadioCall';
-	import Polyline from '$lib/components/Leaflet/Polyline.svelte';
-	import Polygon from '$lib/components/Leaflet/Polygon.svelte';
-	import Popup from '$lib/components/Leaflet/Popup.svelte';
-	import Marker from '$lib/components/Leaflet/Marker.svelte';
-	import { WaypointType } from '$lib/ts/AeronauticalClasses/Waypoint';
+	import RadioCall from '$lib/logic/RadioCall';
+	import Polyline from '$lib/components/leaflet/Polyline.svelte';
+	import Polygon from '$lib/components/leaflet/Polygon.svelte';
+	import Popup from '$lib/components/leaflet/Popup.svelte';
+	import Marker from '$lib/components/leaflet/Marker.svelte';
+	import { WaypointType } from '$lib/logic/aeronautics/Waypoint';
 	import L from 'leaflet';
-	import Parser, { type ParseResult } from '$lib/ts/Parser';
-	import Radio from '$lib/components/Simulatorcomponents/Radio.svelte';
-	import Transponder from '$lib/components/Simulatorcomponents/Transponder.svelte';
-	import MessageOutput from '$lib/components/Simulatorcomponents/MessageOutput.svelte';
-	import MessageInput from '$lib/components/Simulatorcomponents/MessageInput.svelte';
-	import Altimeter from '$lib/components/Simulatorcomponents/Altimeter.svelte';
-	import Map from '$lib/components/Leaflet/Map.svelte';
+	import Parser, { type ParseResult } from '$lib/logic/Parser';
+	import Radio from '$lib/components/simulator/Radio.svelte';
+	import Transponder from '$lib/components/simulator/Transponder.svelte';
+	import MessageOutput from '$lib/components/simulator/MessageOutput.svelte';
+	import MessageInput from '$lib/components/simulator/MessageInput.svelte';
+	import Altimeter from '$lib/components/simulator/Altimeter.svelte';
+	import Map from '$lib/components/leaflet/Map.svelte';
 
 	const modalStore = getModalStore();
 

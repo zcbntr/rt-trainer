@@ -4,8 +4,8 @@
 	import { onMount, onDestroy, getContext, setContext, createEventDispatcher } from 'svelte';
 	import L from 'leaflet';
 	import 'leaflet-rotatedmarker';
-	import type Waypoint from '$lib/ts/AeronauticalClasses/Waypoint';
-	import type Airport from '$lib/ts/AeronauticalClasses/Airport';
+	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
+	import type Airport from '$lib/logic/aeronautics/Airport';
 
 	interface Props {
 		width: number;

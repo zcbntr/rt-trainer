@@ -4,15 +4,15 @@ import type {
 	AltimeterState,
 	RadioState,
 	TransponderState
-} from './ts/SimulatorTypes';
-import type RadioCall from './ts/RadioCall';
-import type Scenario from './ts/Scenario';
-import Airspace from './ts/AeronauticalClasses/Airspace';
-import type Waypoint from './ts/AeronauticalClasses/Waypoint';
-import Airport from './ts/AeronauticalClasses/Airport';
+} from './logic/SimulatorTypes';
+import type RadioCall from './logic/RadioCall';
+import type Scenario from './logic/Scenario';
+import Airspace from './logic/aeronautics/Airspace';
+import type Waypoint from './logic/aeronautics/Waypoint';
+import Airport from './logic/aeronautics/Airport';
 import * as turf from '@turf/turf';
 import axios from 'axios';
-import type { AirportData, AirspaceData } from './ts/AeronauticalClasses/OpenAIPTypes';
+import type { AirportData, AirspaceData } from './logic/aeronautics/OpenAIPTypes';
 import { plainToInstance } from 'class-transformer';
 
 const initialAircraftDetails: AircraftDetails = {

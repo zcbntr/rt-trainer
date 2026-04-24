@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
 
-	import Map from '$lib/components/Leaflet/Map.svelte';
+	import Map from '$lib/components/leaflet/Map.svelte';
 	import {
 		AllAirportsStore,
 		AwaitingServerResponseStore,
@@ -16,17 +16,17 @@
 		fetchAirports,
 		fetchAirspaces
 	} from '$lib/stores';
-	import Waypoint, { WaypointType } from '$lib/ts/AeronauticalClasses/Waypoint';
+	import Waypoint, { WaypointType } from '$lib/logic/aeronautics/Waypoint';
 	import { TrashBinOutline, PlayOutline } from 'flowbite-svelte-icons';
 	import { AllAirspacesStore } from '$lib/stores';
 	import { plainToInstance } from 'class-transformer';
-	import type Airspace from '$lib/ts/AeronauticalClasses/Airspace';
-	import Airport from '$lib/ts/AeronauticalClasses/Airport';
-	import Marker from '$lib/components/Leaflet/Marker.svelte';
-	import Popup from '$lib/components/Leaflet/Popup.svelte';
-	import Polygon from '$lib/components/Leaflet/Polygon.svelte';
-	import { getNthPhoneticAlphabetLetter, wellesbourneMountfordCoords } from '$lib/ts/utils';
-	import Polyline from '$lib/components/Leaflet/Polyline.svelte';
+	import type Airspace from '$lib/logic/aeronautics/Airspace';
+	import Airport from '$lib/logic/aeronautics/Airport';
+	import Marker from '$lib/components/leaflet/Marker.svelte';
+	import Popup from '$lib/components/leaflet/Popup.svelte';
+	import Polygon from '$lib/components/leaflet/Polygon.svelte';
+	import { getNthPhoneticAlphabetLetter, wellesbourneMountfordCoords } from '$lib/logic/utils';
+	import Polyline from '$lib/components/leaflet/Polyline.svelte';
 	import { Icon } from 'svelte-icons-pack';
 	import { BsAirplaneFill } from 'svelte-icons-pack/bs';
 	import { goto } from '$app/navigation';

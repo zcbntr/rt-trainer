@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { CurrentScenarioPointIndexStore } from '$lib/stores';
-	import type Scenario from '$lib/ts/Scenario';
+	import type Scenario from '$lib/logic/Scenario';
 	import { ListBox, ListBoxItem } from '@skeletonlabs/skeleton';
 	import { MapPinOutline } from 'flowbite-svelte-icons';
 

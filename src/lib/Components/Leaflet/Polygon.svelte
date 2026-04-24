@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy, getContext, setContext, createEventDispatcher } from 'svelte';
 	import L from 'leaflet';
-	import type Airspace from '$lib/ts/AeronauticalClasses/Airspace';
+	import type Airspace from '$lib/logic/aeronautics/Airspace';
 
 	interface Props {
 		latLngArray: L.LatLngExpression[];

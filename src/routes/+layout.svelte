@@ -4,42 +4,23 @@
 	import '../app.css';
 	import TopAppBar from '$lib/components/TopAppBar.svelte';
 	import {
-		AppShell,
-		initializeStores,
-		Drawer,
-		getDrawerStore,
-		storePopup,
-		Toast,
-		Modal,
-		type ModalComponent
-	} from '@skeletonlabs/skeleton';
+		// initializeStores,
+		// getDrawerStore,
+		// storePopup,
+		Toast
+	} from '@skeletonlabs/skeleton-svelte';
+	import { toaster } from '$lib/components/singletons/toaster';
 	import { page } from '$app/stores';
-	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import Navigation from '$lib/components/NAVSidebar.svelte';
 	import ScenarioPlanSidebar from '$lib/components/ScenarioPlanSidebar.svelte';
 	import SvelteSeo from 'svelte-seo';
+	// TODO - Get rid of this when possible
 	import 'reflect-metadata';
-	import NoScenarioDataModal from '$lib/components/Modals/QuickGenerationModal.svelte';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
 
 	let { children }: Props = $props();
-
-	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
-
-	initializeStores();
-
-	const drawerStore = getDrawerStore();
-
-	function drawerOpen(): void {
-		drawerStore.open({});
-	}
-
-	const modalRegistry: Record<string, ModalComponent> = {
-		// Set a unique modal ID, then pass the component reference
-		quickLoadScenarioDataComponent: { ref: NoScenarioDataModal }
-	};
 
 	// Holds status of major navigation elements, to control visibility
 	let showTopAppBar: boolean = $state(true);
@@ -98,7 +79,7 @@
 />
 
 <!-- Navigation Drawer -->
-<Drawer width="w-64">
+<!-- <Drawer width="w-64">
 	{#if showRoutePlanSidebar}
 		<ScenarioPlanSidebar />
 	{:else if showNavigation}
@@ -107,29 +88,43 @@
 
 		<Navigation />
 	{/if}
-</Drawer>
+</Drawer> -->
 
-<Modal components={modalRegistry} />
+<Toast.Group {toaster}>
+	{#snippet children(toast)}
+		<Toast {toast}>
+			<Toast.Message>
+				<Toast.Title>{toast.title}</Toast.Title>
+				<Toast.Description>{toast.description}</Toast.Description>
+			</Toast.Message>
+			<Toast.CloseTrigger />
+		</Toast>
+	{/snippet}
+</Toast.Group>
 
-<Toast />
+<!-- Previously was the App Shell, now just a div -->
 
-<!-- App Shell -->
-<AppShell slotSidebarLeft="bg-surface-500/5 appbar {classesSidebar}" slotHeader={classesAppBar}>
-	{#snippet header()}
+<div class="bg-surface-500/5 appbar {classesAppBar} ">
+	<header>
 		<!-- App Bar -->
 		{#if showTopAppBar}
-			<TopAppBar {burgerButton} enabled={true} on:burgerButtonClicked={drawerOpen} />
+			<TopAppBar {burgerButton} enabled={true} />
+			<!-- <TopAppBar {burgerButton} enabled={true} on:burgerButtonClicked={drawerOpen} /> -->
 		{/if}
-	{/snippet}
-	{#snippet sidebarLeft()}
+	</header>
+	<aside class={classesSidebar}>
 		<!-- Navigation -->
 		{#if showNavigation}
 			<Navigation />
 		{:else if showRoutePlanSidebar}
 			<ScenarioPlanSidebar />
 		{/if}
-	{/snippet}
-	{#snippet pageFooter()}
+	</aside>
+	<main>
+		<!-- Page Route Content -->
+		{@render children?.()}
+	</main>
+	<footer>
 		{#if $page.url.pathname === '/'}
 			<div class="flex flex-col place-items-center grow-0 p-2">
 				<p class="text-slate-600">
@@ -145,10 +140,8 @@
 				</p>
 			</div>
 		{/if}
-	{/snippet}
-	<!-- Page Route Content -->
-	{@render children?.()}
-</AppShell>
+	</footer>
+</div>
 
 <style>
 	@font-face {

@@ -6,7 +6,7 @@
 	import Dial from './ModeDial.svelte';
 	import TransponderDisplay from './TransponderDisplay.svelte';
 	import { TransponderStateStore } from '$lib/stores';
-	import type { TransponderState } from '$lib/ts/SimulatorTypes';
+	import type { TransponderState } from '$lib/logic/SimulatorTypes';
 
 	const transponderDialModes: ArrayMaxLength7MinLength2 = [
 		'OFF',

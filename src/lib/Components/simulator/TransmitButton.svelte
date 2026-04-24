@@ -2,7 +2,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { SpeechBufferStore, SpeechInputEnabledStore } from '$lib/stores';
-	import { swapDigitsWithWords } from '$lib/ts/utils';
+	import { swapDigitsWithWords } from '$lib/logic/utils';
 
 	export let enabled: boolean = false;
 	export let speechEnabled: boolean = true; // User's choice
@@ -110,7 +110,7 @@
 	aria-label="Transmit Button"
 	tabindex="0"
 	role="button"
-/>
+></div>
 
 <svelte:window on:keydown={onKeyDown} on:keyup={onKeyUp} />
 

@@ -1,4 +1,4 @@
-import { AirborneStage, LandingStage, StartAerodromeStage } from '$lib/ts/ScenarioStages';
+import { AirborneStage, LandingStage, StartAerodromeStage } from '$lib/logic/ScenarioStages';
 import type RadioCall from './RadioCall';
 
 export default class Results {

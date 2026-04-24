@@ -21,9 +21,9 @@ import {
 	getSeededTimeInMinutes
 } from './utils';
 import * as turf from '@turf/turf';
-import type Airport from './AeronauticalClasses/Airport';
-import type Waypoint from './AeronauticalClasses/Waypoint';
-import type Airspace from './AeronauticalClasses/Airspace';
+import type Airport from './aeronautics/Airport';
+import type Waypoint from './aeronautics/Waypoint';
+import type Airspace from './aeronautics/Airspace';
 import type { Position } from '@turf/turf';
 
 const AIRCRAFT_AVERAGE_SPEED = 3.75; // km per minute. 225 km/h, 120 knots, 140 mph (Cessna 172 max cruise speed)

@@ -4,11 +4,11 @@ import type {
 	AirportData,
 	AirportReportingPointData,
 	AirspaceData
-} from './AeronauticalClasses/OpenAIPTypes';
-import Airport from './AeronauticalClasses/Airport';
-import Runway from './AeronauticalClasses/Runway';
+} from './aeronautics/OpenAIPTypes';
+import Airport from './aeronautics/Airport';
+import Runway from './aeronautics/Runway';
 import { Frequency } from './Frequency';
-import Airspace from './AeronauticalClasses/Airspace';
+import Airspace from './aeronautics/Airspace';
 
 export type AirportReportingPointDBData = {
 	name: string;

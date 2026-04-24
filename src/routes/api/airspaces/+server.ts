@@ -1,4 +1,4 @@
-import { getAllValidAirspaceData } from '$lib/ts/OpenAIPHandler';
+import { getAllValidAirspaceData } from '$lib/logic/OpenAIPHandler';
 import { error, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async () => {

@@ -1,6 +1,6 @@
-import type Airport from './AeronauticalClasses/Airport';
-import type Airspace from './AeronauticalClasses/Airspace';
-import type Waypoint from './AeronauticalClasses/Waypoint';
+import type Airport from './aeronautics/Airport';
+import type Airspace from './aeronautics/Airspace';
+import type Waypoint from './aeronautics/Waypoint';
 import Scenario from './Scenario';
 import type ScenarioPoint from './ScenarioPoints';
 import {

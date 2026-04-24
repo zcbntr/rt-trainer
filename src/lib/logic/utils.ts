@@ -1,5 +1,5 @@
 import type { Position } from '@turf/turf';
-import type Airspace from './AeronauticalClasses/Airspace';
+import type Airspace from './aeronautics/Airspace';
 import * as turf from '@turf/turf';
 
 /**

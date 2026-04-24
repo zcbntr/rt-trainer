@@ -6,12 +6,12 @@ import {
 	StartPointIndexStore,
 	WaypointsStore
 } from '$lib/stores';
-import Waypoint from './AeronauticalClasses/Waypoint';
+import Waypoint from './aeronautics/Waypoint';
 import ScenarioPoint from './ScenarioPoints';
 import { Type } from 'class-transformer';
-import Airport from './AeronauticalClasses/Airport';
+import Airport from './aeronautics/Airport';
 import 'reflect-metadata';
-import Airspace from './AeronauticalClasses/Airspace';
+import Airspace from './aeronautics/Airspace';
 
 export default class Scenario {
 	seed: string;

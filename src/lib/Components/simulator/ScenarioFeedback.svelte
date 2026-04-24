@@ -2,7 +2,7 @@
 	import { RadioCallsHistoryStore } from '$lib/stores';
 	import { TreeView, TreeViewItem } from '@skeletonlabs/skeleton';
 	import { Accordion, AccordionItem } from '@skeletonlabs/skeleton';
-	import Results from '$lib/ts/Results';
+	import Results from '$lib/logic/Results';
 	let results: Results = $state();
 
 	RadioCallsHistoryStore.subscribe((value) => {

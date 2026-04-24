@@ -13,10 +13,10 @@ import {
 } from './utils';
 import Feedback from './Feedback';
 import type ScenarioPoint from './ScenarioPoints';
-import type Waypoint from './AeronauticalClasses/Waypoint';
-import type Runway from './AeronauticalClasses/Runway';
-import type { METORDataSample } from './AeronauticalClasses/METORData';
-import type Airport from './AeronauticalClasses/Airport';
+import type Waypoint from './aeronautics/Waypoint';
+import type Runway from './aeronautics/Runway';
+import type { METORDataSample } from './aeronautics/METORData';
+import type Airport from './aeronautics/Airport';
 import { Type } from 'class-transformer';
 import * as turf from '@turf/turf';
 

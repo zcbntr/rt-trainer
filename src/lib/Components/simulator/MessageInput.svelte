@@ -9,7 +9,12 @@
 	} from '$lib/stores';
 	import { onMount } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
-	import { SlideToggle, getModalStore, popup, type PopupSettings } from '@skeletonlabs/skeleton';
+	import {
+		SlideToggle,
+		getModalStore,
+		popup,
+		type PopupSettings
+	} from '@skeletonlabs/skeleton-svelte';
 
 	const modalStore = getModalStore();
 
@@ -107,7 +112,8 @@
 			cols="50"
 			maxlength="200"
 			placeholder="Enter your radio message here."
-		/>
+		>
+		</textarea>
 	</div>
 
 	<div class="flex flex-row flex-wrap gap-x-1 pb-1 place-content-evenly lg:flex-nowrap">
@@ -134,7 +140,7 @@
 				</div>
 				<div class="card p-4 variant-filled-secondary z-[3]" data-popup="feedbackPopupHover">
 					<p>Shows feedback immediately, instead of just at the end of the scenario.</p>
-					<div class="arrow variant-filled-secondary" />
+					<div class="arrow variant-filled-secondary"></div>
 				</div>
 			</div>
 		</div>
@@ -173,7 +179,7 @@
 						data-popup="speechRecognitionExperimentalWarningPopupHover"
 					>
 						<p>Speech recognition is experimental, you may need to correct the recorded text.</p>
-						<div class="arrow variant-filled-secondary" />
+						<div class="arrow variant-filled-secondary"></div>
 					</div>
 				</div>
 			</div>
@@ -200,7 +206,7 @@
 							browser if you would like to use this feature.<br />Google Chrome, Microsoft Edge and
 							Safari are recommended.
 						</p>
-						<div class="arrow variant-filled-secondary" />
+						<div class="arrow variant-filled-secondary"></div>
 					</div>
 				</div>
 			</div>

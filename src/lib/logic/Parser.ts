@@ -11,7 +11,7 @@ import {
 	TakeOffStage,
 	TaxiStage
 } from './ScenarioStages';
-import type { METORDataSample } from './AeronauticalClasses/METORData';
+import type { METORDataSample } from './aeronautics/METORData';
 import type Feedback from './Feedback';
 
 /* List of mistakes made by the user and the response from the radio target */

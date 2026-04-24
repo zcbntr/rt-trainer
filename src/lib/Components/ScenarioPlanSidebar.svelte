@@ -2,13 +2,13 @@
 	import { run } from 'svelte/legacy';
 
 	import {
-		ListBox,
-		ListBoxItem,
+		Listbox,
 		popup,
 		type PopupSettings,
 		Accordion,
-		AccordionItem
-	} from '@skeletonlabs/skeleton';
+		AccordionItem,
+		useListCollection
+	} from '@skeletonlabs/skeleton-svelte';
 	import { init } from '@paralleldrive/cuid2';
 	import {
 		RefreshOutline,
@@ -26,12 +26,12 @@
 		ScenarioSeedStore,
 		WaypointsStore
 	} from '$lib/stores';
-	import type Waypoint from '$lib/ts/AeronauticalClasses/Waypoint';
+	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
 	import { flip } from 'svelte/animate';
-	import { loadRouteData } from '$lib/ts/Scenario';
-	import { generateFRTOLRouteFromSeed } from '$lib/ts/RouteGeneration';
-	import type Airport from '$lib/ts/AeronauticalClasses/Airport';
-	import type Airspace from '$lib/ts/AeronauticalClasses/Airspace';
+	import { loadRouteData } from '$lib/logic/Scenario';
+	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
+	import type Airport from '$lib/logic/aeronautics/Airport';
+	import type Airspace from '$lib/logic/aeronautics/Airspace';
 
 	ClearSimulationStores();
 
@@ -72,6 +72,18 @@
 
 	AllAirspacesStore.subscribe((value) => {
 		airspaces = value;
+	});
+
+	const distanceUnits = [
+		{ value: 'Nautical Miles', label: 'Nautical Miles' },
+		{ value: 'Miles', label: 'Miles' },
+		{ value: 'Kilometers', label: 'Kilometers' }
+	];
+
+	const distanceUnitsCollection = useListCollection({
+		items: distanceUnits,
+		itemToString: (item) => item.label,
+		itemToValue: (item) => item.value
 	});
 
 	const distanceUnitsPopupCombobox: PopupSettings = {
@@ -134,7 +146,7 @@
 		<div class="flex flex-row mt-[-10px] ml-[6px] pb-2 pb-4">
 			<ol class="flex flex-row gap-2">
 				<li class="crumb"><a class="anchor" href="/">Home</a></li>
-				<li class="crumb-separator" aria-hidden>/</li>
+				<li class="crumb-separator" aria-hidden="true">/</li>
 				<li class="">Scenario Planner</li>
 			</ol>
 		</div>
@@ -222,7 +234,7 @@
 				<div class="flex flex-row gap-2">
 					<textarea
 						id="scenario-seed-input"
-						class="textarea"
+						class="textarea" 
 						rows="1"
 						maxlength="20"
 						placeholder="Enter a seed"
@@ -274,15 +286,16 @@
 				</div>
 
 				<div class="card shadow-xl w-[250px] py-2" data-popup="distance-unit-popup">
-					<ListBox rounded="rounded-none">
-						<ListBoxItem bind:group={distanceUnit} name="medium" value="Nautical Miles"
-							>Nautical Miles</ListBoxItem
-						>
-						<ListBoxItem bind:group={distanceUnit} name="medium" value="Miles">Miles</ListBoxItem>
-						<ListBoxItem bind:group={distanceUnit} name="medium" value="Kilometers"
-							>Kilometers</ListBoxItem
-						>
-					</ListBox>
+					<Listbox class="rounded-none" collection={distanceUnitsCollection}>
+						<Listbox.Content>
+							{#each distanceUnitsCollection.items as item (item.value)}
+								<Listbox.Item {item}>
+									<Listbox.ItemText>{item.label}</Listbox.ItemText>
+									<Listbox.ItemIndicator /></Listbox.Item
+								>
+							{/each}
+						</Listbox.Content>
+					</Listbox>
 					<div class="arrow bg-surface-100-800-token"></div>
 				</div>
 			</div>

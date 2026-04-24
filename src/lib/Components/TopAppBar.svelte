@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AppBar } from '@skeletonlabs/skeleton';
+	import { AppBar } from '@skeletonlabs/skeleton-svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { GithubSolid } from 'flowbite-svelte-icons';
 	interface Props {
@@ -18,43 +18,46 @@
 
 <!-- Hide app bar if not enabled -->
 {#if enabled}
-	<AppBar padding="py-2 px-4 sm:p-4">
-		{#snippet lead()}
-			<div class="flex items-center">
-				<button
-					id="burgerButton"
-					aria-label="Toggle Navigation Drawer"
-					class="{burgerButton} btn btn-sm mr-4"
-					onclick={burgerButtonClicked}
-					onkeypress={burgerButtonClicked}
-				>
-					<span>
-						<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
-							<rect width="100" height="20" />
-							<rect y="30" width="100" height="20" />
-							<rect y="60" width="100" height="20" />
-						</svg>
-					</span>
-				</button>
+	<AppBar>
+		<AppBar.Toolbar class="py-2 px-4 sm:p-4">
+			<AppBar.Lead>
+				<div class="flex items-center">
+					<button
+						id="burgerButton"
+						aria-label="Toggle Navigation Drawer"
+						class="{burgerButton} btn btn-sm mr-4"
+						onclick={burgerButtonClicked}
+						onkeypress={burgerButtonClicked}
+					>
+						<span>
+							<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
+								<rect width="100" height="20" />
+								<rect y="30" width="100" height="20" />
+								<rect y="60" width="100" height="20" />
+							</svg>
+						</span>
+					</button>
 
-				<strong
-					><a href="/" class="btn text-xl sm:text-2xl uppercase" data-sveltekit-preload-data="hover"
-						>RT Trainer</a
-					></strong
+					<strong
+						><a
+							href="/"
+							class="btn text-xl sm:text-2xl uppercase"
+							data-sveltekit-preload-data="hover">RT Trainer</a
+						></strong
+					>
+				</div>
+			</AppBar.Lead>
+			<AppBar.Trail>
+				<a
+					class="btn btn-icon"
+					href="https://github.com/zcbntr/rt-trainer"
+					target="_blank"
+					rel="noreferrer"
 				>
-			</div>
-		{/snippet}
-
-		{#snippet trail()}
-			<a
-				class="btn btn-icon"
-				href="https://github.com/zcbntr/rt-trainer"
-				target="_blank"
-				rel="noreferrer"
-			>
-				<GithubSolid size="xl" />
-			</a>
-		{/snippet}
+					<GithubSolid size="xl" />
+				</a>
+			</AppBar.Trail>
+		</AppBar.Toolbar>
 	</AppBar>
 {:else}
 	<!-- Show burger button if the appbar is not enabled -->
