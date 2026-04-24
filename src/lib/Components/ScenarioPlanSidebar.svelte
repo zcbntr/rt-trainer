@@ -143,7 +143,7 @@
 			<strong><a href="/" class="btn text-xl sm:text-2xl uppercase">RT Trainer</a></strong>
 		</div>
 
-		<div class="flex flex-row mt-[-10px] ml-[6px] pb-2 pb-4">
+		<div class="flex flex-row mt-[-10px] ml-[6px] pb-4">
 			<ol class="flex flex-row gap-2">
 				<li class="crumb"><a class="anchor" href="/">Home</a></li>
 				<li class="crumb-separator" aria-hidden="true">/</li>
@@ -234,7 +234,7 @@
 				<div class="flex flex-row gap-2">
 					<textarea
 						id="scenario-seed-input"
-						class="textarea" 
+						class="textarea"
 						rows="1"
 						maxlength="20"
 						placeholder="Enter a seed"
