@@ -1,10 +1,5 @@
-<!-- @migration-task Error while migrating Svelte code: $$props is used together with named props in a way that cannot be automatically migrated. -->
 <script lang="ts">
-	export let name: keyof typeof icons;
-	export let width = '1rem';
-	export let height = '1rem';
-	export let focusable: string | number | null | undefined = undefined;
-	let icons = {
+	const icons = {
 		planeHero: {
 			box: '0 0 1052.3622 744.09448',
 			svg: `<path d="m220.23 279.24 85.389 119.15 15.886-7.9431-93.332-123.12-7.9431 11.915z" fill="#bcccdc" fill-rule="evenodd" stroke="#000" stroke-width="3.7671"/>
@@ -41,9 +36,26 @@
 `
 		}
 	} as const;
-	let displayIcon = icons[name];
+
+	type IconName = keyof typeof icons;
+
+	let {
+		name,
+		width = '1rem',
+		height = '1rem',
+		focusable = undefined,
+		class: className
+	} = $props<{
+		name: IconName;
+		width?: string;
+		height?: string;
+		focusable?: string | number | null | undefined;
+		class?: string;
+	}>();
+
+	const displayIcon = $derived(() => icons[name]);
 </script>
 
-<svg class={$$props.class} {focusable} {width} {height} viewBox={displayIcon.box}
-	>{@html displayIcon.svg}</svg
->
+<svg class={className} {focusable} {width} {height} viewBox={displayIcon.box}>
+	{@html displayIcon.svg}
+</svg>
