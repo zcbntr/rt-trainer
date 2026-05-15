@@ -10,11 +10,7 @@
 	import { onMount } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
 	import {
-		SlideToggle,
-		getModalStore,
-		popup,
-		type PopupSettings
-	} from '@skeletonlabs/skeleton-svelte';
+		type PopupSettings, Switch } from '@skeletonlabs/skeleton-svelte';
 
 	const modalStore = getModalStore();
 
@@ -119,7 +115,7 @@
 	<div class="flex flex-row flex-wrap gap-x-1 pb-1 place-content-evenly lg:flex-nowrap">
 		<div class="flex flex-col py-2">
 			<div class="flex flex-row place-content-start gap-2">
-				<SlideToggle
+				<Switch
 					id="enable-live-feedback"
 					name="slider-label"
 					checked={liveFeedback}
@@ -138,9 +134,9 @@
 				>
 					Feedback
 				</div>
-				<div class="card p-4 variant-filled-secondary z-[3]" data-popup="feedbackPopupHover">
+				<div class="card p-4 preset-filled-secondary-500 z-[3]" data-popup="feedbackPopupHover">
 					<p>Shows feedback immediately, instead of just at the end of the scenario.</p>
-					<div class="arrow variant-filled-secondary"></div>
+					<div class="arrow preset-filled-secondary-500"></div>
 				</div>
 			</div>
 		</div>
@@ -148,7 +144,7 @@
 		{#if speechRecognitionSupported}
 			<div class="flex flex-col py-2">
 				<div class="flex flex-row place-content-start gap-2">
-					<SlideToggle
+					<Switch
 						id="enable-voice-input"
 						name="slider-label"
 						checked={speechInput}
@@ -175,18 +171,18 @@
 						Voice Input
 					</div>
 					<div
-						class="card p-4 variant-filled-secondary z-[3]"
+						class="card p-4 preset-filled-secondary-500 z-[3]"
 						data-popup="speechRecognitionExperimentalWarningPopupHover"
 					>
 						<p>Speech recognition is experimental, you may need to correct the recorded text.</p>
-						<div class="arrow variant-filled-secondary"></div>
+						<div class="arrow preset-filled-secondary-500"></div>
 					</div>
 				</div>
 			</div>
 		{:else}
 			<div class="flex flex-col py-2">
 				<div class="flex flex-row place-content-start gap-2">
-					<SlideToggle
+					<Switch
 						id="enable-voice-input"
 						name="slider-label"
 						checked={speechInput}
@@ -198,7 +194,7 @@
 						Voice Input
 					</div>
 					<div
-						class="card p-4 variant-filled-secondary z-[3]"
+						class="card p-4 preset-filled-secondary-500 z-[3]"
 						data-popup="speechRecognitionNotSupportedPopupHover"
 					>
 						<p>
@@ -206,7 +202,7 @@
 							browser if you would like to use this feature.<br />Google Chrome, Microsoft Edge and
 							Safari are recommended.
 						</p>
-						<div class="arrow variant-filled-secondary"></div>
+						<div class="arrow preset-filled-secondary-500"></div>
 					</div>
 				</div>
 			</div>

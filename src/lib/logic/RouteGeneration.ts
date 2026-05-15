@@ -2,7 +2,7 @@ import Waypoint, { WaypointType } from './aeronautics/Waypoint';
 import type Airspace from './aeronautics/Airspace';
 import { simpleHash } from './utils';
 import type Airport from './aeronautics/Airport';
-import type { RouteData } from './Scenario';
+import type { RouteData } from './scenarioRoute';
 import * as turf from '@turf/turf';
 
 export function generateFRTOLRouteFromSeed(

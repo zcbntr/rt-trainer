@@ -17,14 +17,12 @@ import type Waypoint from './aeronautics/Waypoint';
 import type Runway from './aeronautics/Runway';
 import type { METORDataSample } from './aeronautics/METORData';
 import type Airport from './aeronautics/Airport';
-import { Type } from 'class-transformer';
 import * as turf from '@turf/turf';
 
 export default class RadioCall {
 	private message: string;
 	private seed: number;
 
-	@Type(() => Scenario)
 	private scenario: Scenario;
 	private prefix: string;
 	private userCallsign: string;
@@ -36,7 +34,6 @@ export default class RadioCall {
 	private currentTransponderFrequency: string;
 	private aircraftType: string;
 
-	@Type(() => Feedback)
 	private feedback: Feedback;
 	private closestVRP: Waypoint | undefined;
 

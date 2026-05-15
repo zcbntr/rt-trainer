@@ -3,10 +3,8 @@
 
 	import {
 		Listbox,
-		popup,
 		type PopupSettings,
 		Accordion,
-		AccordionItem,
 		useListCollection
 	} from '@skeletonlabs/skeleton-svelte';
 	import { init } from '@paralleldrive/cuid2';
@@ -28,7 +26,7 @@
 	} from '$lib/stores';
 	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
 	import { flip } from 'svelte/animate';
-	import { loadRouteData } from '$lib/logic/Scenario';
+	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
 	import type Airport from '$lib/logic/aeronautics/Airport';
 	import type Airspace from '$lib/logic/aeronautics/Airspace';
@@ -242,7 +240,7 @@
 					></textarea>
 					<button
 						type="button"
-						class="btn variant-filled w-10"
+						class="btn preset-filled w-10"
 						onclick={() => {
 							if (awaitingServerResponse) return;
 
@@ -296,7 +294,7 @@
 							{/each}
 						</Listbox.Content>
 					</Listbox>
-					<div class="arrow bg-surface-100-800-token"></div>
+					<div class="arrow bg-surface-100-900"></div>
 				</div>
 			</div>
 
@@ -313,7 +311,7 @@
 			</div>
 
 			<Accordion>
-				<AccordionItem>
+				<Accordion.Item>
 					{#snippet lead()}
 						<WandMagicSparklesOutline />
 					{/snippet}
@@ -334,7 +332,7 @@
 								></textarea>
 								<button
 									type="button"
-									class="btn variant-filled w-10"
+									class="btn preset-filled w-10"
 									onclick={() => {
 										if (awaitingServerResponse) return;
 
@@ -349,7 +347,7 @@
 							</div>
 						</div>
 					{/snippet}
-				</AccordionItem>
+				</Accordion.Item>
 			</Accordion>
 		</div>
 	</div>

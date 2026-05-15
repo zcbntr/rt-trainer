@@ -1,8 +1,6 @@
-import { Type } from 'class-transformer';
 import { Frequency } from '../Frequency';
 import Runway from './Runway';
 import { METORData, METORDataSample } from './METORData';
-import 'reflect-metadata';
 import type { AirportReportingPointDBData } from '../OpenAIPHandler';
 import * as turf from '@turf/turf';
 import { getRandomFrequency, getSeededTimeInMinutes, simpleHash } from '../utils';
@@ -25,13 +23,10 @@ export default class Airport {
 	skydiveActivity: boolean;
 	winchOnly: boolean;
 
-	@Type(() => Runway)
 	runways: Runway[];
 
-	@Type(() => Frequency)
 	frequencies: Frequency[];
 
-	@Type(() => METORData)
 	metorData: METORData;
 
 	constructor(

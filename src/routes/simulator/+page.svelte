@@ -8,10 +8,6 @@
 	import type Airspace from '$lib/logic/aeronautics/Airspace';
 	import type Airport from '$lib/logic/aeronautics/Airport';
 	import {
-		getModalStore,
-		getToastStore,
-		Stepper,
-		Step,
 		type ModalSettings,
 		type ToastSettings
 	} from '@skeletonlabs/skeleton-svelte';
@@ -516,7 +512,7 @@
 					message: feedback.getMistakes().join('<br>'),
 					timeout: 15000,
 					hoverable: true,
-					background: 'variant-filled-warning'
+					background: 'preset-filled-warning-500'
 				};
 				toastStore.trigger(t);
 			}
@@ -748,7 +744,7 @@
 							<span class="underline">next</span>
 							to continue.
 							{#snippet navigation()}
-								<button class="btn variant-ghost-warning" onclick={cancelTutorial}
+								<button class="btn preset-tonal-warning border border-warning-500" onclick={cancelTutorial}
 									>Skip Tutorial</button
 								>
 							{/snippet}

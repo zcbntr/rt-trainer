@@ -19,9 +19,9 @@
 	import Waypoint, { WaypointType } from '$lib/logic/aeronautics/Waypoint';
 	import { TrashBinOutline, PlayOutline } from 'flowbite-svelte-icons';
 	import { AllAirspacesStore } from '$lib/stores';
-	import { plainToInstance } from 'class-transformer';
 	import type Airspace from '$lib/logic/aeronautics/Airspace';
-	import Airport from '$lib/logic/aeronautics/Airport';
+	import type Airport from '$lib/logic/aeronautics/Airport';
+	import { airportFromPlain } from '$lib/logic/transform';
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import Polygon from '$lib/components/leaflet/Polygon.svelte';
@@ -31,8 +31,6 @@
 	import { BsAirplaneFill } from 'svelte-icons-pack/bs';
 	import { goto } from '$app/navigation';
 	import L from 'leaflet';
-	import { LightSwitch } from '@skeletonlabs/skeleton';
-
 	let showAllAirports: boolean = true;
 	let showAllAirspaces: boolean = true;
 
@@ -51,7 +49,7 @@
 	AllAirportsStore.subscribe((value) => {
 		airports.length = 0;
 		for (const airport of value) {
-			airports.push(plainToInstance(Airport, airport as Airport));
+			airports.push(airportFromPlain(airport));
 		}
 	});
 	if (airports.length === 0) fetchAirports();
@@ -372,7 +370,7 @@
 												<div id="waypoint-{waypoint.id}-lng">{waypoint.location[1]}</div>
 											</div>
 
-											<button class="btn variant-filled" onclick={() => deleteWaypoint(waypoint)}
+											<button class="btn preset-filled" onclick={() => deleteWaypoint(waypoint)}
 												><div class="grid grid-cols-4 gap-2 w-full">
 													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
 													<div class="col-span-3 col-start-2">Delete</div>
@@ -404,7 +402,7 @@
 											<button class="btn varient-filled" onclick={() => saveWaypointEdit(waypoint)}
 												>Save</button
 											>
-											<button class="btn variant-filled" onclick={() => deleteWaypoint(waypoint)}
+											<button class="btn preset-filled" onclick={() => deleteWaypoint(waypoint)}
 												><div class="grid grid-cols-4 gap-2 w-full">
 													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
 													<div class="col-span-3 col-start-2">Delete</div>
@@ -437,7 +435,7 @@
 											<button class="btn varient-filled" onclick={() => saveWaypointEdit(waypoint)}
 												>Save</button
 											>
-											<button class="btn variant-filled" onclick={() => deleteWaypoint(waypoint)}
+											<button class="btn preset-filled" onclick={() => deleteWaypoint(waypoint)}
 												><div class="grid grid-cols-4 gap-2 w-full">
 													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
 													<div class="col-span-3 col-start-2">Delete</div>
@@ -497,7 +495,7 @@
 			<div class="flex flex-row place-content-end grow p-2 gap-3">
 				<div class="flex flex-col place-content-center">
 					<button
-						class="h-10 btn variant-filled text-sm"
+						class="h-10 btn preset-filled text-sm"
 						disabled={startButtonDisabled}
 						onclick={onPracticeClick}><span><PlayOutline /></span><span>Start</span></button
 					>

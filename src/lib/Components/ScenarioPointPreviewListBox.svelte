@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { CurrentScenarioPointIndexStore } from '$lib/stores';
 	import type Scenario from '$lib/logic/Scenario';
-	import { ListBox, ListBoxItem } from '@skeletonlabs/skeleton';
 	import { MapPinOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
@@ -31,7 +30,7 @@
 				on:click={handleScenarioPointChange}
 			>
 				{#snippet lead()}
-					<span class="badge-icon p-4 variant-soft-secondary">
+					<span class="badge-icon p-4 preset-tonal-secondary">
 						<MapPinOutline />
 					</span>
 				{/snippet}

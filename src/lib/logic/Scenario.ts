@@ -1,33 +1,14 @@
-import {
-	ClearSimulationStores,
-	CurrentScenarioPointIndexStore,
-	EndPointIndexStore,
-	NullRouteStore,
-	StartPointIndexStore,
-	WaypointsStore
-} from '$lib/stores';
 import Waypoint from './aeronautics/Waypoint';
 import ScenarioPoint from './ScenarioPoints';
-import { Type } from 'class-transformer';
 import Airport from './aeronautics/Airport';
-import 'reflect-metadata';
 import Airspace from './aeronautics/Airspace';
 
 export default class Scenario {
 	seed: string;
-
-	@Type(() => ScenarioPoint)
 	scenarioPoints: ScenarioPoint[] = [];
-
-	@Type(() => Airport)
 	airports: Airport[] = [];
-
-	@Type(() => Airspace)
 	airspaces: Airspace[] = [];
-
-	@Type(() => Waypoint)
 	waypoints: Waypoint[] = [];
-
 	currentPointIndex: number = 0;
 
 	constructor(
@@ -67,43 +48,4 @@ export default class Scenario {
 	public getEndAirport(): Airport {
 		return this.airports[this.airports.length - 1];
 	}
-}
-
-let startPointIndex = 0;
-StartPointIndexStore.subscribe((value) => {
-	startPointIndex = value;
-});
-let endPointIndex = 0;
-EndPointIndexStore.subscribe((value) => {
-	endPointIndex = value;
-});
-
-export function ResetCurrentRoutePointIndex(): void {
-	CurrentScenarioPointIndexStore.set(startPointIndex);
-}
-
-export type RouteData = {
-	waypoints: Waypoint[];
-	airports: Airport[];
-	airspaces: Airspace[];
-};
-
-/**
- * Loads the given route data into the stores.
- *
- * @param routeData - The route data to load
- * @returns void
- */
-export function loadRouteData(routeData: RouteData): void {
-	// Check the scenario was returned correctly
-	if (routeData == null || routeData == undefined) {
-		console.log('Bad route data attempted to be loaded into stores');
-		NullRouteStore.set(true);
-		return;
-	}
-
-	// Reset all existing simulation stores and load the route data into the stores
-	ClearSimulationStores();
-	NullRouteStore.set(false);
-	WaypointsStore.set(routeData.waypoints.sort((a, b) => a.index - b.index));
 }

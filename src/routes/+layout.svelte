@@ -1,22 +1,15 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
 
-	import './layout.css';
+	import '../app.css';
 
 	import TopAppBar from '$lib/components/TopAppBar.svelte';
-	import {
-		// initializeStores,
-		// getDrawerStore,
-		// storePopup,
-		Toast
-	} from '@skeletonlabs/skeleton-svelte';
+	import { Toast } from '@skeletonlabs/skeleton-svelte';
 	import { toaster } from '$lib/components/singletons/toaster';
 	import { page } from '$app/stores';
 	import Navigation from '$lib/components/NAVSidebar.svelte';
 	import ScenarioPlanSidebar from '$lib/components/ScenarioPlanSidebar.svelte';
 	import SvelteSeo from 'svelte-seo';
-	// TODO - Get rid of this when possible
-	import 'reflect-metadata';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
@@ -93,10 +86,10 @@
 
 <Toast.Group {toaster}>
 	{#snippet children(toast)}
-		<Toast {toast}>
+		<Toast toast={toast}>
 			<Toast.Message>
-				<Toast.Title>{toast.title}</Toast.Title>
-				<Toast.Description>{toast.description}</Toast.Description>
+			<Toast.Title>{toast.title}</Toast.Title>
+			<Toast.Description>{toast.description}</Toast.Description>
 			</Toast.Message>
 			<Toast.CloseTrigger />
 		</Toast>

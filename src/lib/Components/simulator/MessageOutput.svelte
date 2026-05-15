@@ -9,7 +9,7 @@
 		CurrentScenarioContextStore,
 		SpeechNoiseStore
 	} from '$lib/stores';
-	import { SlideToggle, popup, type PopupSettings } from '@skeletonlabs/skeleton';
+	import { type PopupSettings, Switch } from '@skeletonlabs/skeleton-svelte';
 	interface Props {
 		[key: string]: any;
 	}
@@ -79,7 +79,7 @@
 			<div class="flex flex-col py-2">
 				<div class="flex flex-row place-content-start gap-2">
 					<div class="flex flex-row place-content-start gap-2">
-						<SlideToggle
+						<Switch
 							id="enabled-audio-messages"
 							name="slider-label"
 							active="bg-primary-500"
@@ -95,15 +95,15 @@
 							Read Aloud Received Calls
 						</div>
 						<div
-							class="card p-4 variant-filled-secondary z-[3]"
+							class="card p-4 preset-filled-secondary-500 z-[3]"
 							data-popup="audioMessagesInfoPopupHover"
 						>
 							<p>Audio messages read aloud when you receive a call from ATC or another aircraft.</p>
-							<div class="arrow variant-filled-secondary"></div>
+							<div class="arrow preset-filled-secondary-500"></div>
 						</div>
 					</div>
 					<div class="flex flex-row place-content-start gap-2">
-						<SlideToggle
+						<Switch
 							id="enabled-audio-messages-noise"
 							name="slider-label"
 							active="bg-primary-500"
@@ -120,14 +120,14 @@
 							Interference Noise
 						</div>
 						<div
-							class="card p-4 variant-filled-secondary z-[3]"
+							class="card p-4 preset-filled-secondary-500 z-[3]"
 							data-popup="audioMessagesNoiseInfoPopupHover"
 						>
 							<p>
 								Adds static noise to read out calls. <br />Requires Read Aloud Recieved Calls to be
 								enabled.
 							</p>
-							<div class="arrow variant-filled-secondary"></div>
+							<div class="arrow preset-filled-secondary-500"></div>
 						</div>
 					</div>
 				</div>

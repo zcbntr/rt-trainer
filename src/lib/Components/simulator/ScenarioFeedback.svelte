@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { RadioCallsHistoryStore } from '$lib/stores';
-	import { TreeView, TreeViewItem } from '@skeletonlabs/skeleton';
-	import { Accordion, AccordionItem } from '@skeletonlabs/skeleton';
+	import { Accordion } from '@skeletonlabs/skeleton-svelte';
 	import Results from '$lib/logic/Results';
 	let results: Results = $state();
 
@@ -15,7 +14,7 @@
 		<p>Something went wrong: No feedback to show</p>
 	{:else}
 		<Accordion>
-			<AccordionItem open>
+			<Accordion.Item open>
 				{#snippet lead()}
 					🛫
 				{/snippet}
@@ -79,8 +78,8 @@
 						{/each}
 					</TreeView>
 				{/snippet}
-			</AccordionItem>
-			<AccordionItem>
+			</Accordion.Item>
+			<Accordion.Item>
 				{#snippet lead()}
 					🧭
 				{/snippet}
@@ -144,8 +143,8 @@
 						{/each}
 					</TreeView>
 				{/snippet}
-			</AccordionItem>
-			<AccordionItem>
+			</Accordion.Item>
+			<Accordion.Item>
 				{#snippet lead()}
 					🛬
 				{/snippet}
@@ -209,7 +208,7 @@
 						{/each}
 					</TreeView>
 				{/snippet}
-			</AccordionItem>
+			</Accordion.Item>
 		</Accordion>
 	{/if}
 </div>

@@ -5,7 +5,7 @@
 	import type Airport from '$lib/logic/aeronautics/Airport';
 	import type Airspace from '$lib/logic/aeronautics/Airspace';
 	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
-	import { loadRouteData } from '$lib/logic/Scenario';
+	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import { init } from '@paralleldrive/cuid2';
 
 	interface Props {
@@ -53,7 +53,7 @@
 	// Base Classes
 	const cBase = 'card p-4 w-modal-slim shadow-xl space-y-4';
 	const cHeader = 'text-2xl font-bold';
-	const cForm = 'space-y-4 rounded-container-token';
+	const cForm = 'space-y-4 rounded-container';
 
 	// Reactive classes
 	let cRouteSeedInput = $state('');

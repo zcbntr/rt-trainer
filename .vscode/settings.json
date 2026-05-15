@@ -1,5 +1,12 @@
 {
 	"files.associations": {
 		"*.css": "tailwindcss"
+	},
+	"terminal.integrated.defaultProfile.osx": "zsh",
+	"debug.javascript.defaultRuntimeExecutable": {
+		"pwa-node": "${env:HOME}/.nvm/versions/node/v24.15.0/bin/node"
+	},
+	"debug.javascript.terminalOptions": {
+		"shellArgs": ["-l"]
 	}
 }
