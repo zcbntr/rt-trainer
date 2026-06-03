@@ -114,7 +114,7 @@
 			<ScenarioPlanSidebar />
 		{/if}
 	</aside>
-	<main>
+	<main class="min-h-0 flex-1">
 		<!-- Page Route Content -->
 		{@render children?.()}
 	</main>

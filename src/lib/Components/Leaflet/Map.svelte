@@ -2,20 +2,20 @@
 	import { run } from 'svelte/legacy';
 
 	/* Structure inspired by ShipBit's youtube tutorial https://www.youtube.com/watch?v=JFctWXEzFZw
-	
+
 	The coordinates used in the rest of the application are in the format [long, lat],
 	here they must be converted to [lat, long] for Leaflet to understand them correctly.
 	*/
 	import { createEventDispatcher, onDestroy, onMount, setContext, tick } from 'svelte';
-	import L from 'leaflet';
-	import 'leaflet/dist/leaflet.css';
+	import type * as Leaflet from 'leaflet';
+	import { getLeaflet } from './leaflet';
 
-	let map: L.Map | undefined = $state();
-	let mapElement: HTMLDivElement = $state();
+	let map: Leaflet.Map | undefined = $state();
+	let mapElement: HTMLDivElement;
 
 	interface Props {
-		bounds?: L.LatLngBounds | undefined;
-		view?: L.LatLngExpression | undefined;
+		bounds?: Leaflet.LatLngBounds | undefined;
+		view?: Leaflet.LatLngExpression | undefined;
 		zoom?: number | undefined;
 		children?: import('svelte').Snippet;
 	}
@@ -35,9 +35,11 @@
 	const dispatch = createEventDispatcher();
 
 	onMount(async () => {
-		if (!bounds && (!view || !zoom)) {
+		if (!bounds && (!view || zoom === undefined)) {
 			throw new Error('Must set either bounds, or both view and zoom.');
 		}
+
+		const L = await getLeaflet();
 
 		map = L.map(mapElement)
 			.on('zoom', (e) => dispatch('zoom', e))
@@ -52,6 +54,15 @@
 			attribution:
 				'<a href="https://www.openaip.net/">OpenAIP</a> | © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 		}).addTo(map);
+
+		if (bounds) {
+			map.fitBounds(bounds);
+		} else if (view && zoom !== undefined) {
+			map.setView(view, zoom);
+		}
+
+		await tick();
+		map.invalidateSize();
 	});
 
 	onDestroy(() => {
@@ -64,14 +75,7 @@
 	});
 </script>
 
-<link
-	rel="stylesheet prefetch"
-	href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-	integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-	crossorigin=""
-/>
-
-<div class="w-full h-full" bind:this={mapElement}>
+<div class="h-full min-h-0 w-full flex-1" bind:this={mapElement}>
 	{#if map}
 		{@render children?.()}
 	{/if}

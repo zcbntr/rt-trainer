@@ -2,8 +2,8 @@
 
 <script lang="ts">
 	import { onMount, onDestroy, getContext, setContext, createEventDispatcher } from 'svelte';
-	import L from 'leaflet';
-	import 'leaflet-rotatedmarker';
+	import type * as Leaflet from 'leaflet';
+	import { getLeaflet } from './leaflet';
 	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
 	import type Airport from '$lib/logic/aeronautics/Airport';
 
@@ -11,10 +11,10 @@
 		width: number;
 		height: number;
 		rotation?: number;
-		latLng: L.LatLngExpression;
+		latLng: Leaflet.LatLngExpression;
 		aeroObject?: Waypoint | Airport | undefined;
 		draggable?: boolean;
-		iconAnchor?: L.Point;
+		iconAnchor?: Leaflet.PointExpression;
 		children?: import('svelte').Snippet;
 	}
 
@@ -25,56 +25,61 @@
 		latLng,
 		aeroObject = undefined,
 		draggable = false,
-		iconAnchor = L.point(width / 2 - 8, height / 2 - 8),
+		iconAnchor,
 		children
 	}: Props = $props();
 
 	const dispatch = createEventDispatcher();
 
-	let marker: L.Marker | undefined = $state();
-	let markerElement: HTMLElement = $state();
+	let marker: Leaflet.Marker | undefined = $state();
+	let markerElement: HTMLElement;
 
-	const { getMap }: { getMap: () => L.Map | undefined } = getContext('map');
+	const { getMap }: { getMap: () => Leaflet.Map | undefined } = getContext('map');
 	const map = getMap();
 
 	setContext('layer', {
-		// L.Marker inherits from L.Layer
 		getLayer: () => marker
 	});
 
-	onMount(() => {
-		if (map) {
-			let icon = L.divIcon({
-				html: markerElement,
-				className: 'map-marker',
-				iconSize: L.point(width, height),
-				iconAnchor: iconAnchor
-			});
-			marker = L.marker(latLng, {
-				icon,
-				rotationAngle: rotation,
-				rotationOrigin: 'center center',
-				title: aeroObject?.name
-			}).addTo(map);
+	onMount(async () => {
+		if (!map) return;
 
-			if (draggable) marker.dragging?.enable();
-			marker?.on('drag', (e) => {
-				dispatch('drag', { event: e, aeroObject: aeroObject, marker: marker });
-				map?.invalidateSize();
-			});
-			marker?.on('click', (e) => {
-				dispatch('click', { event: e, aeroObject: aeroObject, marker: marker });
-			});
-			marker?.on('mouseover', (e) => {
-				dispatch('mouseover', { event: e, aeroObject: aeroObject, marker: marker });
-			});
-			marker?.on('mouseout', (e) => {
-				dispatch('mouseout', { event: e, aeroObject: aeroObject, marker: marker });
-			});
-			marker?.on('mouseup', (e) => {
-				dispatch('mouseup', { event: e, aeroObject: aeroObject, marker: marker });
-			});
-		}
+		const L = await getLeaflet();
+		await import('leaflet-rotatedmarker');
+
+		const anchor = iconAnchor ?? [width / 2 - 8, height / 2 - 8];
+
+		const icon = L.divIcon({
+			html: markerElement,
+			className: 'map-marker',
+			iconSize: [width, height],
+			iconAnchor: anchor
+		});
+
+		marker = L.marker(latLng, {
+			icon,
+			rotationAngle: rotation,
+			rotationOrigin: 'center center',
+			title: aeroObject?.name
+		}).addTo(map);
+
+		if (draggable) marker.dragging?.enable();
+		marker.on('drag', (e) => {
+			dispatch('drag', { event: e, aeroObject, marker });
+			map?.invalidateSize();
+		});
+		marker.on('click', (e) => {
+			dispatch('click', { event: e, aeroObject, marker });
+		});
+		marker.on('mouseover', (e) => {
+			dispatch('mouseover', { event: e, aeroObject, marker });
+		});
+		marker.on('mouseout', (e) => {
+			dispatch('mouseout', { event: e, aeroObject, marker });
+		});
+		marker.on('mouseup', (e) => {
+			dispatch('mouseup', { event: e, aeroObject, marker });
+		});
 	});
 
 	onDestroy(() => {

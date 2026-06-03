@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { onMount, onDestroy, getContext, setContext } from 'svelte';
-	import L from 'leaflet';
+	import type * as Leaflet from 'leaflet';
+	import { getLeaflet } from './leaflet';
 
 	interface Props {
-		latLngArray: L.LatLngExpression[];
+		latLngArray: Leaflet.LatLngExpression[];
 		colour?: string;
 		fillOpacity?: number;
 		weight?: number;
@@ -12,25 +13,26 @@
 
 	let { latLngArray, colour = '#FF69B4', fillOpacity = 1, weight = 3, children }: Props = $props();
 
-	let polyline: L.Polyline | undefined = $state();
-	let polylineElement: HTMLElement = $state();
+	let polyline: Leaflet.Polyline | undefined = $state();
+	let polylineElement: HTMLElement;
 
-	const { getMap }: { getMap: () => L.Map | undefined } = getContext('map');
+	const { getMap }: { getMap: () => Leaflet.Map | undefined } = getContext('map');
 	const map = getMap();
 
 	setContext('layer', {
-		// L.Polyline inherits from L.Layer
 		getLayer: () => polyline
 	});
 
-	onMount(() => {
-		if (map) {
-			polyline = L.polyline(latLngArray, {
-				color: colour,
-				fillOpacity: fillOpacity,
-				weight: weight
-			}).addTo(map);
-		}
+	onMount(async () => {
+		if (!map) return;
+
+		const L = await getLeaflet();
+
+		polyline = L.polyline(latLngArray, {
+			color: colour,
+			fillOpacity,
+			weight
+		}).addTo(map);
 	});
 
 	onDestroy(() => {

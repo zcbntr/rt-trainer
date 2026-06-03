@@ -58,7 +58,7 @@
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import { WaypointType } from '$lib/logic/aeronautics/Waypoint';
-	import L from 'leaflet';
+	import type * as Leaflet from 'leaflet';
 	import Parser, { type ParseResult } from '$lib/logic/Parser';
 	import Radio from '$lib/components/simulator/Radio.svelte';
 	import Transponder from '$lib/components/simulator/Transponder.svelte';
@@ -353,7 +353,7 @@
 	});
 
 	let waypointPoints: number[][] = $state([]);
-	let bounds: L.LatLngBounds;
+	let bounds: Leaflet.LatLngBounds;
 	let bbox: number[] = [];
 	WaypointPointsMapStore.subscribe((value) => {
 		waypointPoints = value;
@@ -839,7 +839,7 @@
 										width={50}
 										height={50}
 										aeroObject={waypoint}
-										iconAnchor={L.point(8, 26)}
+										iconAnchor={[8, 26]}
 										on:click={(e) => {
 											e.preventDefault();
 										}}

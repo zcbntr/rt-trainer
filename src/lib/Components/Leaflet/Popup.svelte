@@ -2,29 +2,31 @@
 
 <script lang="ts">
 	import { onMount, onDestroy, getContext } from 'svelte';
-	import L from 'leaflet';
+	import type * as Leaflet from 'leaflet';
+	import { getLeaflet } from './leaflet';
+
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
 
 	let { children }: Props = $props();
 
-	let popup: L.Popup | undefined;
-	let popupElement: HTMLElement = $state();
-
+	let popup: Leaflet.Popup | undefined;
+	let popupElement: HTMLElement;
 	let open = $state(false);
 
-	const { getLayer }: { getLayer: () => L.Layer | undefined } = getContext('layer');
+	const { getLayer }: { getLayer: () => Leaflet.Layer | undefined } = getContext('layer');
 	const layer = getLayer();
 
-	onMount(() => {
-		popup = L.popup().setContent(popupElement);
+	onMount(async () => {
+		if (!layer) return;
 
-		if (layer) {
-			layer.bindPopup(popup);
-			layer.on('popupopen', () => (open = true));
-			layer.on('popupclose', () => (open = false));
-		}
+		const L = await getLeaflet();
+
+		popup = L.popup().setContent(popupElement);
+		layer.bindPopup(popup);
+		layer.on('popupopen', () => (open = true));
+		layer.on('popupclose', () => (open = false));
 	});
 
 	onDestroy(() => {
