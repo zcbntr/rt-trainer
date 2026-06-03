@@ -1,12 +1,7 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
 
-	import {
-		Listbox,
-		type PopupSettings,
-		Accordion,
-		useListCollection
-	} from '@skeletonlabs/skeleton-svelte';
+	import { Accordion, SegmentedControl } from '@skeletonlabs/skeleton-svelte';
 	import { init } from '@paralleldrive/cuid2';
 	import {
 		RefreshOutline,
@@ -24,12 +19,14 @@
 		ScenarioSeedStore,
 		WaypointsStore
 	} from '$lib/stores';
+	import { resolve } from '$app/paths';
 	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
 	import { flip } from 'svelte/animate';
 	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
 	import type Airport from '$lib/logic/aeronautics/Airport';
 	import type Airspace from '$lib/logic/aeronautics/Airspace';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	ClearSimulationStores();
 
@@ -78,18 +75,7 @@
 		{ value: 'Kilometers', label: 'Kilometers' }
 	];
 
-	const distanceUnitsCollection = useListCollection({
-		items: distanceUnits,
-		itemToString: (item) => item.label,
-		itemToValue: (item) => item.value
-	});
-
-	const distanceUnitsPopupCombobox: PopupSettings = {
-		event: 'click',
-		target: 'distance-unit-popup',
-		placement: 'bottom',
-		closeQuery: '.listbox-item'
-	};
+	let distanceUnitValue = $state<string | null>('Nautical Miles');
 
 	async function loadSeededRoute() {
 		AwaitingServerResponseStore.set(true);
@@ -100,7 +86,7 @@
 
 	const dragDuration: number = 200;
 	let draggingWaypoint: Waypoint | undefined = $state(undefined);
-	let animatingWaypoints = new Set();
+	let animatingWaypoints = new SvelteSet<Waypoint>([]);
 
 	function swapWith(waypoint: Waypoint): void {
 		if (draggingWaypoint === waypoint || animatingWaypoints.has(waypoint)) return;
@@ -135,19 +121,13 @@
 	});
 </script>
 
-<div class="sidebar-container flex flex-col grow py-0 overflow-clip">
-	<div class="flex flex-col sticky top-0 p-3 z-50 bg-surface-100 dark:bg-surface-900">
-		<div class="flex flex-row ml-[-14px]">
-			<strong><a href="/" class="btn text-xl sm:text-2xl uppercase">RT Trainer</a></strong>
-		</div>
+<div class="sidebar-container flex grow flex-col overflow-clip py-0">
+	<div class="sticky top-0 z-50 flex flex-col bg-surface-100 p-3 dark:bg-surface-900">
+		<strong><a href={resolve('/')} class="btn text-xl uppercase sm:text-2xl">RT Trainer</a></strong>
 
-		<div class="flex flex-row mt-[-10px] ml-[6px] pb-4">
-			<ol class="flex flex-row gap-2">
-				<li class="crumb"><a class="anchor" href="/">Home</a></li>
-				<li class="crumb-separator" aria-hidden="true">/</li>
-				<li class="">Scenario Planner</li>
-			</ol>
-		</div>
+		<ol class="flex flex-row gap-2 pb-2 pl-3.5 font-light">
+			<li class="">Scenario Planner</li>
+		</ol>
 
 		<hr />
 	</div>
@@ -157,7 +137,7 @@
 			<div><strong>Route Waypoints</strong></div>
 			{#if waypoints.length == 0}
 				<div class="px-1">
-					<p class="text-slate-600 dark:text-slate-400 text-sm">
+					<p class="text-sm text-slate-600 dark:text-slate-400">
 						Add a waypoint by clicking on an airport or any other spot on the map. Or use the <b
 							>Auto-generate</b
 						> Tool below.
@@ -168,7 +148,7 @@
 			{#each waypoints as waypoint (waypoint.index)}
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
-					class="card p-2 flex flex-row gap-2 place-content-center"
+					class="flex flex-row place-content-center gap-2 card p-2"
 					draggable="true"
 					animate:flip={{ duration: dragDuration }}
 					ondragstart={() => {
@@ -202,7 +182,7 @@
 
 					<div
 						id={waypoint.name + '-waypoint-details-popup'}
-						class="card p-4 w-auto shadow-xl z-50"
+						class="z-50 w-auto card p-4 shadow-xl"
 						data-popup={waypoint.name + '-waypoint-details-popup'}
 					>
 						<div>
@@ -240,7 +220,7 @@
 					></textarea>
 					<button
 						type="button"
-						class="btn preset-filled w-10"
+						class="btn w-10 preset-filled"
 						onclick={() => {
 							if (awaitingServerResponse) return;
 
@@ -273,28 +253,28 @@
 			</div>
 			<div>
 				<div class="flex flex-col gap-1">
-					<div class="label text-sm">Distance Units</div>
-					<button
-						class="btn textarea w-full justify-between"
-						use:popup={distanceUnitsPopupCombobox}
+					<SegmentedControl
+						defaultValue="Nautical Miles"
+						{distanceUnitValue}
+						onValueChange={(details) => (distanceUnitValue = details.value)}
 					>
-						<span class="ml-[-6px]">{distanceUnit ?? 'Distance Unit'}</span>
-						<span>↓</span>
-					</button>
-				</div>
-
-				<div class="card shadow-xl w-[250px] py-2" data-popup="distance-unit-popup">
-					<Listbox class="rounded-none" collection={distanceUnitsCollection}>
-						<Listbox.Content>
-							{#each distanceUnitsCollection.items as item (item.value)}
-								<Listbox.Item {item}>
-									<Listbox.ItemText>{item.label}</Listbox.ItemText>
-									<Listbox.ItemIndicator /></Listbox.Item
-								>
-							{/each}
-						</Listbox.Content>
-					</Listbox>
-					<div class="arrow bg-surface-100-900"></div>
+						<SegmentedControl.Label class="text-sm">Distance Units</SegmentedControl.Label>
+						<SegmentedControl.Control>
+							<SegmentedControl.Indicator />
+							<SegmentedControl.Item value="Nautical Miles">
+								<SegmentedControl.ItemText>nm</SegmentedControl.ItemText>
+								<SegmentedControl.ItemHiddenInput />
+							</SegmentedControl.Item>
+							<SegmentedControl.Item value="Miles">
+								<SegmentedControl.ItemText>mi</SegmentedControl.ItemText>
+								<SegmentedControl.ItemHiddenInput />
+							</SegmentedControl.Item>
+							<SegmentedControl.Item value="Kilometers">
+								<SegmentedControl.ItemText>km</SegmentedControl.ItemText>
+								<SegmentedControl.ItemHiddenInput />
+							</SegmentedControl.Item>
+						</SegmentedControl.Control>
+					</SegmentedControl>
 				</div>
 			</div>
 
@@ -310,15 +290,17 @@
 				<strong>Tools</strong>
 			</div>
 
-			<Accordion>
-				<Accordion.Item>
-					{#snippet lead()}
-						<WandMagicSparklesOutline />
-					{/snippet}
-					{#snippet summary()}
-						Auto-generate Route
-					{/snippet}
-					{#snippet content()}
+			<Accordion multiple>
+				<Accordion.Item value="auto-generate-route">
+					<h3>
+						<Accordion.ItemTrigger class="flex items-center justify-between gap-2 font-bold">
+							Auto-generate Route
+							<Accordion.ItemIndicator class="group">
+								<WandMagicSparklesOutline />
+							</Accordion.ItemIndicator>
+						</Accordion.ItemTrigger>
+					</h3>
+					<Accordion.ItemContent>
 						<div class="flex flex-col gap-2">
 							<div class="label">Route Seed</div>
 							<div class="flex flex-row gap-2">
@@ -332,7 +314,7 @@
 								></textarea>
 								<button
 									type="button"
-									class="btn preset-filled w-10"
+									class="btn w-10 preset-filled"
 									onclick={() => {
 										if (awaitingServerResponse) return;
 
@@ -346,7 +328,7 @@
 								>
 							</div>
 						</div>
-					{/snippet}
+					</Accordion.ItemContent>
 				</Accordion.Item>
 			</Accordion>
 		</div>

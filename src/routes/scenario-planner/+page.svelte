@@ -30,7 +30,6 @@
 	import { Icon } from 'svelte-icons-pack';
 	import { BsAirplaneFill } from 'svelte-icons-pack/bs';
 	import { goto } from '$app/navigation';
-	import L from 'leaflet';
 	let showAllAirports: boolean = true;
 	let showAllAirspaces: boolean = true;
 
@@ -127,19 +126,17 @@
 		onRouteAirports.push(airport);
 	}
 
-	function onWaypointDrag(e: any) {
+	function onWaypointDrag(e: CustomEvent<{ aeroObject: Waypoint }>) {
 		const waypoint = waypoints.find((waypoint) => waypoint.id === e.detail.aeroObject.id);
 		draggedWaypoint = waypoint;
 	}
 
-	function onWaypointMouseUp(e: any) {
+	function onWaypointMouseUp(e: CustomEvent<{ aeroObject: Waypoint }>) {
 		const waypoint = waypoints.find((waypoint) => waypoint.id === e.detail.aeroObject.id);
 		if (draggedWaypoint == waypoint) {
 			if (waypoint) {
-				waypoint.location = [
-					parseFloat(e.detail.event.latlng.lng.toFixed(6)),
-					parseFloat(e.detail.event.latlng.lat.toFixed(6))
-				];
+				waypoint.location[1] = parseFloat(e.detail.aeroObject.location[1].toFixed(6));
+				waypoint.location[0] = parseFloat(e.detail.aeroObject.location[0].toFixed(6));
 				WaypointsStore.set(waypoints);
 			}
 		}
@@ -238,6 +235,7 @@
 			'&airports=' +
 			onRouteAirports.map((airport) => airport.id).toString();
 
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		goto(scenarioURLString);
 	}
 	let durationEstimate = $derived(onRouteAirports.length * 8 + onRouteAirspaces.length * 5);
@@ -259,11 +257,11 @@
 	});
 </script>
 
-<div class="flex flex-col place-content-center w-full h-full">
-	<div class="flex flex-col place-content-center sm:place-content-start w-full h-full">
-		<div class="flex flex-col xs:pr-3 w-full h-full">
+<div class="flex min-h-0 flex-1 flex-col">
+	<div class="flex min-h-0 flex-1 flex-col">
+		<div class="xs:pr-3 flex min-h-0 flex-1 flex-col">
 			<Map view={wellesbourneMountfordCoords} zoom={9} on:click={onMapClick}>
-				{#each airports as airport}
+				{#each airports as airport (airport.id)}
 					{#if showAllAirports || waypoints.some((waypoint) => waypoint.referenceObjectId === airport.id)}
 						<Marker
 							latLng={[airport.coordinates[1], airport.coordinates[0]]}
@@ -291,12 +289,12 @@
 					{/if}
 				{/each}
 
-				{#each filteredAirspaces as airspace}
+				{#each filteredAirspaces as airspace (airspace.id)}
 					{#if showAllAirspaces}
 						{#if airspace.type == 14}
 							<Polygon
 								latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
-								color={'red'}
+								color="red"
 								fillOpacity={0.2}
 								weight={1}
 								aeroObject={airspace}
@@ -321,7 +319,7 @@
 						{:else}
 							<Polygon
 								latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
-								color={'blue'}
+								color="blue"
 								fillOpacity={0.2}
 								weight={1}
 								aeroObject={airspace}
@@ -371,7 +369,7 @@
 											</div>
 
 											<button class="btn preset-filled" onclick={() => deleteWaypoint(waypoint)}
-												><div class="grid grid-cols-4 gap-2 w-full">
+												><div class="grid w-full grid-cols-4 gap-2">
 													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
 													<div class="col-span-3 col-start-2">Delete</div>
 												</div></button
@@ -399,11 +397,11 @@
 											><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
 												>{waypoint.location[1]}</textarea
 											>
-											<button class="btn varient-filled" onclick={() => saveWaypointEdit(waypoint)}
+											<button class="varient-filled btn" onclick={() => saveWaypointEdit(waypoint)}
 												>Save</button
 											>
 											<button class="btn preset-filled" onclick={() => deleteWaypoint(waypoint)}
-												><div class="grid grid-cols-4 gap-2 w-full">
+												><div class="grid w-full grid-cols-4 gap-2">
 													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
 													<div class="col-span-3 col-start-2">Delete</div>
 												</div></button
@@ -416,7 +414,7 @@
 									width={50}
 									height={50}
 									aeroObject={waypoint}
-									iconAnchor={L.point(8, 26)}
+									iconAnchor={[8, 26]}
 									on:drag={onWaypointDrag}
 									on:mouseup={onWaypointMouseUp}
 									draggable={true}
@@ -432,11 +430,11 @@
 											><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
 												>{waypoint.location[1]}</textarea
 											>
-											<button class="btn varient-filled" onclick={() => saveWaypointEdit(waypoint)}
+											<button class="varient-filled btn" onclick={() => saveWaypointEdit(waypoint)}
 												>Save</button
 											>
 											<button class="btn preset-filled" onclick={() => deleteWaypoint(waypoint)}
-												><div class="grid grid-cols-4 gap-2 w-full">
+												><div class="grid w-full grid-cols-4 gap-2">
 													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
 													<div class="col-span-3 col-start-2">Delete</div>
 												</div></button
@@ -449,7 +447,7 @@
 					{/key}
 				{/each}
 
-				{#each waypointPoints as waypointPoint, index}
+				{#each waypointPoints as waypointPoint, index (waypointPoint.toString() + index.toString())}
 					{#if index > 0}
 						<!-- Force redraw if either waypoint of the line changes location -->
 						{#key [waypointPoints[index - 1], waypointPoints[index]]}
@@ -464,7 +462,7 @@
 				{/each}
 			</Map>
 		</div>
-		<div class="flex flex-row w-full h-20">
+		<div class="flex h-20 w-full flex-row">
 			<div class="flex flex-row place-content-center p-4">
 				<div class="flex flex-col place-content-center">
 					<div class="text-sm">Est. Distance</div>
@@ -492,16 +490,14 @@
 				</div>
 			</div>
 
-			<div class="flex flex-row place-content-end grow p-2 gap-3">
+			<div class="flex grow flex-row place-content-end gap-3 p-2">
 				<div class="flex flex-col place-content-center">
 					<button
-						class="h-10 btn preset-filled text-sm"
+						class="btn h-10 preset-filled text-sm"
 						disabled={startButtonDisabled}
 						onclick={onPracticeClick}><span><PlayOutline /></span><span>Start</span></button
 					>
 				</div>
-
-				<div class="flex flex-col place-content-center"><LightSwitch /></div>
 			</div>
 		</div>
 	</div>
