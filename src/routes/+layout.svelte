@@ -10,6 +10,7 @@
 	import Navigation from '$lib/components/NAVSidebar.svelte';
 	import ScenarioPlanSidebar from '$lib/components/ScenarioPlanSidebar.svelte';
 	import SvelteSeo from 'svelte-seo';
+	import favicon from '$lib/assets/favicon.png';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
@@ -64,6 +65,10 @@
 	});
 </script>
 
+<svelte:head>
+	<link rel="icon" href={favicon} />
+</svelte:head>
+
 <SvelteSeo
 	title="RT Trainer | FRTOL Practice"
 	description="Gain confidence in your RT skills with our FRTOL practice tool. Practice your RT skills with our randomly generated scenarios and get instant feedback on your performance. Speak or type your radio calls. Share routes with friends and instructors. Use the simulated cockpit controls."
@@ -86,10 +91,10 @@
 
 <Toast.Group {toaster}>
 	{#snippet children(toast)}
-		<Toast toast={toast}>
+		<Toast {toast}>
 			<Toast.Message>
-			<Toast.Title>{toast.title}</Toast.Title>
-			<Toast.Description>{toast.description}</Toast.Description>
+				<Toast.Title>{toast.title}</Toast.Title>
+				<Toast.Description>{toast.description}</Toast.Description>
 			</Toast.Message>
 			<Toast.CloseTrigger />
 		</Toast>
