@@ -11,8 +11,8 @@ export function getLeaflet(): Promise<LeafletDefault> {
 	}
 
 	leafletPromise ??= import('leaflet').then((module) => {
-		void import('leaflet/dist/leaflet.css');
-		return module.default;
+		const L = module.default ?? module;
+		return L as LeafletDefault;
 	});
 
 	return leafletPromise;

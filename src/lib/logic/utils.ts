@@ -3,9 +3,15 @@ import type Airspace from './aeronautics/Airspace';
 import * as turf from '@turf/turf';
 
 /**
- * Default coordinates for the map center
+ * Default coordinates for the map center ([lat, lng] for Leaflet)
  */
 export const wellesbourneMountfordCoords: [number, number] = [52.192, -1.614];
+
+/** SW / NE corners ([lat, lng]) for scenario planner initial view over the UK */
+export const ukPlannerBounds: [[number, number], [number, number]] = [
+	[48.5, -11.5],
+	[59.5, 3.5]
+];
 
 /**
  * Linear interpolation between two values

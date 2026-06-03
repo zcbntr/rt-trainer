@@ -1,7 +1,13 @@
 <!-- Based off of ShipBit's youtube tutorial https://www.youtube.com/watch?v=JFctWXEzFZw -->
 
 <script lang="ts">
-	import { onMount, onDestroy, getContext, setContext, createEventDispatcher } from 'svelte';
+	import {
+		onMount,
+		onDestroy,
+		getContext,
+		setContext,
+		createEventDispatcher
+	} from 'svelte';
 	import type * as Leaflet from 'leaflet';
 	import { getLeaflet } from './leaflet';
 	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
@@ -35,13 +41,18 @@
 	let markerElement: HTMLElement;
 
 	const { getMap }: { getMap: () => Leaflet.Map | undefined } = getContext('map');
-	const map = getMap();
 
 	setContext('layer', {
 		getLayer: () => marker
 	});
 
+	$effect(() => {
+		if (!marker) return;
+		marker.setLatLng(latLng);
+	});
+
 	onMount(async () => {
+		const map = getMap();
 		if (!map) return;
 
 		const L = await getLeaflet();

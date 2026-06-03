@@ -17,13 +17,18 @@
 	let polylineElement: HTMLElement;
 
 	const { getMap }: { getMap: () => Leaflet.Map | undefined } = getContext('map');
-	const map = getMap();
 
 	setContext('layer', {
 		getLayer: () => polyline
 	});
 
+	$effect(() => {
+		if (!polyline) return;
+		polyline.setLatLngs(latLngArray);
+	});
+
 	onMount(async () => {
+		const map = getMap();
 		if (!map) return;
 
 		const L = await getLeaflet();

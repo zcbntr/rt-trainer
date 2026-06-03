@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
 
-	import { Accordion, SegmentedControl } from '@skeletonlabs/skeleton-svelte';
+	import { Accordion, Popover, SegmentedControl } from '@skeletonlabs/skeleton-svelte';
 	import { init } from '@paralleldrive/cuid2';
 	import {
 		RefreshOutline,
@@ -68,12 +68,6 @@
 	AllAirspacesStore.subscribe((value) => {
 		airspaces = value;
 	});
-
-	const distanceUnits = [
-		{ value: 'Nautical Miles', label: 'Nautical Miles' },
-		{ value: 'Miles', label: 'Miles' },
-		{ value: 'Kilometers', label: 'Kilometers' }
-	];
 
 	let distanceUnitValue = $state<string | null>('Nautical Miles');
 
@@ -145,7 +139,7 @@
 				</div>
 			{/if}
 			<!-- for some reason the key (waypoint.index) has duplicates when coming from the route generator -->
-			{#each waypoints as waypoint (waypoint.index)}
+			{#each waypoints as waypoint (waypoint.id)}
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					class="flex flex-row place-content-center gap-2 card p-2"
@@ -171,34 +165,26 @@
 					<div class="flex flex-col place-content-center">
 						<textarea class="textarea" rows="1" placeholder={waypoint.name}></textarea>
 					</div>
-					<button
-						class="flex flex-col place-content-center"
-						use:popup={{
-							event: 'click',
-							target: waypoint.name + '-waypoint-details-popup',
-							placement: 'bottom'
-						}}><DotsHorizontalOutline /></button
-					>
-
-					<div
-						id={waypoint.name + '-waypoint-details-popup'}
-						class="z-50 w-auto card p-4 shadow-xl"
-						data-popup={waypoint.name + '-waypoint-details-popup'}
-					>
-						<div>
-							<button
-								onclick={() => {
-									WaypointsStore.update((waypoints) => {
-										waypoints = waypoints.filter((w) => w.id !== waypoint.id);
-										waypoints.forEach((waypoint, index) => {
-											waypoint.index = index;
+					<Popover>
+						<Popover.Trigger class="flex flex-col place-content-center">
+							<DotsHorizontalOutline />
+						</Popover.Trigger>
+						<Popover.Positioner>
+							<Popover.Content class="z-50 w-auto card p-4 shadow-xl">
+								<button
+									onclick={() => {
+										WaypointsStore.update((waypoints) => {
+											waypoints = waypoints.filter((w) => w.id !== waypoint.id);
+											waypoints.forEach((waypoint, index) => {
+												waypoint.index = index;
+											});
+											return waypoints;
 										});
-										return waypoints;
-									});
-								}}>Delete</button
-							>
-						</div>
-					</div>
+									}}>Delete</button
+								>
+							</Popover.Content>
+						</Popover.Positioner>
+					</Popover>
 				</div>
 			{/each}
 		</div>

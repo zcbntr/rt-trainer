@@ -16,9 +16,9 @@
 	let open = $state(false);
 
 	const { getLayer }: { getLayer: () => Leaflet.Layer | undefined } = getContext('layer');
-	const layer = getLayer();
 
 	onMount(async () => {
+		const layer = getLayer();
 		if (!layer) return;
 
 		const L = await getLeaflet();
@@ -30,6 +30,7 @@
 	});
 
 	onDestroy(() => {
+		const layer = getLayer();
 		layer?.unbindPopup();
 		popup?.remove();
 		popup = undefined;

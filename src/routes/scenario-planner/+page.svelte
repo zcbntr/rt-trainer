@@ -26,6 +26,7 @@
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import Polygon from '$lib/components/leaflet/Polygon.svelte';
 	import { getNthPhoneticAlphabetLetter, wellesbourneMountfordCoords } from '$lib/logic/utils';
+	import type * as Leaflet from 'leaflet';
 	import Polyline from '$lib/components/leaflet/Polyline.svelte';
 	import { Icon } from 'svelte-icons-pack';
 	import { BsAirplaneFill } from 'svelte-icons-pack/bs';
@@ -108,7 +109,7 @@
 			WaypointType.Fix,
 			waypoints.length
 		);
-		waypoints.push(waypoint);
+		waypoints = [...waypoints, waypoint];
 		WaypointsStore.set(waypoints);
 	}
 
@@ -120,7 +121,7 @@
 			waypoints.length,
 			airport.id
 		);
-		waypoints.push(waypoint);
+		waypoints = [...waypoints, waypoint];
 		WaypointsStore.set(waypoints);
 
 		onRouteAirports.push(airport);
@@ -239,6 +240,22 @@
 		goto(scenarioURLString);
 	}
 	let durationEstimate = $derived(onRouteAirports.length * 8 + onRouteAirspaces.length * 5);
+
+	let routeBounds = $derived.by((): Leaflet.LatLngBoundsExpression | undefined => {
+		if (waypoints.length === 0) {
+			return undefined;
+		}
+
+		const lats = waypoints.map((w) => w.location[1]);
+		const lngs = waypoints.map((w) => w.location[0]);
+		const margin = 0.08;
+
+		return [
+			[Math.min(...lats) - margin, Math.min(...lngs) - margin],
+			[Math.max(...lats) + margin, Math.max(...lngs) + margin]
+		];
+	});
+
 	run(() => {
 		// Waypoints must be at least 2 to create a scenario
 		// onRouteAirports must be at most 2 to create a scenario
@@ -260,7 +277,14 @@
 <div class="flex min-h-0 flex-1 flex-col">
 	<div class="flex min-h-0 flex-1 flex-col">
 		<div class="xs:pr-3 flex min-h-0 flex-1 flex-col">
-			<Map view={wellesbourneMountfordCoords} zoom={9} on:click={onMapClick}>
+			<Map
+				bounds={routeBounds}
+				view={wellesbourneMountfordCoords}
+				zoom={8}
+				fitPadding={40}
+				resizeKey={`${waypoints.length}-${waypointPoints.length}`}
+				on:click={onMapClick}
+			>
 				{#each airports as airport (airport.id)}
 					{#if showAllAirports || waypoints.some((waypoint) => waypoint.referenceObjectId === airport.id)}
 						<Marker
@@ -345,9 +369,8 @@
 					{/if}
 				{/each}
 
-				{#each waypoints as waypoint (waypoint.index)}
-					{#key waypoint.id}
-						{#key waypoint.location}
+				{#each waypoints as waypoint (waypoint.id)}
+					{#key waypoint.location}
 							{#if waypoint.type == WaypointType.Airport}<Marker
 									latLng={[waypoint.location[1], waypoint.location[0]]}
 									width={50}
@@ -443,7 +466,6 @@
 									>
 								</Marker>
 							{/if}
-						{/key}
 					{/key}
 				{/each}
 
