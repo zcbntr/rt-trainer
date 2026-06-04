@@ -12,7 +12,7 @@
 	import Navigation from '$lib/components/NAVSidebar.svelte';
 	import ScenarioPlanSidebar from '$lib/components/ScenarioPlanSidebar.svelte';
 	import SvelteSeo from 'svelte-seo';
-	import favicon from '$lib/assets/favicon.png';
+	import favicon from '$lib/assets/favicon.ico';
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
@@ -115,7 +115,7 @@
 
 <Toast.Group {toaster}>
 	{#snippet children(toast)}
-		<Toast {toast} class="card w-full max-w-md p-4 shadow-xl {toastPreset(toast.type)}">
+		<Toast {toast} class="w-full max-w-md card p-4 shadow-xl {toastPreset(toast.type)}">
 			<Toast.Message>
 				{#if toast.title}
 					<Toast.Title>{toast.title}</Toast.Title>

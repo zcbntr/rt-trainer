@@ -1,5 +1,5 @@
-<div class="flex flex-row place-content-center h-full w-full">
-	<div class="flex flex-col p-5 place-content-center h-full w-full gap-5 sm:w-8/12">
+<div class="flex h-full w-full flex-row place-content-center">
+	<div class="flex h-full w-full flex-col place-content-center gap-5 p-5 sm:w-8/12">
 		<div class="p-1 h2">About</div>
 		<div class="px-3">
 			<p class="p-2">
@@ -13,7 +13,7 @@
 				<a
 					class="anchor"
 					href="https://www.caa.co.uk/general-aviation/pilot-licences/flight-radio-telephony-operator-licence/"
-					>Flight Radiotelephony Operator's License (FRTOL)</a
+					>Flight Radiotelephony Operator's Licence (FRTOL)</a
 				>. More information about the licence and exam can be found on the
 				<a
 					class="anchor"
@@ -23,12 +23,12 @@
 			</p>
 			<p class="p-2">
 				This website was created as part of Zac Benattar's third year computer science project. The
-				fronted was built using
+				frontend was built using
 				<a class="anchor" href="https://svelte.dev/">Svelte</a> and the backend is a Vite webserver
 				built using
 				<a class="anchor" href="https://kit.svelte.dev/">SvelteKit</a>. The website is hosted by
 				<a class="anchor" href="https://vercel.com/">Vercel</a>. This project was developed with
-				assistance from the
+				assistance from David Archer and the
 				<a class="anchor" href="http://www.southwarwickshireflyingschool.com"
 					>South Warwickshire Flying School</a
 				>. The project is open source and can be found on
@@ -41,16 +41,16 @@
 		<div class="p-1 h3">Contact</div>
 		<div class="px-3">
 			<div><b>Developer</b> - Zac Benattar</div>
-			<div class="px-3 text-">
+			<div class="text- px-3">
 				Please contact me about any issues you encounter, feature requests, or any other questions
 				you have at zbenattar@gmail.com
 			</div>
 		</div>
 
 		<div class="p-1 h3">Attributions</div>
-		<ul class="px-5 list-disc">
+		<ul class="list-disc px-5">
 			<li class="py-2">
-				<div class="h4">Aeronatical Data</div>
+				<div class="h4">Aeronautical Data</div>
 				<p>
 					All airport and airspace data comes from <a class="anchor" href="https://www.openaip.net/"
 						>OpenAIP</a

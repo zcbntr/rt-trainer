@@ -93,8 +93,8 @@
 			const initialZoom = hasViewZoom() ? zoom! : 6;
 
 			map = L.map(mapElement, { center, zoom: initialZoom })
-				.on('click', (e) => click(e))
-				.on('popupopen', async (e) => {
+				.on('click', (e: Leaflet.LeafletMouseEvent) => click(e))
+				.on('popupopen', async (e: Leaflet.PopupEvent) => {
 					await tick();
 					e.popup?.update();
 				});
@@ -105,7 +105,7 @@
 					'<a href="https://www.openaip.net/">OpenAIP</a> | © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 			}).addTo(map);
 
-			map.whenReady(() => refreshMap());
+			map?.whenReady(() => refreshMap());
 			await tick();
 			refreshMap();
 		})();
