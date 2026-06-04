@@ -44,7 +44,7 @@ export const AircraftDetailsStore = writable<AircraftDetails>(initialAircraftDet
 
 export const ScenarioSeedStore = writable<string>('');
 
-export const HasEmergencyEventsStore = writable<boolean>(false);
+export const HasEmergenciesStore = writable<boolean>(false);
 
 export const SpeechInputEnabledStore = writable<boolean>(false);
 
@@ -251,7 +251,7 @@ export const AwaitingServerResponseStore = writable<boolean>(false);
 export function ClearSimulationStores(): void {
 	AircraftDetailsStore.set(initialAircraftDetails);
 	ScenarioSeedStore.set('');
-	HasEmergencyEventsStore.set(false);
+	HasEmergenciesStore.set(false);
 	SpeechInputEnabledStore.set(false);
 	SpeechOutputEnabledStore.set(false);
 	SpeechNoiseStore.set(0);

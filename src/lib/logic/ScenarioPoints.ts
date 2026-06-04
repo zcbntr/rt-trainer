@@ -852,7 +852,7 @@ export function getAirborneScenarioPoints(
 	startAirport: Airport | undefined,
 	endAirport: Airport | undefined,
 	previousScenarioPoint: ScenarioPoint,
-	hasEmergency: boolean
+	hasEmergencies: boolean
 ): ScenarioPoint[] {
 	const seed = simpleHash(seedString);
 
@@ -1087,7 +1087,7 @@ export function getAirborneScenarioPoints(
 		if (switchingAirspace) i++;
 	}
 
-	if (hasEmergency && scenarioPoints.length > 0) {
+	if (hasEmergencies && scenarioPoints.length > 0) {
 		// Add emergency before a random waypoint on the route
 		const emergencyScenarioPointIndex = endStageIndexes[seed % (endStageIndexes.length - 1)] - 1;
 

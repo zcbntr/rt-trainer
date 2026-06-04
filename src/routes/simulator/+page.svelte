@@ -91,10 +91,9 @@
 		criticalDataMissing = true;
 	}
 
-	// Check whether the hasEmergency is specified
-	const hasEmergencyString: string | null = $page.url.searchParams.get('hasEmergency');
-	if (hasEmergencyString != null) {
-		hasEmergencies = hasEmergencyString === 'true';
+	const hasEmergenciesString: string | null = $page.url.searchParams.get('hasEmergencies');
+	if (hasEmergenciesString != null) {
+		hasEmergencies = hasEmergenciesString === 'true';
 	}
 
 	// Get waypoints from the URL's JSON.stringify form

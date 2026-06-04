@@ -15,7 +15,7 @@ export function generateScenario(
 	waypoints: Waypoint[],
 	airports: Airport[],
 	airspaces: Airspace[],
-	hasEmergency: boolean
+	hasEmergencies: boolean
 ): Scenario {
 	if (!airspaces || airspaces.length === 0) {
 		throw new Error('No airspaces found');
@@ -52,7 +52,7 @@ export function generateScenario(
 			startAirport,
 			endAirport,
 			scenarioPoints[scenarioPoints.length - 1],
-			hasEmergency
+			hasEmergencies
 		)
 	);
 

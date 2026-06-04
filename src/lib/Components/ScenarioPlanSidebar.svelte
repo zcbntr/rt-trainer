@@ -13,7 +13,7 @@
 		AllAirspacesStore,
 		AwaitingServerResponseStore,
 		ClearSimulationStores,
-		HasEmergencyEventsStore,
+		HasEmergenciesStore,
 		maxFlightLevelStore,
 		RouteDistanceDisplayUnitStore,
 		ScenarioSeedStore,
@@ -36,8 +36,8 @@
 	// Scenario data
 	let scenarioSeed: string = $state(shortCUID());
 	ScenarioSeedStore.set(scenarioSeed); // Set initial value
-	let hasEmergencyEvents: boolean = $state(true);
-	HasEmergencyEventsStore.set(hasEmergencyEvents); // Set initial value
+	let hasEmergencies: boolean = $state(true);
+	HasEmergenciesStore.set(hasEmergencies); // Set initial value
 
 	// Route data
 	let routeSeed: string = $state(''); // Only used for seeding the route generator
@@ -83,6 +83,8 @@
 	let animatingWaypoints = new SvelteSet<Waypoint>([]);
 
 	function swapWith(waypoint: Waypoint): void {
+		if (!draggingWaypoint || !waypoint) return;
+
 		if (draggingWaypoint === waypoint || animatingWaypoints.has(waypoint)) return;
 		animatingWaypoints.add(waypoint);
 		setTimeout((): boolean => animatingWaypoints.delete(waypoint), dragDuration);
@@ -104,7 +106,7 @@
 		ScenarioSeedStore.set(scenarioSeed);
 	});
 	run(() => {
-		HasEmergencyEventsStore.set(hasEmergencyEvents);
+		HasEmergenciesStore.set(hasEmergencies);
 	});
 	run(() => {
 		RouteDistanceDisplayUnitStore.set(distanceUnit);
@@ -212,9 +214,9 @@
 
 							scenarioSeed = shortCUID();
 
-							const element = document.getElementById('scenario-seed-input');
+							const element = document.getElementById('scenario-seed-input') as HTMLTextAreaElement;
 							if (element) {
-								element.value = routeSeed;
+								element.value = scenarioSeed;
 							}
 						}}><RefreshOutline /></button
 					>
@@ -227,7 +229,7 @@
 					class="checkbox"
 					type="checkbox"
 					checked
-					onchange={() => (hasEmergencyEvents = !hasEmergencyEvents)}
+					onchange={() => (hasEmergencies = !hasEmergencies)}
 				/>
 				<p>Emergency Events</p>
 			</label>
@@ -241,7 +243,7 @@
 				<div class="flex flex-col gap-1">
 					<SegmentedControl
 						defaultValue="Nautical Miles"
-						{distanceUnitValue}
+						value={distanceUnitValue}
 						onValueChange={(details) => (distanceUnitValue = details.value)}
 					>
 						<SegmentedControl.Label class="text-sm">Distance Units</SegmentedControl.Label>
@@ -306,9 +308,9 @@
 
 										routeSeed = shortCUID();
 
-										const element = document.getElementById('route-seed-input');
+										const element = document.getElementById('route-seed-input') as HTMLTextAreaElement;
 										if (element) {
-											element.value = routeSeed;
+											(element as HTMLTextAreaElement).value = routeSeed;
 										}
 									}}><RefreshOutline /></button
 								>

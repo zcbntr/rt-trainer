@@ -6,7 +6,7 @@
 		AllAirportsStore,
 		AwaitingServerResponseStore,
 		FilteredAirspacesStore,
-		HasEmergencyEventsStore,
+		HasEmergenciesStore,
 		OnRouteAirspacesStore,
 		RouteDistanceDisplayStore,
 		RouteDistanceMetersStore,
@@ -222,7 +222,7 @@
 		});
 
 		let hasEmergencies: boolean = false;
-		HasEmergencyEventsStore.subscribe((value) => {
+		HasEmergenciesStore.subscribe((value) => {
 			hasEmergencies = value;
 		});
 
