@@ -69,12 +69,12 @@
 		<div id={'dial-container-' + id} class="relative">
 			<div
 				id={'frequency-center-div-' + id}
-				class="w-0 h-0 absolute"
+				class="absolute h-0 w-0"
 				style="top: 50%; left: 50%; transform: rotate(0deg); position: absolute; margin: auto;"
-			/>
+			></div>
 			<button
 				id={'frequency-dial-' + id}
-				class="frequency-dial flex w-20 h-20 flex border-2 rounded-full {enabledClass}"
+				class="frequency-dial flex h-20 w-20 rounded-full border-2 {enabledClass}"
 			>
 				<div style="position: absolute; left: 8px; top: 30%; width: 14px; pointer-events: none;">
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2.7 6.25"
@@ -103,30 +103,30 @@
 					>
 				</div>
 				<div
-					class="absolute flex flex-row w-100 h-100"
+					class="absolute flex h-100 w-100 flex-row"
 					style="top: 0px; left: 0px; width: 100%; height: 100%;"
 				>
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
-						class="w-100 h-100 z-[3]"
+						class="z-3 h-100 w-100"
 						style="width: 50%; height: 100%;"
 						aria-label="Frequency dial anticlockwise turn"
-						on:mousedown={startIncrementingAntiClockwiseHold}
-						on:mouseup={stopIncrementingAntiClockwiseHold}
-						on:mouseleave={stopIncrementingAntiClockwiseHold}
-					/>
-					<!-- svelte-ignore a11y-no-static-element-interactions -->
+						onmousedown={startIncrementingAntiClockwiseHold}
+						onmouseup={stopIncrementingAntiClockwiseHold}
+						onmouseleave={stopIncrementingAntiClockwiseHold}
+					></div>
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
-						class="w-100 h-100 z-[3]"
+						class="z-3 h-100 w-100"
 						style="width: 50%; height: 100%;"
 						aria-label="Frequency dial clockwise turn"
-						on:mousedown={startIncrementingClockwiseHold}
-						on:mouseup={stopIncrementingClockwiseHold}
-						on:mouseleave={stopIncrementingClockwiseHold}
-					/>
+						onmousedown={startIncrementingClockwiseHold}
+						onmouseup={stopIncrementingClockwiseHold}
+						onmouseleave={stopIncrementingClockwiseHold}
+					></div>
 				</div>
 
-				<div class="absolute w-0.5 h-10 bg-white center" />
+				<div class="center absolute h-10 w-0.5 bg-white"></div>
 			</button>
 		</div>
 	</div>

@@ -4,10 +4,9 @@
 	import { page } from '$app/stores';
 	import type { WaypointURLObject } from '$lib/logic/ScenarioTypes';
 	import Waypoint from '$lib/logic/aeronautics/Waypoint';
-	import {
-		type ModalSettings,
-		type ToastSettings
-	} from '@skeletonlabs/skeleton-svelte';
+	import { dialog } from '$lib/components/singletons/dialog.svelte';
+	import { toaster } from '$lib/components/singletons/toaster';
+	import QuickLoadScenarioDataModal from '$lib/components/dialogs/QuickLoadScenarioDataModal.svelte';
 	import { generateScenario } from '$lib/logic/ScenarioGenerator';
 	import 'leaflet/dist/leaflet.css';
 	import { onMount } from 'svelte';
@@ -58,8 +57,6 @@
 	import MessageInput from '$lib/components/simulator/MessageInput.svelte';
 	import Altimeter from '$lib/components/simulator/Altimeter.svelte';
 	import Map from '$lib/components/leaflet/Map.svelte';
-
-	const modalStore = getModalStore();
 
 	// Scenario settings
 	let seed: string = '';
@@ -176,18 +173,18 @@
 	if (criticalDataMissing) {
 		// Set a short timeout then trigger modal to load scenario data
 		setTimeout(() => {
-			const modal: ModalSettings = {
+			dialog.trigger({
 				type: 'component',
-				component: 'quickLoadScenarioDataComponent',
-				response: (r: any) => {
-					if (r) {
-						seed = r.scenarioSeed;
-						hasEmergencies = r.hasEmergencies;
+				component: QuickLoadScenarioDataModal,
+				response: (r) => {
+					if (r && typeof r === 'object' && 'scenarioSeed' in r) {
+						const data = r as { scenarioSeed: string; hasEmergencies: boolean };
+						seed = data.scenarioSeed;
+						hasEmergencies = data.hasEmergencies;
 						loadScenario();
 					}
 				}
-			};
-			modalStore.trigger(modal);
+			});
 		}, 1000);
 	}
 
@@ -237,8 +234,6 @@
 	let awaitingRadioCallCheck: boolean = false;
 	let serverNotResponding: boolean = false;
 	let nullRoute: boolean = false;
-
-	const toastStore = getToastStore();
 
 	const aircraftPosition = $derived.by((): [number, number] => {
 		const pos = $CurrentScenarioPointStore?.pose.position;
@@ -323,14 +318,14 @@
 		const scenario = get(ScenarioStore);
 
 		if (radioState.dialMode == 'OFF') {
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'Error',
 				body: 'Radio is off'
 			});
 			return false;
 		} else if (transponderState.dialMode == 'OFF') {
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'Error',
 				body: 'Transponder is off'
@@ -339,7 +334,7 @@
 		} else if (
 			radioState.activeFrequency != scenario?.getCurrentPoint().updateData.currentTargetFrequency
 		) {
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'Error',
 				body: 'Radio frequency incorrect'
@@ -349,14 +344,14 @@
 			transponderState.frequency !=
 			scenario?.getCurrentPoint().updateData.currentTransponderFrequency
 		) {
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'Error',
 				body: 'Transponder frequency incorrect'
 			});
 			return false;
 		} else if (altimeterState.pressure != scenario?.getCurrentPoint().updateData.currentPressure) {
-			// modalStore.trigger({
+			// dialog.trigger({
 			// 	type: 'alert',
 			// 	title: 'Error',
 			// 	body: 'Altimeter pressure setting incorrect'
@@ -388,19 +383,14 @@
 		});
 
 		if (get(LiveFeedbackStore)) {
-			// Clear previous toasts so only one feedback shown at a time
-			toastStore.clear();
+			toaster.dismiss();
 
-			// Do nothing if the call was flawless
 			if (!feedback.isFlawless()) {
-				// Show current mistakes
-				const t: ToastSettings = {
-					message: feedback.getMistakes().join('<br>'),
-					timeout: 15000,
-					hoverable: true,
-					background: 'preset-filled-warning-500'
-				};
-				toastStore.trigger(t);
+				toaster.warning({
+					title: 'Mistakes',
+					description: feedback.getMistakes().join('\n'),
+					duration: 15000
+				});
 			}
 		}
 
@@ -414,21 +404,18 @@
 			failedAttempts++;
 
 			if (failedAttempts >= 3) {
-				// Show a modal asking the user if they want to be given the correct call or keep trying
-				const m: ModalSettings = {
+				dialog.trigger({
 					type: 'confirm',
 					title: 'Mistake',
 					body: 'Do you want to be given the correct call?',
-					response: (r: boolean) => {
+					response: (r) => {
 						if (r) {
-							// Put the correct call in the input box
 							ExpectedUserMessageStore.set(parseResult.expectedUserCall);
 						} else {
 							failedAttempts = -7;
 						}
 					}
-				};
-				modalStore.trigger(m);
+				});
 
 				return false;
 			}
@@ -454,16 +441,15 @@
 
 			return false;
 		} else if (minorMistakes.length > 0) {
-			// Show a toast with the minor mistakes and advance scenario
-			const t: ToastSettings = {
-				message: 'Correct with minor mistakes: ' + minorMistakes.join('<br>') + '.'
-			};
-			toastStore.trigger(t);
+			toaster.info({
+				title: 'Almost',
+				description: `Correct with minor mistakes:\n${minorMistakes.join('\n')}.`
+			});
 		} else {
-			const t: ToastSettings = {
-				message: 'Correct!'
-			};
-			toastStore.trigger(t);
+			toaster.success({
+				title: 'Correct',
+				description: 'Your call was correct.'
+			});
 		}
 
 		tutorialStep4 = true;
@@ -499,7 +485,7 @@
 
 		if (scenario == undefined) {
 			console.log('Error: No route');
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'Scenario Error',
 				body: 'No scenario is loaded. Refresh the page to try again.'
@@ -540,17 +526,16 @@
 
 		// If the user has reached the end of the route, then show a modal asking if they want to view their feedback
 		if (get(CurrentScenarioPointIndexStore) == get(EndPointIndexStore)) {
-			const m: ModalSettings = {
+			dialog.trigger({
 				type: 'confirm',
 				title: 'Scenario Complete',
 				body: 'Do you want view your feedback?',
-				response: (r: boolean) => {
+				response: (r) => {
 					if (r) {
 						goto('/scenario/results/');
 					}
 				}
-			};
-			modalStore.trigger(m);
+			});
 
 			return;
 		}
@@ -595,7 +580,7 @@
 	});
 	run(() => {
 		if (serverNotResponding) {
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'Server did not respond',
 				body: 'This may be due to a bad request or the feature you are trying to use not being implemented yet. This software is still early in development, expect errors like this one.'
@@ -604,7 +589,7 @@
 	});
 	run(() => {
 		if (nullRoute) {
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'No Route Generated',
 				body: 'After 1000 iterations no feasible route was generated for this seed. Please try another one. The route generation is not finalised and will frequently encounter issues like this one. '

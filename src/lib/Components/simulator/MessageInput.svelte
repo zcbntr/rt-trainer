@@ -8,10 +8,9 @@
 	} from '$lib/stores';
 	import { onMount } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
-	import {
-		type PopupSettings, Switch } from '@skeletonlabs/skeleton-svelte';
-
-	const modalStore = getModalStore();
+	import { Switch } from '@skeletonlabs/skeleton-svelte';
+	import HoverTooltip from '$lib/components/HoverTooltip.svelte';
+	import { dialog } from '$lib/components/singletons/dialog.svelte';
 
 	interface Props {
 		class?: string;
@@ -79,24 +78,6 @@
 	onMount(() => {
 		mounted = true;
 	});
-
-	const feedbackTooltip: PopupSettings = {
-		event: 'hover',
-		target: 'feedbackPopupHover',
-		placement: 'bottom'
-	};
-
-	const speechRecognitionExperimentalWarningTooltip: PopupSettings = {
-		event: 'hover',
-		target: 'speechRecognitionExperimentalWarningPopupHover',
-		placement: 'bottom'
-	};
-
-	const speechRecognitionNotSupportedTooltip: PopupSettings = {
-		event: 'hover',
-		target: 'speechRecognitionNotSupportedPopupHover',
-		placement: 'bottom'
-	};
 </script>
 
 <div
@@ -131,16 +112,9 @@
 						$LiveFeedbackStore = !$LiveFeedbackStore;
 					}}
 				/>
-				<div
-					class="flex flex-col place-content-center [&>*]:pointer-events-none"
-					use:popup={feedbackTooltip}
-				>
-					Feedback
-				</div>
-				<div class="card p-4 preset-filled-secondary-500 z-[3]" data-popup="feedbackPopupHover">
+				<HoverTooltip label="Feedback">
 					<p>Shows feedback immediately, instead of just at the end of the scenario.</p>
-					<div class="arrow preset-filled-secondary-500"></div>
-				</div>
+				</HoverTooltip>
 			</div>
 		</div>
 
@@ -159,7 +133,7 @@
 						on:click={() => {
 							$SpeechInputEnabledStore = !$SpeechInputEnabledStore;
 							if ($SpeechInputEnabledStore) {
-								modalStore.trigger({
+								dialog.trigger({
 									type: 'alert',
 									title: 'Speech input is enabled',
 									body: 'Hold down the spacebar or click and hold the red button to record your message. Let go when you are done.'
@@ -167,19 +141,9 @@
 							}
 						}}
 					/>
-					<div
-						class="[&>*]:pointer-events-none"
-						use:popup={speechRecognitionExperimentalWarningTooltip}
-					>
-						Voice Input
-					</div>
-					<div
-						class="card p-4 preset-filled-secondary-500 z-[3]"
-						data-popup="speechRecognitionExperimentalWarningPopupHover"
-					>
+					<HoverTooltip label="Voice Input">
 						<p>Speech recognition is experimental, you may need to correct the recorded text.</p>
-						<div class="arrow preset-filled-secondary-500"></div>
-					</div>
+					</HoverTooltip>
 				</div>
 			</div>
 		{:else}
@@ -193,20 +157,13 @@
 						size="sm"
 						disabled
 					/>
-					<div class="[&>*]:pointer-events-none" use:popup={speechRecognitionNotSupportedTooltip}>
-						Voice Input
-					</div>
-					<div
-						class="card p-4 preset-filled-secondary-500 z-[3]"
-						data-popup="speechRecognitionNotSupportedPopupHover"
-					>
+					<HoverTooltip label="Voice Input">
 						<p>
 							Speech recognition is not supported in this browser.<br />Please use a different
 							browser if you would like to use this feature.<br />Google Chrome, Microsoft Edge and
 							Safari are recommended.
 						</p>
-						<div class="arrow preset-filled-secondary-500"></div>
-					</div>
+					</HoverTooltip>
 				</div>
 			</div>
 		{/if}

@@ -5,7 +5,8 @@
 		SpeechNoiseStore,
 		SpeechOutputEnabledStore
 	} from '$lib/stores';
-	import { type PopupSettings, Switch } from '@skeletonlabs/skeleton-svelte';
+	import { Switch } from '@skeletonlabs/skeleton-svelte';
+	import HoverTooltip from '$lib/components/HoverTooltip.svelte';
 
 	interface Props {
 		class?: string;
@@ -18,18 +19,6 @@
 			? 'Context for your current point in the scenario will appear here'
 			: $CurrentScenarioContextStore
 	);
-
-	const audioMessagesInfoTooltip: PopupSettings = {
-		event: 'hover',
-		target: 'audioMessagesInfoPopupHover',
-		placement: 'bottom'
-	};
-
-	const audioMessagesNoiseInfoTooltip: PopupSettings = {
-		event: 'hover',
-		target: 'audioMessagesNoiseInfoPopupHover',
-		placement: 'bottom'
-	};
 </script>
 
 <div
@@ -60,16 +49,9 @@
 								$SpeechOutputEnabledStore = !$SpeechOutputEnabledStore;
 							}}
 						/>
-						<div class="[&>*]:pointer-events-none" use:popup={audioMessagesInfoTooltip}>
-							Read Aloud Received Calls
-						</div>
-						<div
-							class="card p-4 preset-filled-secondary-500 z-[3]"
-							data-popup="audioMessagesInfoPopupHover"
-						>
+						<HoverTooltip label="Read Aloud Received Calls">
 							<p>Audio messages read aloud when you receive a call from ATC or another aircraft.</p>
-							<div class="arrow preset-filled-secondary-500"></div>
-						</div>
+						</HoverTooltip>
 					</div>
 					<div class="flex flex-row place-content-start gap-2">
 						<Switch
@@ -85,19 +67,12 @@
 								$SpeechNoiseStore = $SpeechNoiseStore === 0 ? 0.1 : 0;
 							}}
 						/>
-						<div class="[&>*]:pointer-events-none" use:popup={audioMessagesNoiseInfoTooltip}>
-							Interference Noise
-						</div>
-						<div
-							class="card p-4 preset-filled-secondary-500 z-[3]"
-							data-popup="audioMessagesNoiseInfoPopupHover"
-						>
+						<HoverTooltip label="Interference Noise">
 							<p>
 								Adds static noise to read out calls. <br />Requires Read Aloud Recieved Calls to be
 								enabled.
 							</p>
-							<div class="arrow preset-filled-secondary-500"></div>
-						</div>
+						</HoverTooltip>
 					</div>
 				</div>
 			</div>

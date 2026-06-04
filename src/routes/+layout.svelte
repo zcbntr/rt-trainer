@@ -4,6 +4,7 @@
 	import TopAppBar from '$lib/components/TopAppBar.svelte';
 	import NavigationDrawer from '$lib/components/NavigationDrawer.svelte';
 	import { Toast } from '@skeletonlabs/skeleton-svelte';
+	import AppDialog from '$lib/components/AppDialog.svelte';
 	import { toaster } from '$lib/components/singletons/toaster';
 	import { drawer } from '$lib/components/singletons/drawer.svelte';
 	import { afterNavigate } from '$app/navigation';
@@ -70,6 +71,19 @@
 	const drawerWidth = $derived(showRoutePlanSidebar ? 'w-80' : 'w-64');
 	const drawerTitle = $derived(showNavigation && !showRoutePlanSidebar ? 'Navigation' : undefined);
 
+	function toastPreset(type: string | undefined): string {
+		switch (type) {
+			case 'warning':
+				return 'preset-filled-warning-500';
+			case 'success':
+				return 'preset-filled-success-500';
+			case 'error':
+				return 'preset-filled-error-500';
+			default:
+				return 'preset-filled';
+		}
+	}
+
 	afterNavigate(() => {
 		drawer.close();
 	});
@@ -97,12 +111,18 @@
 	</NavigationDrawer>
 {/if}
 
+<AppDialog />
+
 <Toast.Group {toaster}>
 	{#snippet children(toast)}
-		<Toast {toast}>
+		<Toast {toast} class="card w-full max-w-md p-4 shadow-xl {toastPreset(toast.type)}">
 			<Toast.Message>
-				<Toast.Title>{toast.title}</Toast.Title>
-				<Toast.Description>{toast.description}</Toast.Description>
+				{#if toast.title}
+					<Toast.Title>{toast.title}</Toast.Title>
+				{/if}
+				{#if toast.description}
+					<Toast.Description class="whitespace-pre-line">{toast.description}</Toast.Description>
+				{/if}
 			</Toast.Message>
 			<Toast.CloseTrigger />
 		</Toast>
