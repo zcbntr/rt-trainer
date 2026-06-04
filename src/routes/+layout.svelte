@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import '../app.css';
 
 	import TopAppBar from '$lib/components/TopAppBar.svelte';
@@ -17,52 +15,55 @@
 
 	let { children }: Props = $props();
 
-	// Holds status of major navigation elements, to control visibility
-	let showTopAppBar: boolean = $state(true);
-	let showNavigation: boolean = $state(false);
-	let showRoutePlanSidebar: boolean = $state(false);
-	let classesSidebar: string = $state('');
-	let classesAppBar: string = $state('');
-	let burgerButton: string = $state('');
+	const layoutShell = $derived.by(() => {
+		const path = $page.url.pathname;
 
-	// Reactive Classes
-	run(() => {
-		if ($page.url.pathname === '/') {
-			// If on homepage hide sidebar and ways to access it
-			showTopAppBar = true;
-			showNavigation = false;
-			showRoutePlanSidebar = false;
-			classesAppBar = 'w-auto';
-			classesSidebar = 'w-0';
-			burgerButton = 'lg:hidden';
-		} else if (
-			$page.url.pathname.includes('/simulator') ||
-			$page.url.pathname.includes('/results')
-		) {
-			// If on scenario page hide sidebar and show burger button
-			showTopAppBar = true;
-			showNavigation = true;
-			showRoutePlanSidebar = false;
-			classesAppBar = 'w-auto';
-			classesSidebar = 'w-0';
-			burgerButton = 'lg';
-		} else if ($page.url.pathname.includes('/scenario-planner')) {
-			// If on route planner page hide sidebar and show burger button
-			showTopAppBar = false;
-			showNavigation = false;
-			showRoutePlanSidebar = true;
-			classesAppBar = 'w-auto';
-			classesSidebar = 'w-0 lg:w-80';
-			burgerButton = 'lg:hidden';
-		} else {
-			showTopAppBar = true;
-			showNavigation = true;
-			showRoutePlanSidebar = false;
-			classesAppBar = 'w-auto';
-			classesSidebar = 'w-0 lg:w-64';
-			burgerButton = 'lg:hidden';
+		if (path === '/') {
+			return {
+				showTopAppBar: true,
+				showNavigation: false,
+				showRoutePlanSidebar: false,
+				classesAppBar: 'w-auto',
+				classesSidebar: 'w-0',
+				burgerButton: 'lg:hidden'
+			};
 		}
+		if (path.includes('/simulator') || path.includes('/results')) {
+			return {
+				showTopAppBar: true,
+				showNavigation: true,
+				showRoutePlanSidebar: false,
+				classesAppBar: 'w-auto',
+				classesSidebar: 'w-0',
+				burgerButton: 'lg'
+			};
+		}
+		if (path.includes('/scenario-planner')) {
+			return {
+				showTopAppBar: false,
+				showNavigation: false,
+				showRoutePlanSidebar: true,
+				classesAppBar: 'w-auto',
+				classesSidebar: 'w-0 lg:w-80',
+				burgerButton: 'lg:hidden'
+			};
+		}
+		return {
+			showTopAppBar: true,
+			showNavigation: true,
+			showRoutePlanSidebar: false,
+			classesAppBar: 'w-auto',
+			classesSidebar: 'w-0 lg:w-64',
+			burgerButton: 'lg:hidden'
+		};
 	});
+
+	const showTopAppBar = $derived(layoutShell.showTopAppBar);
+	const showNavigation = $derived(layoutShell.showNavigation);
+	const showRoutePlanSidebar = $derived(layoutShell.showRoutePlanSidebar);
+	const classesAppBar = $derived(layoutShell.classesAppBar);
+	const classesSidebar = $derived(layoutShell.classesSidebar);
+	const burgerButton = $derived(layoutShell.burgerButton);
 </script>
 
 <svelte:head>

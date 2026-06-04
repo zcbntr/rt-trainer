@@ -13,3 +13,5 @@ Keep changes minimal per commit/PR.
 Storing user data is intended once the upgrades to Svelte 5 and Skeleton UI 4 are complete so that users can save routes and progress.
 
 This is a non commercial project and paid libraries/hosting is to be avoided.
+
+The scenario planner map of airports and airspaces in the UK, and the user can drag and drop waypoints to plot a flight path.

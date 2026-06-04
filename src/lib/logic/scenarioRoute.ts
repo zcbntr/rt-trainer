@@ -1,3 +1,4 @@
+import { get } from 'svelte/store';
 import {
 	ClearSimulationStores,
 	CurrentScenarioPointIndexStore,
@@ -10,18 +11,8 @@ import type Airport from './aeronautics/Airport';
 import type Airspace from './aeronautics/Airspace';
 import type Waypoint from './aeronautics/Waypoint';
 
-let startPointIndex = 0;
-StartPointIndexStore.subscribe((value) => {
-	startPointIndex = value;
-});
-
-let endPointIndex = 0;
-EndPointIndexStore.subscribe((value) => {
-	endPointIndex = value;
-});
-
 export function resetCurrentRoutePointIndex(): void {
-	CurrentScenarioPointIndexStore.set(startPointIndex);
+	CurrentScenarioPointIndexStore.set(get(StartPointIndexStore));
 }
 
 export type RouteData = {
@@ -30,17 +21,28 @@ export type RouteData = {
 	airspaces: Airspace[];
 };
 
+export type LoadRouteDataOptions = {
+	/** When false, only updates route waypoints (planner auto-generate). Default true for simulator flows. */
+	clearSimulation?: boolean;
+};
+
 /**
  * Loads the given route data into the stores.
  */
-export function loadRouteData(routeData: RouteData): void {
+export function loadRouteData(routeData: RouteData, options: LoadRouteDataOptions = {}): void {
+	const { clearSimulation = true } = options;
+
 	if (routeData == null || routeData == undefined) {
 		console.log('Bad route data attempted to be loaded into stores');
 		NullRouteStore.set(true);
 		return;
 	}
 
-	ClearSimulationStores();
-	NullRouteStore.set(false);
+	if (clearSimulation) {
+		ClearSimulationStores();
+	} else {
+		NullRouteStore.set(false);
+	}
+
 	WaypointsStore.set(routeData.waypoints.sort((a, b) => a.index - b.index));
 }
