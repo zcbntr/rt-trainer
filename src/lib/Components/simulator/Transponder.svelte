@@ -156,8 +156,8 @@
 
 	<div class="flex flex-row mx-4 order-3">
 		<FrequencyDial
-			on:dialAntiClockwiseTurn={onTransponderFrequencyReduce}
-			on:dialClockwiseTurn={onTransponderFrequencyIncrease}
+			dialAntiClockwiseTurn={onTransponderFrequencyReduce}
+			dialClockwiseTurn={onTransponderFrequencyIncrease}
 			DialEnabled={frequencyDialEnabled}
 			id="transponder-frequency-dial"
 		/>

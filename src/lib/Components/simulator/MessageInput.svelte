@@ -7,7 +7,6 @@
 		UserMessageStore
 	} from '$lib/stores';
 	import { onMount } from 'svelte';
-	import { createEventDispatcher } from 'svelte';
 	import { Switch } from '@skeletonlabs/skeleton-svelte';
 	import HoverTooltip from '$lib/components/HoverTooltip.svelte';
 	import { dialog } from '$lib/components/singletons/dialog.svelte';
@@ -15,9 +14,14 @@
 	interface Props {
 		class?: string;
 		speechRecognitionSupported?: boolean;
+		submit?: () => void;
 	}
 
-	let { class: className = '', speechRecognitionSupported = false }: Props = $props();
+	let {
+		class: className = '',
+		speechRecognitionSupported = false,
+		submit: onSubmit = () => {}
+	}: Props = $props();
 	let mounted = $state(false);
 	let message = $state('');
 
@@ -28,8 +32,6 @@
 			message = inputBox.value;
 		}
 	});
-
-	const dispatch = createEventDispatcher();
 
 	const handleDelete = () => {
 		resetBox();
@@ -46,7 +48,7 @@
 		const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
 		message = inputBox.value;
 		UserMessageStore.set(message);
-		dispatch('submit');
+		onSubmit();
 	};
 
 	function fillInputFromStore(value: string) {
@@ -108,7 +110,7 @@
 					role="switch"
 					aria-checked={$LiveFeedbackStore}
 					aria-label="Toggle live feedback"
-					on:click={() => {
+					onclick={() => {
 						$LiveFeedbackStore = !$LiveFeedbackStore;
 					}}
 				/>
@@ -130,7 +132,7 @@
 						role="switch"
 						aria-checked={$SpeechInputEnabledStore}
 						aria-label="Toggle speech input"
-						on:click={() => {
+						onclick={() => {
 							$SpeechInputEnabledStore = !$SpeechInputEnabledStore;
 							if ($SpeechInputEnabledStore) {
 								dialog.trigger({
@@ -168,9 +170,9 @@
 			</div>
 		{/if}
 
-		<button class="submit-button btn px-3 bg-surface-400" on:click={submit}>Submit</button>
+		<button class="submit-button btn px-3 bg-surface-400" onclick={submit}>Submit</button>
 
-		<button class="clear-button btn bg-surface-400" on:click={handleDelete}>Clear</button>
+		<button class="clear-button btn bg-surface-400" onclick={handleDelete}>Clear</button>
 	</div>
 </div>
 

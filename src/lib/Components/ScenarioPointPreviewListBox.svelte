@@ -27,7 +27,7 @@
 				bind:group={selectedScenarioPointIndex}
 				name="scenarioPointId"
 				value={scenarioPoint.index}
-				on:click={handleScenarioPointChange}
+				onclick={handleScenarioPointChange}
 			>
 				{#snippet lead()}
 					<span class="badge-icon p-4 preset-tonal-secondary">

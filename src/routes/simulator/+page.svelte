@@ -50,6 +50,7 @@
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import { WaypointType } from '$lib/logic/aeronautics/Waypoint';
 	import type * as Leaflet from 'leaflet';
+	import type { MarkerLayerDetail, PolygonLayerDetail } from '$lib/components/leaflet/types';
 	import Parser, { type ParseResult } from '$lib/logic/Parser';
 	import Radio from '$lib/components/simulator/Radio.svelte';
 	import Transponder from '$lib/components/simulator/Transponder.svelte';
@@ -674,7 +675,7 @@
 			<div class="flex flex-col place-content-evenly sm:grid sm:grid-cols-2 gap-5">
 				<MessageOutput />
 
-				<MessageInput {speechRecognitionSupported} on:submit={handleSubmit} />
+				<MessageInput {speechRecognitionSupported} submit={handleSubmit} />
 			</div>
 
 			<Radio />
@@ -692,14 +693,11 @@
 										width={50}
 										height={50}
 										aeroObject={waypoint}
-										on:click={(e) => {
-											e.preventDefault();
+										mouseover={(detail: MarkerLayerDetail) => {
+											detail.marker.openPopup();
 										}}
-										on:mouseover={(e) => {
-											e.detail.marker.openPopup();
-										}}
-										on:mouseout={(e) => {
-											e.detail.marker.closePopup();
+										mouseout={(detail: MarkerLayerDetail) => {
+											detail.marker.closePopup();
 										}}
 									>
 										{#if waypoint.index == $WaypointsStore.length - 1}
@@ -721,14 +719,11 @@
 										height={50}
 										aeroObject={waypoint}
 										iconAnchor={[8, 26]}
-										on:click={(e) => {
-											e.preventDefault();
+										mouseover={(detail: MarkerLayerDetail) => {
+											detail.marker.openPopup();
 										}}
-										on:mouseover={(e) => {
-											e.detail.marker.openPopup();
-										}}
-										on:mouseout={(e) => {
-											e.detail.marker.closePopup();
+										mouseout={(detail: MarkerLayerDetail) => {
+											detail.marker.closePopup();
 										}}
 									>
 										<div class="text-2xl">🚩</div>
@@ -766,14 +761,11 @@
 									color={'red'}
 									fillOpacity={0.2}
 									weight={1}
-									on:click={(e) => {
-										e.preventDefault();
+									mouseover={(detail: PolygonLayerDetail) => {
+										detail.polygon.openPopup();
 									}}
-									on:mouseover={(e) => {
-										e.detail.polygon.openPopup();
-									}}
-									on:mouseout={(e) => {
-										e.detail.polygon.closePopup();
+									mouseout={(detail: PolygonLayerDetail) => {
+										detail.polygon.closePopup();
 									}}
 								/>
 							{:else}
@@ -782,14 +774,11 @@
 									color={'blue'}
 									fillOpacity={0.2}
 									weight={1}
-									on:click={(e) => {
-										e.preventDefault();
+									mouseover={(detail: PolygonLayerDetail) => {
+										detail.polygon.openPopup();
 									}}
-									on:mouseover={(e) => {
-										e.detail.polygon.openPopup();
-									}}
-									on:mouseout={(e) => {
-										e.detail.polygon.closePopup();
+									mouseout={(detail: PolygonLayerDetail) => {
+										detail.polygon.closePopup();
 									}}
 								/>
 							{/if}

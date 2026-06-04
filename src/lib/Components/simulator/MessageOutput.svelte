@@ -45,7 +45,7 @@
 							role="switch"
 							aria-checked={$SpeechOutputEnabledStore}
 							aria-label="Toggle text-to-speech audio messages"
-							on:click={() => {
+							onclick={() => {
 								$SpeechOutputEnabledStore = !$SpeechOutputEnabledStore;
 							}}
 						/>
@@ -63,7 +63,7 @@
 							role="switch"
 							aria-checked={$SpeechNoiseStore > 0}
 							aria-label="Toggle interference noise"
-							on:click={() => {
+							onclick={() => {
 								$SpeechNoiseStore = $SpeechNoiseStore === 0 ? 0.1 : 0;
 							}}
 						/>

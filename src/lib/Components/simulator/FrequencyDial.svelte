@@ -1,13 +1,19 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-
 	interface Props {
 		class?: string;
 		DialEnabled?: boolean;
 		id?: string;
+		dialAntiClockwiseTurn?: () => void;
+		dialClockwiseTurn?: () => void;
 	}
 
-	let { class: className = '', DialEnabled = false, id = '' }: Props = $props();
+	let {
+		class: className = '',
+		DialEnabled = false,
+		id = '',
+		dialAntiClockwiseTurn = () => {},
+		dialClockwiseTurn = () => {}
+	}: Props = $props();
 	let intervalId: ReturnType<typeof setInterval> | undefined;
 	let intervalDuration: number = 250;
 
@@ -19,14 +25,12 @@
 		}
 	});
 
-	const dispatch = createEventDispatcher();
-
 	const onDialAntiClockwiseTurn = () => {
-		dispatch('dialAntiClockwiseTurn');
+		dialAntiClockwiseTurn();
 	};
 
 	const onDialClockwiseTurn = () => {
-		dispatch('dialClockwiseTurn');
+		dialClockwiseTurn();
 	};
 
 	function onAntiClockwiseTick() {

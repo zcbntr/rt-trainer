@@ -42,7 +42,7 @@ export type SimulatorUpdateData = {
 	emergency: EmergencyType;
 };
 
-/* A point on the route used in generation. Not necissarily visible to the user */
+/* A point on the route used in generation. Not necessarily visible to the user */
 export default class ScenarioPoint {
 	index: number;
 	stage: string;

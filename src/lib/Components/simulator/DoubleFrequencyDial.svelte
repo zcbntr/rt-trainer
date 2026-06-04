@@ -1,13 +1,23 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
-
 	interface Props {
 		class?: string;
 		DialEnabled?: boolean;
 		id?: string;
+		dialOuterAntiClockwiseTurn?: () => void;
+		dialOuterClockwiseTurn?: () => void;
+		dialInnerAntiClockwiseTurn?: () => void;
+		dialInnerClockwiseTurn?: () => void;
 	}
 
-	let { class: className = '', DialEnabled = false, id = '' }: Props = $props();
+	let {
+		class: className = '',
+		DialEnabled = false,
+		id = '',
+		dialOuterAntiClockwiseTurn = () => {},
+		dialOuterClockwiseTurn = () => {},
+		dialInnerAntiClockwiseTurn = () => {},
+		dialInnerClockwiseTurn = () => {}
+	}: Props = $props();
 
 	let intervalId: ReturnType<typeof setInterval> | undefined;
 	const defaultIntervalDuration = 200;
@@ -23,22 +33,20 @@
 		}
 	});
 
-	const dispatch = createEventDispatcher();
-
 	const onDialOuterAntiClockwiseTurn = () => {
-		dispatch('dialOuterAntiClockwiseTurn');
+		dialOuterAntiClockwiseTurn();
 	};
 
 	const onDialOuterClockwiseTurn = () => {
-		dispatch('dialOuterClockwiseTurn');
+		dialOuterClockwiseTurn();
 	};
 
 	const onDialInnerAntiClockwiseTurn = () => {
-		dispatch('dialInnerAntiClockwiseTurn');
+		dialInnerAntiClockwiseTurn();
 	};
 
 	const onDialInnerClockwiseTurn = () => {
-		dispatch('dialInnerClockwiseTurn');
+		dialInnerClockwiseTurn();
 	};
 
 	function startIncrementingInnerAntiClockwiseHold() {

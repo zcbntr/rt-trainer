@@ -70,8 +70,8 @@
 		<div class="flex flex-col place-content-end gap-5">
 			<FrequencyDial
 				class="absolute"
-				on:dialAntiClockwiseTurn={onDecrementSideTurn}
-				on:dialClockwiseTurn={onIncrementSideTurn}
+				dialAntiClockwiseTurn={onDecrementSideTurn}
+				dialClockwiseTurn={onIncrementSideTurn}
 				DialEnabled={true}
 				id="altimeter-pressure-dial"
 			/>

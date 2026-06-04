@@ -18,13 +18,13 @@
 	} from '$lib/stores';
 	import Waypoint, { WaypointType } from '$lib/logic/aeronautics/Waypoint';
 	import { TrashBinOutline, PlayOutline } from 'flowbite-svelte-icons';
-	import type Airspace from '$lib/logic/aeronautics/Airspace';
 	import type Airport from '$lib/logic/aeronautics/Airport';
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import Polygon from '$lib/components/leaflet/Polygon.svelte';
 	import { getNthPhoneticAlphabetLetter, wellesbourneMountfordCoords } from '$lib/logic/utils';
 	import type * as Leaflet from 'leaflet';
+	import type { MarkerLayerDetail, PolygonLayerDetail } from '$lib/components/leaflet/types';
 	import Polyline from '$lib/components/leaflet/Polyline.svelte';
 	import { Icon } from 'svelte-icons-pack';
 	import { BsAirplaneFill } from 'svelte-icons-pack/bs';
@@ -74,12 +74,12 @@
 			$AwaitingServerResponseStore
 	);
 
-	function onMapClick(event: CustomEvent<{ latlng: { lat: number; lng: number } }>) {
+	function onMapClick(event: Leaflet.LeafletMouseEvent) {
 		if ($AwaitingServerResponseStore) return;
 
 		addWaypoint(
-			+parseFloat(event.detail.latlng.lat.toFixed(6)),
-			+parseFloat(event.detail.latlng.lng.toFixed(6))
+			+parseFloat(event.latlng.lat.toFixed(6)),
+			+parseFloat(event.latlng.lng.toFixed(6))
 		);
 	}
 
@@ -106,14 +106,14 @@
 		WaypointsStore.set([...waypoints, waypoint]);
 	}
 
-	function onWaypointDragEnd(
-		e: CustomEvent<{ aeroObject: Waypoint; marker: Leaflet.Marker }>
-	) {
+	function onWaypointDragEnd(detail: MarkerLayerDetail) {
+		if (!detail.aeroObject || !(detail.aeroObject instanceof Waypoint)) return;
+
 		const waypoints = get(WaypointsStore);
-		const waypoint = waypoints.find((wp) => wp.id === e.detail.aeroObject.id);
+		const waypoint = waypoints.find((wp) => wp.id === detail.aeroObject!.id);
 		if (!waypoint) return;
 
-		const { lat, lng } = e.detail.marker.getLatLng();
+		const { lat, lng } = detail.marker.getLatLng();
 		waypoint.location[1] = +parseFloat(lat.toFixed(6));
 		waypoint.location[0] = +parseFloat(lng.toFixed(6));
 		WaypointsStore.set([...waypoints]);
@@ -203,7 +203,7 @@
 				zoom={8}
 				fitPadding={40}
 				resizeKey={`${$WaypointsStore.length}-${$WaypointPointsMapStore.length}`}
-				on:click={onMapClick}
+				click={onMapClick}
 			>
 				{#each $AllAirportsStore as airport (airport.id)}
 					{#if showAllAirports || $WaypointsStore.some((waypoint) => waypoint.referenceObjectId === airport.id)}
@@ -213,15 +213,14 @@
 							height={30}
 							aeroObject={airport}
 							draggable={false}
-							on:click={(e) => {
-								e.preventDefault();
-								addAirportWaypoint(e.detail.aeroObject);
+							click={(detail: MarkerLayerDetail) => {
+								if (detail.aeroObject) addAirportWaypoint(detail.aeroObject as Airport);
 							}}
-							on:mouseover={(e) => {
-								e.detail.marker.openPopup();
+							mouseover={(detail: MarkerLayerDetail) => {
+								detail.marker.openPopup();
 							}}
-							on:mouseout={(e) => {
-								e.detail.marker.closePopup();
+							mouseout={(detail: MarkerLayerDetail) => {
+								detail.marker.closePopup();
 							}}
 						>
 							{#if !$WaypointsStore.some((waypoint) => waypoint.referenceObjectId === airport.id)}
@@ -242,18 +241,17 @@
 								fillOpacity={0.2}
 								weight={1}
 								aeroObject={airspace}
-								on:click={(e) => {
-									e.preventDefault();
+								click={(detail: PolygonLayerDetail) => {
 									addWaypoint(
-										+parseFloat(e.detail.event.latlng.lat.toFixed(6)),
-										+parseFloat(e.detail.event.latlng.lng.toFixed(6))
+										+parseFloat(detail.event.latlng.lat.toFixed(6)),
+										+parseFloat(detail.event.latlng.lng.toFixed(6))
 									);
 								}}
-								on:mouseover={(e) => {
-									e.detail.polygon.openPopup();
+								mouseover={(detail: PolygonLayerDetail) => {
+									detail.polygon.openPopup();
 								}}
-								on:mouseout={(e) => {
-									e.detail.polygon.closePopup();
+								mouseout={(detail: PolygonLayerDetail) => {
+									detail.polygon.closePopup();
 								}}
 							>
 								<Popup>
@@ -267,18 +265,17 @@
 								fillOpacity={0.2}
 								weight={1}
 								aeroObject={airspace}
-								on:click={(e) => {
-									e.preventDefault();
+								click={(detail: PolygonLayerDetail) => {
 									addWaypoint(
-										+parseFloat(e.detail.event.latlng.lat.toFixed(6)),
-										+parseFloat(e.detail.event.latlng.lng.toFixed(6))
+										+parseFloat(detail.event.latlng.lat.toFixed(6)),
+										+parseFloat(detail.event.latlng.lng.toFixed(6))
 									);
 								}}
-								on:mouseover={(e) => {
-									e.detail.polygon.openPopup();
+								mouseover={(detail: PolygonLayerDetail) => {
+									detail.polygon.openPopup();
 								}}
-								on:mouseout={(e) => {
-									e.detail.polygon.closePopup();
+								mouseout={(detail: PolygonLayerDetail) => {
+									detail.polygon.closePopup();
 								}}
 							>
 								<Popup>
@@ -325,7 +322,7 @@
 								width={50}
 								height={50}
 								aeroObject={waypoint}
-								on:dragend={onWaypointDragEnd}
+								dragend={onWaypointDragEnd}
 								draggable={true}
 							>
 								<div class="text-2xl">🏁</div>
@@ -357,7 +354,7 @@
 								height={50}
 								aeroObject={waypoint}
 								iconAnchor={[8, 26]}
-								on:dragend={onWaypointDragEnd}
+								dragend={onWaypointDragEnd}
 								draggable={true}
 							>
 								<div class="text-2xl">🚩</div>

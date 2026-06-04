@@ -91,17 +91,17 @@
 <div
 	id="transmit-button"
 	class="{className} {transmitButtonClasses} transmit-button rounded-full cursor-pointer"
-	on:mousedown={handleTransmitMouseDown}
-	on:keydown={handleTransmitMouseDown}
-	on:mouseup={handleTransmitMouseUp}
-	on:keyup={handleTransmitMouseUp}
-	on:mouseleave={handleTransmitMouseLeave}
+	onmousedown={handleTransmitMouseDown}
+	onkeydown={handleTransmitMouseDown}
+	onmouseup={handleTransmitMouseUp}
+	onkeyup={handleTransmitMouseUp}
+	onmouseleave={handleTransmitMouseLeave}
 	aria-label="Transmit Button"
 	tabindex="0"
 	role="button"
 ></div>
 
-<svelte:window on:keydown={onKeyDown} on:keyup={onKeyUp} />
+<svelte:window onkeydown={onKeyDown} onkeyup={onKeyUp} />
 
 <style>
 	.transmit-button {

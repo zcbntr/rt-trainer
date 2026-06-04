@@ -4,7 +4,7 @@
 	The coordinates used in the rest of the application are in the format [long, lat],
 	here they must be converted to [lat, long] for Leaflet to understand them correctly.
 	*/
-	import { createEventDispatcher, onDestroy, onMount, setContext, tick } from 'svelte';
+	import { onDestroy, onMount, setContext, tick } from 'svelte';
 	import type * as Leaflet from 'leaflet';
 	import { getLeaflet } from './leaflet';
 
@@ -19,6 +19,7 @@
 		/** Change when map overlays change so the map can recalculate its size. */
 		resizeKey?: unknown;
 		children?: import('svelte').Snippet;
+		click?: (event: Leaflet.LeafletMouseEvent) => void;
 	}
 
 	let {
@@ -27,10 +28,9 @@
 		zoom = 8,
 		fitPadding = 32,
 		resizeKey = undefined,
-		children
+		children,
+		click = () => {}
 	}: Props = $props();
-
-	const dispatch = createEventDispatcher();
 
 	function fitPaddingOption(): [number, number] {
 		return typeof fitPadding === 'number' ? [fitPadding, fitPadding] : fitPadding;
@@ -94,8 +94,7 @@
 			const initialZoom = hasViewZoom() ? zoom! : 6;
 
 			map = L.map(mapElement, { center, zoom: initialZoom })
-				.on('zoom', (e) => dispatch('zoom', e))
-				.on('click', (e) => dispatch('click', e))
+				.on('click', (e) => click(e))
 				.on('popupopen', async (e) => {
 					await tick();
 					e.popup?.update();

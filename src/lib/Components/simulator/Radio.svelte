@@ -76,9 +76,8 @@
 		}
 	};
 
-	function onDialModeChange(event: Event) {
+	function onDialModeChange(newDialModeIndex: number) {
 		const radioState = get(RadioStateStore);
-		var newDialModeIndex = (<any>event).detail;
 		if (newDialModeIndex == 0) {
 			if (radioState.mode === 'COM') {
 				const COMModeButton = document.getElementById('button-com') as HTMLInputElement;
@@ -145,7 +144,7 @@
 		Modes={RadioDialModes}
 		CurrentModeIndex={0}
 		id="radio-mode-dial"
-		on:modeChange={onDialModeChange}
+		modeChange={onDialModeChange}
 	/>
 
 	<div class="flex flex-col place-content-end gap-1">
@@ -177,10 +176,10 @@
 		<DoubleFrequencyDial
 			DialEnabled={frequencyDialEnabled}
 			id="radio-frequency-dial"
-			on:dialInnerAntiClockwiseTurn={onRadioFrequencyReduceSmall}
-			on:dialInnerClockwiseTurn={onRadioFrequencyIncreaseSmall}
-			on:dialOuterAntiClockwiseTurn={onRadioFrequencyReduceLarge}
-			on:dialOuterClockwiseTurn={onRadioFrequencyIncreaseLarge}
+			dialInnerAntiClockwiseTurn={onRadioFrequencyReduceSmall}
+			dialInnerClockwiseTurn={onRadioFrequencyIncreaseSmall}
+			dialOuterAntiClockwiseTurn={onRadioFrequencyReduceLarge}
+			dialOuterClockwiseTurn={onRadioFrequencyIncreaseLarge}
 		/>
 	</div>
 </div>

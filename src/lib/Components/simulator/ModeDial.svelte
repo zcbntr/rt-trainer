@@ -2,7 +2,6 @@
 	import { run } from 'svelte/legacy';
 
 	import { onMount } from 'svelte';
-	import { createEventDispatcher } from 'svelte';
 
 	// Used to limit number of modes so that the dial doesn't get too crowded
 	type ArrayMaxLength7MinLength2 = readonly [
@@ -19,22 +18,18 @@
 		CurrentModeIndex?: number;
 		DialEnabled?: boolean;
 		id?: string;
+		modeChange?: (index: number) => void;
 	}
 
 	let {
 		Modes,
 		CurrentModeIndex = $bindable(0),
 		DialEnabled = $bindable(false),
-		id = ''
+		id = '',
+		modeChange = () => {}
 	}: Props = $props();
 	let mounted: boolean = $state(false);
 	let width: string = Modes.length > 2 ? 'w-40' : 'w-28';
-
-	const dispatch = createEventDispatcher();
-
-	run(() => {
-		dispatch('modeChange', CurrentModeIndex);
-	});
 
 	run(() => {
 		if (mounted) {
@@ -142,11 +137,13 @@
 		}
 
 		CurrentModeIndex = modeIndex;
+		modeChange(modeIndex);
 	}
 
 	onMount(() => {
 		mounted = true;
 		addModes();
+		modeChange(CurrentModeIndex);
 	});
 </script>
 

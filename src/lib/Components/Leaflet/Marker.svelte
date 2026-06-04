@@ -1,17 +1,12 @@
 <!-- Based off of ShipBit's youtube tutorial https://www.youtube.com/watch?v=JFctWXEzFZw -->
 
 <script lang="ts">
-	import {
-		onMount,
-		onDestroy,
-		getContext,
-		setContext,
-		createEventDispatcher
-	} from 'svelte';
+	import { onMount, onDestroy, getContext, setContext } from 'svelte';
 	import type * as Leaflet from 'leaflet';
 	import { getLeaflet } from './leaflet';
 	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
 	import type Airport from '$lib/logic/aeronautics/Airport';
+	import type { MarkerLayerDetail } from '$lib/components/leaflet/types';
 
 	interface Props {
 		width: number;
@@ -22,6 +17,12 @@
 		draggable?: boolean;
 		iconAnchor?: Leaflet.PointExpression;
 		children?: import('svelte').Snippet;
+		drag?: (detail: MarkerLayerDetail) => void;
+		click?: (detail: MarkerLayerDetail) => void;
+		mouseover?: (detail: MarkerLayerDetail) => void;
+		mouseout?: (detail: MarkerLayerDetail) => void;
+		mouseup?: (detail: MarkerLayerDetail) => void;
+		dragend?: (detail: MarkerLayerDetail) => void;
 	}
 
 	let {
@@ -32,10 +33,14 @@
 		aeroObject = undefined,
 		draggable = false,
 		iconAnchor,
-		children
+		children,
+		drag = () => {},
+		click = () => {},
+		mouseover = () => {},
+		mouseout = () => {},
+		mouseup = () => {},
+		dragend = () => {}
 	}: Props = $props();
-
-	const dispatch = createEventDispatcher();
 
 	let marker: Leaflet.Marker | undefined = $state();
 	let markerElement: HTMLElement;
@@ -76,23 +81,29 @@
 
 		if (draggable) marker.dragging?.enable();
 		marker.on('drag', (e) => {
-			dispatch('drag', { event: e, aeroObject, marker });
+			if (!marker) return;
+			drag({ event: e, aeroObject, marker });
 			map?.invalidateSize();
 		});
 		marker.on('click', (e) => {
-			dispatch('click', { event: e, aeroObject, marker });
+			if (!marker) return;
+			click({ event: e, aeroObject, marker });
 		});
 		marker.on('mouseover', (e) => {
-			dispatch('mouseover', { event: e, aeroObject, marker });
+			if (!marker) return;
+			mouseover({ event: e, aeroObject, marker });
 		});
 		marker.on('mouseout', (e) => {
-			dispatch('mouseout', { event: e, aeroObject, marker });
+			if (!marker) return;
+			mouseout({ event: e, aeroObject, marker });
 		});
 		marker.on('mouseup', (e) => {
-			dispatch('mouseup', { event: e, aeroObject, marker });
+			if (!marker) return;
+			mouseup({ event: e, aeroObject, marker });
 		});
 		marker.on('dragend', (e) => {
-			dispatch('dragend', { event: e, aeroObject, marker });
+			if (!marker) return;
+			dragend({ event: e, aeroObject, marker });
 		});
 	});
 

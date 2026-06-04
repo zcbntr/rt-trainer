@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { onMount, onDestroy, getContext, setContext, createEventDispatcher } from 'svelte';
+	import { onMount, onDestroy, getContext, setContext } from 'svelte';
 	import type * as Leaflet from 'leaflet';
 	import { getLeaflet } from './leaflet';
 	import type Airspace from '$lib/logic/aeronautics/Airspace';
+	import type { PolygonLayerDetail } from '$lib/components/leaflet/types';
 
 	interface Props {
 		latLngArray: Leaflet.LatLngExpression[];
@@ -12,6 +13,9 @@
 		fillOpacity?: number;
 		weight?: number;
 		children?: import('svelte').Snippet;
+		click?: (detail: PolygonLayerDetail) => void;
+		mouseover?: (detail: PolygonLayerDetail) => void;
+		mouseout?: (detail: PolygonLayerDetail) => void;
 	}
 
 	let {
@@ -21,10 +25,11 @@
 		fillColor = undefined,
 		fillOpacity = 0.2,
 		weight = 1,
-		children
+		children,
+		click = () => {},
+		mouseover = () => {},
+		mouseout = () => {}
 	}: Props = $props();
-
-	const dispatch = createEventDispatcher();
 
 	let polygon: Leaflet.Polygon | undefined = $state();
 	let polygonElement: HTMLElement;
@@ -54,13 +59,16 @@
 		}).addTo(map);
 
 		polygon.on('click', (e) => {
-			dispatch('click', { event: e, waypoint: aeroObject, polygon });
+			if (!polygon) return;
+			click({ event: e, waypoint: aeroObject, polygon });
 		});
 		polygon.on('mouseover', (e) => {
-			dispatch('mouseover', { event: e, waypoint: aeroObject, polygon });
+			if (!polygon) return;
+			mouseover({ event: e, waypoint: aeroObject, polygon });
 		});
 		polygon.on('mouseout', (e) => {
-			dispatch('mouseout', { event: e, waypoint: aeroObject, polygon });
+			if (!polygon) return;
+			mouseout({ event: e, waypoint: aeroObject, polygon });
 		});
 	});
 
