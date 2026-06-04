@@ -2,11 +2,10 @@
 	import { run } from 'svelte/legacy';
 
 	import { AllAirportsStore, AllAirspacesStore, fetchAirports, fetchAirspaces } from '$lib/stores';
-	import type Airport from '$lib/logic/aeronautics/Airport';
-	import type Airspace from '$lib/logic/aeronautics/Airspace';
 	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
 	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import { init } from '@paralleldrive/cuid2';
+	import { get } from 'svelte/store';
 
 	interface Props {
 		parent: any;
@@ -14,24 +13,13 @@
 
 	let { parent }: Props = $props();
 
-	let validSettings: boolean = $state(false);
-
 	const shortCUID = init({ length: 8 });
 
-	// Load stores if not populated
-	let airspaces: Airspace[] = [];
-	AllAirspacesStore.subscribe((value) => {
-		airspaces = value;
+	$effect(() => {
+		if ($AllAirportsStore.length === 0) fetchAirports();
+		if ($AllAirspacesStore.length === 0) fetchAirspaces();
 	});
-	if (airspaces.length === 0) fetchAirspaces();
 
-	let airports: Airport[] = [];
-	AllAirportsStore.subscribe((value) => {
-		airports = value;
-	});
-	if (airports.length === 0) fetchAirports();
-
-	// Form Data
 	const formData = $state({
 		routeSeed: shortCUID(),
 		scenarioSeed: shortCUID(),
@@ -39,25 +27,27 @@
 	});
 
 	function onFormSubmit() {
-		// Check route generated correctly
-		const routeData = generateFRTOLRouteFromSeed(formData.routeSeed, airports, airspaces, 30);
+		const routeData = generateFRTOLRouteFromSeed(
+			formData.routeSeed,
+			get(AllAirportsStore),
+			get(AllAirspacesStore),
+			30
+		);
 		if (routeData) {
-			// Eventually check the scenario itself can be generated, for now just pass the route data and let the page handle it
 			loadRouteData(routeData);
 		} else {
-			// Show error - this is temp - should turn the seed input red and give an error message
 			validSettings = false;
 		}
 	}
 
-	// Base Classes
 	const cBase = 'card p-4 w-modal-slim shadow-xl space-y-4';
 	const cHeader = 'text-2xl font-bold';
 	const cForm = 'space-y-4 rounded-container';
 
-	// Reactive classes
+	let validSettings = $state(false);
 	let cRouteSeedInput = $state('');
 	let cRouteSeedInputErrorMessage = $state('hidden');
+
 	run(() => {
 		if (
 			formData.scenarioSeed &&
@@ -65,10 +55,8 @@
 			formData.routeSeed &&
 			formData.routeSeed.length > 0
 		) {
-			// Enable save button
 			validSettings = true;
 		} else {
-			// Disable save button
 			validSettings = false;
 		}
 	});
@@ -111,7 +99,7 @@
 					id="emergency-events-checkbox"
 					class="checkbox"
 					type="checkbox"
-					checked
+					checked={formData.hasEmergencies}
 					onchange={() => (formData.hasEmergencies = !formData.hasEmergencies)}
 				/>
 				<p>Emergency Events</p>

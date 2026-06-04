@@ -2,11 +2,7 @@
 	import { RadioCallsHistoryStore } from '$lib/stores';
 	import { Accordion } from '@skeletonlabs/skeleton-svelte';
 	import Results from '$lib/logic/Results';
-	let results: Results = $state();
-
-	RadioCallsHistoryStore.subscribe((value) => {
-		results = new Results(value);
-	});
+	const results = $derived(new Results($RadioCallsHistoryStore));
 </script>
 
 <div class="card p-4 w-9/12">

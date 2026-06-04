@@ -6,15 +6,8 @@
 	import FrequencyDial from './FrequencyDial.svelte';
 
 	let mounted: boolean = $state(false);
-	let currentAltitude: number = $state(0);
-	let currentPressure: number = $state(1013);
 
-	CurrentScenarioPointStore.subscribe((currentRoutePoint) => {
-		if (currentRoutePoint != null) {
-			let targetPose = currentRoutePoint.pose;
-			currentAltitude = targetPose.altitude;
-		}
-	});
+	const currentAltitude = $derived($CurrentScenarioPointStore?.pose.altitude ?? 0);
 
 	function setAltitudeDial(altitude: number) {
 		const longArrow = document.getElementsByClassName('long-arrow')[0] as HTMLAnchorElement;
@@ -37,16 +30,19 @@
 			// 90 degrees is 1035 (max), -20 degrees is 980 (min), correct with - 540
 			var newRotation = Math.round(((pressure % 360) / 55) * 110) - 540;
 			dialFace.style.transform = 'rotate(' + newRotation + 'deg)';
-			currentAltitude = 30 * pressure - 30390;
 		}
 	}
 
 	function onIncrementSideTurn() {
-		currentPressure += 1;
+		AltimeterStateStore.update((state) => ({
+			pressure: Math.min(1035, state.pressure + 1)
+		}));
 	}
 
 	function onDecrementSideTurn() {
-		currentPressure -= 1;
+		AltimeterStateStore.update((state) => ({
+			pressure: Math.max(980, state.pressure - 1)
+		}));
 	}
 
 	onMount(() => {
@@ -57,13 +53,8 @@
 	run(() => {
 		if (mounted) {
 			setAltitudeDial(currentAltitude);
-			if (currentPressure < 980) currentPressure = 980;
-			if (currentPressure > 1035) currentPressure = 1035;
-			setPressureDial(currentPressure);
+			setPressureDial($AltimeterStateStore.pressure);
 		}
-	});
-	run(() => {
-		AltimeterStateStore.set({ pressure: currentPressure });
 	});
 </script>
 

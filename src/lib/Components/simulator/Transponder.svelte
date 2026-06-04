@@ -6,7 +6,7 @@
 	import Dial from './ModeDial.svelte';
 	import TransponderDisplay from './TransponderDisplay.svelte';
 	import { TransponderStateStore } from '$lib/stores';
-	import type { TransponderState } from '$lib/logic/SimulatorTypes';
+	import { get } from 'svelte/store';
 
 	const transponderDialModes: ArrayMaxLength7MinLength2 = [
 		'OFF',
@@ -27,13 +27,6 @@
 		string?
 	];
 
-	// Holds current transponder state
-	let transponderState: TransponderState = $state({
-		dialMode: 'OFF',
-		frequency: '7000',
-		identEnabled: false,
-		vfrHasExecuted: false
-	});
 	let dialModeIndex: number = $state(0);
 	let displayOn: boolean = $state(false);
 	let digitArr = $state([7, 0, 0, 0]);
@@ -44,20 +37,21 @@
 
 	// Click handlers
 	const handleIDENTButtonClick = () => {
-		if (transponderState.dialMode != 'OFF') {
+		if (get(TransponderStateStore).dialMode != 'OFF') {
 			const IDENTModeButton = document.getElementById('button-ident') as HTMLInputElement;
-			// Make flash continuously when clicked, untill clicked again
 			IDENTModeButton.classList.toggle('blink-continiously');
-			transponderState.identEnabled = !transponderState.identEnabled;
+			TransponderStateStore.update((state) => ({
+				...state,
+				identEnabled: !state.identEnabled
+			}));
 		}
 	};
 
 	const handleVFRButtonClick = () => {
-		if (transponderState.dialMode != 'OFF') {
+		if (get(TransponderStateStore).dialMode != 'OFF') {
 			const VFRModeButton = document.getElementById('button-vfr') as HTMLInputElement;
-			// Make flash on when pressed then remain off
 			VFRModeButton.classList.toggle('blink-once');
-			transponderState.identEnabled = true;
+			TransponderStateStore.update((state) => ({ ...state, identEnabled: true }));
 		}
 	};
 
@@ -83,40 +77,26 @@
 
 	function onTransponderDialModeChange(newModeIndex: number) {
 		if (newModeIndex == 0) {
-			if (transponderState.identEnabled) {
+			if (get(TransponderStateStore).identEnabled) {
 				const IDENTModeButton = document.getElementById('button-ident') as HTMLInputElement;
 				IDENTModeButton.classList.remove('active-button');
-				transponderState.identEnabled = false;
 			}
-			transponderState.dialMode = 'OFF';
 			displayOn = false;
 			frequencyDialEnabled = false;
+			TransponderStateStore.update((state) => ({
+				...state,
+				dialMode: 'OFF',
+				identEnabled: false
+			}));
 		} else {
-			switch (newModeIndex) {
-				case 1:
-					transponderState.dialMode = 'SBY';
-					break;
-				case 2:
-					transponderState.dialMode = 'GND';
-					break;
-				case 3:
-					transponderState.dialMode = 'ON';
-					break;
-				case 4:
-					transponderState.dialMode = 'ALT';
-					break;
-				case 5:
-					transponderState.dialMode = 'TEST';
-					break;
-			}
-
+			const dialModes = ['OFF', 'SBY', 'GND', 'ON', 'ALT', 'TEST'] as const;
 			displayOn = true;
 			frequencyDialEnabled = true;
+			TransponderStateStore.update((state) => ({
+				...state,
+				dialMode: dialModes[newModeIndex] ?? 'SBY'
+			}));
 		}
-
-		// Shouldnt need to do this here as we have a reactive statement for this, but it seems to be necessary
-		// for the store to update when the dail mode changes
-		TransponderStateStore.set(transponderState);
 	}
 
 	function onTransponderFrequencyIncrease(event: Event) {
@@ -139,12 +119,9 @@
 		mounted = true;
 	});
 	run(() => {
-		TransponderStateStore.set(transponderState);
-	});
-	run(() => {
 		if (mounted) {
 			frequency = digitArr.join('');
-			transponderState.frequency = frequency;
+			TransponderStateStore.update((state) => ({ ...state, frequency }));
 		}
 	});
 	// Trigger onTransponderDialModeChange when transponderDialMode changes

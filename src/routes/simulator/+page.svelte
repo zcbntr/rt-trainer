@@ -2,11 +2,8 @@
 	import { run } from 'svelte/legacy';
 
 	import { page } from '$app/stores';
-	import type Scenario from '$lib/logic/Scenario';
 	import type { WaypointURLObject } from '$lib/logic/ScenarioTypes';
 	import Waypoint from '$lib/logic/aeronautics/Waypoint';
-	import type Airspace from '$lib/logic/aeronautics/Airspace';
-	import type Airport from '$lib/logic/aeronautics/Airport';
 	import {
 		type ModalSettings,
 		type ToastSettings
@@ -44,14 +41,9 @@
 		fetchAirports,
 		fetchAirspaces
 	} from '$lib/stores';
-	import type {
-		TransponderState,
-		AircraftDetails,
-		RadioState,
-		AltimeterState
-	} from '$lib/logic/SimulatorTypes';
 	import { isCallsignStandardRegistration, replaceWithPhoneticAlphabet } from '$lib/logic/utils';
 	import { goto } from '$app/navigation';
+	import { get } from 'svelte/store';
 	import RadioCall from '$lib/logic/RadioCall';
 	import Polyline from '$lib/components/leaflet/Polyline.svelte';
 	import Polygon from '$lib/components/leaflet/Polygon.svelte';
@@ -79,8 +71,6 @@
 	// Flag to check if critical data is missing and the user must be prompted to enter it
 	let criticalDataMissing: boolean = $state(false);
 
-	// Scenario objects
-	let waypoints: Waypoint[] = $state([]);
 	let airportIDs: string[] = [];
 
 	// Check whether the seed is specified - if not then warn user
@@ -100,17 +90,18 @@
 	const waypointsString: string | null = $page.url.searchParams.get('waypoints');
 	if (waypointsString != null) {
 		const waypointsDataArray: WaypointURLObject[] = JSON.parse(waypointsString);
-		waypoints = waypointsDataArray.map(
-			(waypoint) =>
-				new Waypoint(
-					waypoint.name,
-					waypoint.location,
-					waypoint.type,
-					waypoint.index,
-					waypoint.referenceObjectId
-				)
+		WaypointsStore.set(
+			waypointsDataArray.map(
+				(waypoint) =>
+					new Waypoint(
+						waypoint.name,
+						waypoint.location,
+						waypoint.type,
+						waypoint.index,
+						waypoint.referenceObjectId
+					)
+			)
 		);
-		WaypointsStore.set(waypoints);
 	} else {
 		criticalDataMissing = true;
 	}
@@ -177,34 +168,10 @@
 		tutorial = tutorialString === 'true';
 	}
 
-	// Load stores if not populated
-	let airspaces: Airspace[] = $state([]);
-	AllAirspacesStore.subscribe((value) => {
-		airspaces = value;
+	$effect(() => {
+		if ($AllAirspacesStore.length === 0) fetchAirspaces();
+		if ($AllAirportsStore.length === 0) fetchAirports();
 	});
-	if (airspaces.length === 0) fetchAirspaces();
-
-	let onRouteAirspaces: Airspace[] = $state([]);
-	OnRouteAirspacesStore.subscribe((value) => {
-		onRouteAirspaces = value;
-	});
-
-	let airports: Airport[] = $state([]);
-	AllAirportsStore.subscribe((value) => {
-		airports = value;
-	});
-	if (airports.length === 0) fetchAirports();
-
-	let onRouteAirports: Airport[] = [];
-	OnRouteAirportsStore.subscribe((value) => {
-		onRouteAirports = value;
-	});
-
-	WaypointsStore.subscribe((value) => {
-		waypoints = value;
-	});
-
-	let scenario: Scenario | undefined = $state(undefined);
 
 	if (criticalDataMissing) {
 		// Set a short timeout then trigger modal to load scenario data
@@ -226,28 +193,26 @@
 
 	function loadScenario() {
 		try {
-			scenario = generateScenario(
+			const scenario = generateScenario(
 				seed,
-				waypoints,
-				onRouteAirports,
-				onRouteAirspaces,
+				get(WaypointsStore),
+				get(OnRouteAirportsStore),
+				get(OnRouteAirspacesStore),
 				hasEmergencies
 			);
+			ScenarioStore.set(scenario);
+
+			if (endPointIndex == -1) {
+				EndPointIndexStore.set(scenario.scenarioPoints.length - 1);
+			} else {
+				EndPointIndexStore.set(endPointIndex);
+			}
 		} catch (e) {
 			console.error(e);
-			return;
-		}
-
-		ScenarioStore.set(scenario);
-
-		if (endPointIndex == -1) {
-			EndPointIndexStore.set(scenario.scenarioPoints.length - 1);
-		} else {
-			EndPointIndexStore.set(endPointIndex);
 		}
 	}
 
-	ScenarioStore.set(scenario);
+	ScenarioStore.set(undefined);
 	CurrentScenarioPointIndexStore.set(startPointIndex);
 	StartPointIndexStore.set(startPointIndex);
 
@@ -258,29 +223,13 @@
 		aircraftType: aircraftType
 	});
 
-	// Simulator state and settings
-	let aircraftDetails: AircraftDetails = $state(); // Current settings of the simulator
-	let radioState: RadioState = $state(); // Current radio settings
-	let transponderState: TransponderState = $state(); // Current transponder settings
-	let altimeterState: AltimeterState;
-	let atcMessage: string = $state();
-	let userMessage: string;
-	let currentTarget: string;
-	let currentTargetFrequency: string;
-	let currentRoutePointIndex: number = 0;
 	let failedAttempts: number = 0;
 	let currentRadioCall: RadioCall;
-	let currentSimConext: string;
 
 	// Page settings
-	let speechRecognitionSupported: boolean = $state(false); // Speech recognition is not supported in all browsers e.g. firefox
-	let speechNoiseLevel: number = $state(0);
-	let readRecievedCalls: boolean = $state(false);
-	let liveFeedback: boolean = false;
+	let speechRecognitionSupported: boolean = $state(false);
 	let tutorialStep4: boolean = $state(false);
 
-	// Tutorial state
-	let tutorialEnabled: boolean = $state(false);
 	let tutorialComplete: boolean = $state(false);
 	let tutorialStep: number = 1;
 
@@ -291,84 +240,17 @@
 
 	const toastStore = getToastStore();
 
-	ScenarioStore.subscribe((value) => {
-		scenario = value;
+	const aircraftPosition = $derived.by((): [number, number] => {
+		const pos = $CurrentScenarioPointStore?.pose.position;
+		if (!pos) return [0, 0];
+		return [pos[1], pos[0]];
 	});
 
-	SpeechOutputEnabledStore.subscribe((value) => {
-		readRecievedCalls = value;
-	});
-
-	SpeechNoiseStore.subscribe((value) => {
-		speechNoiseLevel = value;
-	});
-
-	LiveFeedbackStore.subscribe((value) => {
-		liveFeedback = value;
-	});
-
-	AircraftDetailsStore.subscribe((value) => {
-		aircraftDetails = value;
-	});
-
-	RadioStateStore.subscribe((value) => {
-		radioState = value;
-	});
-
-	TransponderStateStore.subscribe((value) => {
-		transponderState = value;
-	});
-
-	AltimeterStateStore.subscribe((value) => {
-		altimeterState = value;
-	});
-
-	UserMessageStore.subscribe((value) => {
-		userMessage = value;
-	});
-
-	MostRecentlyReceivedMessageStore.subscribe((value) => {
-		atcMessage = value;
-	});
-
-	CurrentScenarioContextStore.subscribe((value) => {
-		currentSimConext = value;
-	});
-
-	CurrentScenarioPointIndexStore.subscribe((value) => {
-		currentRoutePointIndex = value;
-	});
-
-	CurrentTargetStore.subscribe((value) => {
-		currentTarget = value;
-	});
-
-	CurrentTargetFrequencyStore.subscribe((value) => {
-		currentTargetFrequency = value;
-	});
-
-	TutorialStore.subscribe((value) => {
-		tutorialEnabled = value;
-	});
-
-	let waypointPoints: number[][] = $state([]);
-	let bounds: Leaflet.LatLngBounds;
-	let bbox: number[] = [];
-	WaypointPointsMapStore.subscribe((value) => {
-		waypointPoints = value;
-	});
-
-	let position: number[] = $state([0, 0]);
-	let displayHeading: number = $state(0);
-	let altitude: number = 0;
-	let airSpeed: number = 0;
-
-	CurrentScenarioPointStore.subscribe((value) => {
-		position = value?.pose.position.reverse() ?? [0, 0];
-		displayHeading = value?.pose.trueHeading ? value?.pose.trueHeading - 45 : 0;
-		altitude = value?.pose.altitude ?? 0;
-		airSpeed = value?.pose.airSpeed ?? 0;
-	});
+	const displayHeading = $derived(
+		$CurrentScenarioPointStore?.pose.trueHeading
+			? $CurrentScenarioPointStore.pose.trueHeading - 45
+			: 0
+	);
 
 	/**
 	 * Reads out the current atc message using the speech synthesis API, with added static noise
@@ -385,7 +267,7 @@
 			const audioContext = new AudioContext();
 
 			// Create speech synthesis utterance and noise buffer
-			const speech = new SpeechSynthesisUtterance(atcMessage);
+			const speech = new SpeechSynthesisUtterance(get(MostRecentlyReceivedMessageStore));
 			const noiseBuffer = generateStaticNoise(45, speech.rate * 44100);
 			const noiseSource = new AudioBufferSourceNode(audioContext, { buffer: noiseBuffer });
 			const gainNode = new GainNode(audioContext);
@@ -435,6 +317,11 @@
 	 * @returns boolean
 	 */
 	function checkClientSimStateCorrect(): boolean {
+		const radioState = get(RadioStateStore);
+		const transponderState = get(TransponderStateStore);
+		const altimeterState = get(AltimeterStateStore);
+		const scenario = get(ScenarioStore);
+
 		if (radioState.dialMode == 'OFF') {
 			modalStore.trigger({
 				type: 'alert',
@@ -500,7 +387,7 @@
 			return value;
 		});
 
-		if (liveFeedback) {
+		if (get(LiveFeedbackStore)) {
 			// Clear previous toasts so only one feedback shown at a time
 			toastStore.clear();
 
@@ -548,6 +435,7 @@
 
 			// Make ATC respond with say again and do not advance the simulator
 			if (callsignMentioned) {
+				const aircraftDetails = get(AircraftDetailsStore);
 				if (isCallsignStandardRegistration(aircraftDetails.callsign)) {
 					MostRecentlyReceivedMessageStore.set(
 						aircraftDetails.prefix +
@@ -595,7 +483,12 @@
 	 * @returns void
 	 */
 	function handleSubmit() {
-		// Check the call is not empty
+		const userMessage = get(UserMessageStore);
+		const scenario = get(ScenarioStore);
+		const aircraftDetails = get(AircraftDetailsStore);
+		const transponderState = get(TransponderStateStore);
+		const radioState = get(RadioStateStore);
+
 		if (
 			userMessage == undefined ||
 			userMessage == '' ||
@@ -604,7 +497,6 @@
 			return;
 		}
 
-		// Check sim state matches expected state
 		if (scenario == undefined) {
 			console.log('Error: No route');
 			modalStore.trigger({
@@ -631,8 +523,8 @@
 			aircraftDetails.callsign,
 			scenario.getCurrentPoint().updateData.callsignModified,
 			transponderState.vfrHasExecuted,
-			currentTarget,
-			currentTargetFrequency,
+			get(CurrentTargetStore),
+			get(CurrentTargetFrequencyStore),
 			radioState.activeFrequency,
 			transponderState.frequency,
 			aircraftDetails.aircraftType
@@ -647,7 +539,7 @@
 		if (!handleFeedback(response)) return;
 
 		// If the user has reached the end of the route, then show a modal asking if they want to view their feedback
-		if (currentRoutePointIndex == endPointIndex) {
+		if (get(CurrentScenarioPointIndexStore) == get(EndPointIndexStore)) {
 			const m: ModalSettings = {
 				type: 'confirm',
 				title: 'Scenario Complete',
@@ -682,7 +574,7 @@
 	}
 
 	function cancelTutorial(): void {
-		tutorialEnabled = false;
+		TutorialStore.set(false);
 	}
 
 	onMount(async () => {
@@ -693,7 +585,11 @@
 		}
 	});
 	run(() => {
-		if (!criticalDataMissing && airports.length > 0 && airspaces.length > 0) {
+		if (
+			!criticalDataMissing &&
+			$AllAirportsStore.length > 0 &&
+			$AllAirspacesStore.length > 0
+		) {
 			loadScenario();
 		}
 	});
@@ -716,22 +612,23 @@
 		}
 	});
 	run(() => {
-		if (readRecievedCalls && atcMessage) {
-			TTSWithNoise(speechNoiseLevel);
+		if ($SpeechOutputEnabledStore && $MostRecentlyReceivedMessageStore) {
+			TTSWithNoise($SpeechNoiseStore);
 		}
 	});
 	let tutorialStep2 = $derived(
-		transponderState?.dialMode == 'SBY' && radioState?.dialMode == 'SBY'
+		$TransponderStateStore?.dialMode == 'SBY' && $RadioStateStore?.dialMode == 'SBY'
 	);
 	let tutorialStep3 = $derived(
-		radioState?.activeFrequency == scenario?.getCurrentPoint().updateData.currentTargetFrequency
+		$RadioStateStore?.activeFrequency ==
+			$ScenarioStore?.getCurrentPoint().updateData.currentTargetFrequency
 	);
 </script>
 
 <div class="flex" style="justify-content: center;">
 	<div class="w-full max-w-screen-lg p-5">
 		<div class="flex flex-row place-content-center gap-5 flex-wrap">
-			{#if tutorialEnabled && !tutorialComplete}
+			{#if $TutorialStore && !tutorialComplete}
 				<div class="card bg-primary-900 text-white p-3 rounded-lg sm:w-7/12 sm:mx-10">
 					<Stepper on:complete={onCompleteHandler} on:step={onStepHandler}>
 						<Step>
@@ -772,8 +669,8 @@
 								<li>Type your message in the input box.</li>
 								<li>Or enable speech input and say your message out loud.</li>
 								<li>
-									Your callsign is `{aircraftDetails.prefix}
-									{aircraftDetails.callsign}`. You can change this in your
+									Your callsign is `{$AircraftDetailsStore.prefix}
+									{$AircraftDetailsStore.callsign}`. You can change this in your
 									<a href="/profile">profile settings</a>.
 								</li>
 							</ul>
@@ -801,10 +698,10 @@
 
 			<div class="card p-2 rounded-md w-[420px] h-[452px] bg-neutral-600 flex flex-row grow">
 				<div class="w-full h-full">
-					<Map view={scenario?.getCurrentPoint().pose.position} zoom={9}>
-						{#if waypointPoints.length > 0}
-							{#each waypoints as waypoint (waypoint.index)}
-								{#if waypoint.index == waypoints.length - 1 || waypoint.type == WaypointType.Airport}
+					<Map view={$ScenarioStore?.getCurrentPoint().pose.position} zoom={9}>
+						{#if $WaypointPointsMapStore.length > 0}
+							{#each $WaypointsStore as waypoint (waypoint.index)}
+								{#if waypoint.index == $WaypointsStore.length - 1 || waypoint.type == WaypointType.Airport}
 									<Marker
 										latLng={[waypoint.location[1], waypoint.location[0]]}
 										width={50}
@@ -820,7 +717,7 @@
 											e.detail.marker.closePopup();
 										}}
 									>
-										{#if waypoint.index == waypoints.length - 1}
+										{#if waypoint.index == $WaypointsStore.length - 1}
 											<div class="text-2xl">🏁</div>
 										{:else if waypoint.type == WaypointType.Airport}
 											<div class="text-2xl">🛫</div>
@@ -861,12 +758,14 @@
 							{/each}
 						{/if}
 
-						{#each waypointPoints as waypointPoint, index}
+						{#each $WaypointPointsMapStore as waypointPoint, index}
 							{#if index > 0}
-								<!-- Force redraw if either waypoint of the line changes location -->
-								{#key [waypointPoints[index - 1], waypointPoints[index]]}
+								{#key [$WaypointPointsMapStore[index - 1], $WaypointPointsMapStore[index]]}
 									<Polyline
-										latLngArray={[waypointPoints[index - 1], waypointPoints[index]]}
+										latLngArray={[
+											$WaypointPointsMapStore[index - 1] as [number, number],
+											$WaypointPointsMapStore[index] as [number, number]
+										]}
 										colour="#FF69B4"
 										fillOpacity={1}
 										weight={7}
@@ -875,7 +774,7 @@
 							{/if}
 						{/each}
 
-						{#each onRouteAirspaces as airspace}
+						{#each $OnRouteAirspacesStore as airspace}
 							{#if airspace.type == 14}
 								<Polygon
 									latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
@@ -911,16 +810,16 @@
 							{/if}
 						{/each}
 
-						{#key position}
-							<Marker latLng={position} width={50} height={50} rotation={displayHeading}>
+						{#key aircraftPosition}
+							<Marker latLng={aircraftPosition} width={50} height={50} rotation={displayHeading}>
 								<div class="text-2xl">🛩️</div>
 
 								<Popup
 									><div class="flex flex-col gap-2">
 										<div>
 											<!-- Lat, Long format -->
-											<div>{position[1].toFixed(6)}</div>
-											<div>{position[0].toFixed(6)}</div>
+											<div>{aircraftPosition[1].toFixed(6)}</div>
+											<div>{aircraftPosition[0].toFixed(6)}</div>
 										</div>
 									</div></Popup
 								>
@@ -934,11 +833,11 @@
 
 			<div class="w-full flex flex-row flex-wrap gap-5 p-2 text-neutral-600/50">
 				<div>
-					Your callsign: {aircraftDetails.prefix}
-					{aircraftDetails.callsign}
+					Your callsign: {$AircraftDetailsStore.prefix}
+					{$AircraftDetailsStore.callsign}
 				</div>
 				<div>
-					Your aircraft type: {aircraftDetails.aircraftType}
+					Your aircraft type: {$AircraftDetailsStore.aircraftType}
 				</div>
 			</div>
 		</div>

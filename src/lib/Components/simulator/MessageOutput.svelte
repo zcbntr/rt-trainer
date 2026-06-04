@@ -1,55 +1,23 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import {
-		CurrentTargetStore,
-		MostRecentlyReceivedMessageStore,
-		SpeechOutputEnabledStore,
-		CurrentTargetFrequencyStore,
 		CurrentScenarioContextStore,
-		SpeechNoiseStore
+		MostRecentlyReceivedMessageStore,
+		SpeechNoiseStore,
+		SpeechOutputEnabledStore
 	} from '$lib/stores';
 	import { type PopupSettings, Switch } from '@skeletonlabs/skeleton-svelte';
+
 	interface Props {
-		[key: string]: any;
+		class?: string;
 	}
 
-	let { ...props }: Props = $props();
+	let { class: className = '' }: Props = $props();
 
-	let currentTarget: string;
-	let currentTargetFrequency: string = '000.000';
-	let readReceivedCalls: boolean = $state(false);
-	let speechNoiseLevel: number = $state(0);
-
-	CurrentTargetStore.subscribe((value) => {
-		currentTarget = value;
-	});
-
-	CurrentTargetFrequencyStore.subscribe((value) => {
-		currentTargetFrequency = value;
-	});
-
-	let mostRecentlyReceivedMessage: string = $state();
-
-	MostRecentlyReceivedMessageStore.subscribe((value) => {
-		mostRecentlyReceivedMessage = value;
-	});
-
-	let currentContext: string = $state();
-	CurrentScenarioContextStore.subscribe((value) => {
-		currentContext = value;
-		if (currentContext === '') {
-			currentContext = 'Context for your current point in the scenario will appear here';
-		}
-	});
-
-	run(() => {
-		SpeechOutputEnabledStore.set(readReceivedCalls);
-	});
-
-	run(() => {
-		SpeechNoiseStore.set(speechNoiseLevel);
-	});
+	const currentContextDisplay = $derived(
+		$CurrentScenarioContextStore === ''
+			? 'Context for your current point in the scenario will appear here'
+			: $CurrentScenarioContextStore
+	);
 
 	const audioMessagesInfoTooltip: PopupSettings = {
 		event: 'hover',
@@ -65,13 +33,13 @@
 </script>
 
 <div
-	class="p-1.5 card rounded-md max-w-lg min-h-72 flex flex-col grid-cols-1 gap-1 bg-neutral-600 text-white grow {props.class}"
+	class="p-1.5 card rounded-md max-w-lg min-h-72 flex flex-col grid-cols-1 gap-1 bg-neutral-600 text-white grow {className}"
 >
 	<div
 		class="border-0 card bg-neutral-700 grow flex flex-col justify-self-stretch px-2 py-1.5 gap-2"
 	>
-		<div>{currentContext}</div>
-		<div>{mostRecentlyReceivedMessage}</div>
+		<div>{currentContextDisplay}</div>
+		<div>{$MostRecentlyReceivedMessageStore}</div>
 	</div>
 
 	<div class="flex flex-row gap-x-1 flex-wrap">
@@ -82,13 +50,14 @@
 						<Switch
 							id="enabled-audio-messages"
 							name="slider-label"
+							checked={$SpeechOutputEnabledStore}
 							active="bg-primary-500"
 							size="sm"
 							role="switch"
-							aria-checked={readReceivedCalls}
+							aria-checked={$SpeechOutputEnabledStore}
 							aria-label="Toggle text-to-speech audio messages"
 							on:click={() => {
-								readReceivedCalls = !readReceivedCalls;
+								$SpeechOutputEnabledStore = !$SpeechOutputEnabledStore;
 							}}
 						/>
 						<div class="[&>*]:pointer-events-none" use:popup={audioMessagesInfoTooltip}>
@@ -108,12 +77,12 @@
 							name="slider-label"
 							active="bg-primary-500"
 							size="sm"
-							disabled={!readReceivedCalls}
+							disabled={!$SpeechOutputEnabledStore}
 							role="switch"
-							aria-checked={speechNoiseLevel > 0}
+							aria-checked={$SpeechNoiseStore > 0}
 							aria-label="Toggle interference noise"
 							on:click={() => {
-								speechNoiseLevel = speechNoiseLevel === 0 ? 0.1 : 0;
+								$SpeechNoiseStore = $SpeechNoiseStore === 0 ? 0.1 : 0;
 							}}
 						/>
 						<div class="[&>*]:pointer-events-none" use:popup={audioMessagesNoiseInfoTooltip}>

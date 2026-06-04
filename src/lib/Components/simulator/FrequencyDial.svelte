@@ -1,16 +1,23 @@
-<!-- @migration-task Error while migrating Svelte code: $$props is used together with named props in a way that cannot be automatically migrated. -->
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	export let DialEnabled: boolean = false;
-	export let id: string = '';
-	var intervalId: any;
+
+	interface Props {
+		class?: string;
+		DialEnabled?: boolean;
+		id?: string;
+	}
+
+	let { class: className = '', DialEnabled = false, id = '' }: Props = $props();
+	let intervalId: ReturnType<typeof setInterval> | undefined;
 	let intervalDuration: number = 250;
 
-	$: enabledClass = DialEnabled ? 'enabled' : 'disabled';
+	const enabledClass = $derived(DialEnabled ? 'enabled' : 'disabled');
 
-	$: if (!DialEnabled) {
-		clearInterval(intervalId);
-	}
+	$effect(() => {
+		if (!DialEnabled) {
+			clearInterval(intervalId);
+		}
+	});
 
 	const dispatch = createEventDispatcher();
 
@@ -57,7 +64,7 @@
 	}
 </script>
 
-<div class="flex flex-row {$$props.class}">
+<div class="flex flex-row {className}">
 	<div id={'dial-and-frequency-container-' + id} class="flex flex-col place-content-center">
 		<div id={'dial-container-' + id} class="relative">
 			<div

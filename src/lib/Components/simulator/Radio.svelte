@@ -6,7 +6,7 @@
 	import RadioDisplay from './RadioDisplay.svelte';
 	import TransmitButton from './TransmitButton.svelte';
 	import { RadioStateStore } from '$lib/stores';
-	import type { RadioState } from '$lib/logic/SimulatorTypes';
+	import { get } from 'svelte/store';
 
 	var RadioDialModes: ArrayMaxLength7MinLength2 = ['OFF', 'SBY'];
 	type ArrayMaxLength7MinLength2 = readonly [
@@ -19,15 +19,6 @@
 		string?
 	];
 
-	// Holds current radio settings
-	let radioState: RadioState = $state({
-		mode: 'OFF',
-		dialMode: 'OFF',
-		activeFrequency: '121.800',
-		standbyFrequency: '129.800',
-		tertiaryFrequency: '177.200'
-	});
-
 	let activeFrequency: number = $state(121.8);
 	let standbyFrequency: number = $state(129.8);
 	let tertiaryFrequency: number = $state(177.2);
@@ -37,12 +28,8 @@
 	let transmitButtonEnabled: boolean = $state(false);
 	let transmitting: boolean = false;
 
-	run(() => {
-		RadioStateStore.set(radioState);
-	});
-
-	// Click handlers
 	const handleCOMButtonClick = () => {
+		const radioState = get(RadioStateStore);
 		if (radioState.dialMode != 'OFF') {
 			const COMModeButton = document.getElementById('button-com') as HTMLInputElement;
 			if (COMModeButton != null) {
@@ -51,7 +38,7 @@
 						const NAVModeButton = document.getElementById('button-nav') as HTMLInputElement;
 						NAVModeButton.classList.remove('active-button');
 					}
-					radioState.mode = 'COM';
+					RadioStateStore.update((state) => ({ ...state, mode: 'COM' }));
 					COMModeButton.classList.add('active-button');
 				}
 			}
@@ -59,6 +46,7 @@
 	};
 
 	const handleNAVButtonClick = () => {
+		const radioState = get(RadioStateStore);
 		if (radioState.dialMode != 'OFF') {
 			const NAVModeButton = document.getElementById('button-nav') as HTMLInputElement;
 			if (NAVModeButton != null) {
@@ -67,7 +55,7 @@
 						const COMModeButton = document.getElementById('button-com') as HTMLInputElement;
 						COMModeButton.classList.remove('active-button');
 					}
-					radioState.mode = 'NAV';
+					RadioStateStore.update((state) => ({ ...state, mode: 'NAV' }));
 					NAVModeButton.classList.add('active-button');
 				}
 			}
@@ -75,18 +63,21 @@
 	};
 
 	const handleSWAPButtonClick = () => {
-		if (radioState.dialMode != 'OFF') {
+		if (get(RadioStateStore).dialMode != 'OFF') {
 			let tempFrequency: number = activeFrequency;
 			activeFrequency = standbyFrequency;
 			standbyFrequency = tempFrequency;
 
-			radioState.activeFrequency = activeFrequency.toFixed(3);
-			radioState.standbyFrequency = standbyFrequency.toFixed(3);
+			RadioStateStore.update((state) => ({
+				...state,
+				activeFrequency: activeFrequency.toFixed(3),
+				standbyFrequency: standbyFrequency.toFixed(3)
+			}));
 		}
 	};
 
 	function onDialModeChange(event: Event) {
-		// Fix this hack
+		const radioState = get(RadioStateStore);
 		var newDialModeIndex = (<any>event).detail;
 		if (newDialModeIndex == 0) {
 			if (radioState.mode === 'COM') {
@@ -95,7 +86,7 @@
 			} else if (radioState.mode === 'NAV') {
 				const NAVModeButton = document.getElementById('button-nav') as HTMLInputElement;
 				NAVModeButton.classList.remove('active-button');
-				radioState.mode = 'COM';
+				RadioStateStore.update((state) => ({ ...state, mode: 'COM' }));
 			}
 			displayOn = false;
 			frequencyDialEnabled = false;
@@ -108,36 +99,42 @@
 			transmitButtonEnabled = true;
 		}
 
-		if (newDialModeIndex == 0) {
-			radioState.dialMode = 'OFF';
-		} else {
-			radioState.dialMode = 'SBY';
-		}
-
-		// Shouldnt need to do this here as we have a reactive statement for this, but it seems to be necessary
-		// for the store to update when the dail mode changes
-		RadioStateStore.set(radioState);
+		RadioStateStore.update((state) => ({
+			...state,
+			dialMode: newDialModeIndex == 0 ? 'OFF' : 'SBY'
+		}));
 	}
 
 	function onRadioFrequencyIncreaseLarge() {
 		standbyFrequency += 1;
-		radioState.standbyFrequency = standbyFrequency.toFixed(3);
+		RadioStateStore.update((state) => ({
+			...state,
+			standbyFrequency: standbyFrequency.toFixed(3)
+		}));
 	}
 
 	function onRadioFrequencyReduceLarge() {
 		standbyFrequency -= 1;
-		radioState.standbyFrequency = standbyFrequency.toFixed(3);
+		RadioStateStore.update((state) => ({
+			...state,
+			standbyFrequency: standbyFrequency.toFixed(3)
+		}));
 	}
 
-	// Precision errors are a problem here
 	function onRadioFrequencyIncreaseSmall() {
 		standbyFrequency = parseFloat((standbyFrequency + 0.005).toPrecision(6));
-		radioState.standbyFrequency = standbyFrequency.toFixed(3);
+		RadioStateStore.update((state) => ({
+			...state,
+			standbyFrequency: standbyFrequency.toFixed(3)
+		}));
 	}
 
 	function onRadioFrequencyReduceSmall() {
 		standbyFrequency = parseFloat((standbyFrequency - 0.005).toPrecision(6));
-		radioState.standbyFrequency = standbyFrequency.toFixed(3);
+		RadioStateStore.update((state) => ({
+			...state,
+			standbyFrequency: standbyFrequency.toFixed(3)
+		}));
 	}
 </script>
 
@@ -165,7 +162,7 @@
 		</div>
 		<RadioDisplay
 			DisplayOn={displayOn}
-			bind:mode={radioState.mode}
+			mode={$RadioStateStore.mode}
 			bind:activeFrequency
 			bind:standbyFrequency
 			bind:tertiaryFrequency

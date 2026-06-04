@@ -1,107 +1,96 @@
-<!-- @migration-task Error while migrating Svelte code: $$props is used together with named props in a way that cannot be automatically migrated. -->
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { SpeechBufferStore, SpeechInputEnabledStore } from '$lib/stores';
 	import { swapDigitsWithWords } from '$lib/logic/utils';
 
-	export let enabled: boolean = false;
-	export let speechEnabled: boolean = true; // User's choice
-	export let transmitting: boolean = false;
-	let mounted: boolean = false;
-	let SpeechRecognitionType: any;
-	let SpeechGrammarList: any;
-	let SpeechRecognitionEvent: any;
-	let recognition: any;
-	let transmitButtonClasses = 'disabled';
+	interface Props {
+		class?: string;
+		enabled?: boolean;
+		transmitting?: boolean;
+	}
 
-	SpeechInputEnabledStore.subscribe((value) => {
-		speechEnabled = value;
+	let {
+		class: className = '',
+		enabled = false,
+		transmitting = $bindable(false)
+	}: Props = $props();
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let recognition: any = $state(null);
+	let isActive = $state(false);
+
+	const transmitButtonClasses = $derived(
+		isActive
+			? 'enabled active'
+			: $SpeechInputEnabledStore && enabled
+				? 'enabled'
+				: 'disabled'
+	);
+
+	$effect(() => {
+		if ($SpeechInputEnabledStore) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const SpeechRecognitionType: any =
+				(window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+			const instance = new SpeechRecognitionType();
+			instance.lang = 'en';
+			instance.onresult = (event: any) => {
+				let speechInput = event.results[0][0].transcript;
+				console.log(`You said: ${speechInput}, Confidence: ${event.results[0][0].confidence}`);
+
+				speechInput = swapDigitsWithWords(speechInput);
+
+				SpeechBufferStore.set(speechInput);
+			};
+			recognition = instance;
+		} else {
+			recognition = null;
+		}
 	});
 
-	$: if (speechEnabled && enabled) {
-		transmitButtonClasses = 'enabled';
-	} else {
-		transmitButtonClasses = 'disabled';
-	}
-
-	$: if (speechEnabled) {
-		SpeechRecognitionType = window.SpeechRecognition || window.webkitSpeechRecognition;
-		SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
-		SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
-		recognition = new SpeechRecognitionType();
-		recognition.lang = 'en';
-		recognition.onresult = (event: SpeechRecognitionEvent) => {
-			let speechInput = event.results[0][0].transcript;
-			console.log(`You said: ${speechInput}, Confidence: ${event.results[0][0].confidence}`);
-
-			speechInput = swapDigitsWithWords(speechInput);
-
-			SpeechBufferStore.set(speechInput);
-		};
-	} else {
-		recognition = null;
-	}
-
-	const handleTransmitMouseDown = () => {
-		if (speechEnabled && enabled && !transmitting) {
-			transmitButtonClasses = 'enabled active';
+	const startTransmitting = () => {
+		if ($SpeechInputEnabledStore && enabled && !transmitting) {
+			isActive = true;
 			transmitting = true;
 			recognition?.start();
 		}
 	};
 
-	const handleTransmitMouseUp = () => {
-		if (speechEnabled && enabled && transmitting) {
-			transmitButtonClasses = 'enabled';
+	const stopTransmitting = () => {
+		if ($SpeechInputEnabledStore && enabled && transmitting) {
+			isActive = false;
 			transmitting = false;
 			recognition?.stop();
 		}
+	};
+
+	const handleTransmitMouseDown = () => {
+		startTransmitting();
+	};
+
+	const handleTransmitMouseUp = () => {
+		stopTransmitting();
 	};
 
 	const handleTransmitMouseLeave = () => {
-		if (speechEnabled && enabled && transmitting) {
-			transmitButtonClasses = 'enabled';
-			transmitting = false;
-			recognition?.stop();
-		}
+		stopTransmitting();
 	};
 
-	function onKeyDown(e: { keyCode: any }) {
-		switch (e.keyCode) {
-			case 32:
-				if (speechEnabled) {
-					if (enabled && !transmitting) {
-						transmitButtonClasses = 'enabled active';
-						transmitting = true;
-						recognition?.start();
-					}
-				}
-				break;
+	function onKeyDown(e: KeyboardEvent) {
+		if (e.keyCode === 32) {
+			startTransmitting();
 		}
 	}
 
-	function onKeyUp(e: { keyCode: any }) {
-		switch (e.keyCode) {
-			case 32:
-				if (speechEnabled) {
-					if (enabled && transmitting) {
-						transmitButtonClasses = 'enabled';
-						transmitting = false;
-						recognition?.stop();
-					}
-					break;
-				}
+	function onKeyUp(e: KeyboardEvent) {
+		if (e.keyCode === 32) {
+			stopTransmitting();
 		}
 	}
 
-	onMount(() => {
-		mounted = true;
-	});
 </script>
 
 <div
 	id="transmit-button"
-	class="{$$props.class} {transmitButtonClasses} transmit-button rounded-full cursor-pointer"
+	class="{className} {transmitButtonClasses} transmit-button rounded-full cursor-pointer"
 	on:mousedown={handleTransmitMouseDown}
 	on:keydown={handleTransmitMouseDown}
 	on:mouseup={handleTransmitMouseUp}

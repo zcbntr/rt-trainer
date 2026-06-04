@@ -1,4 +1,3 @@
-<!-- @migration-task Error while migrating Svelte code: $$props is used together with named props in a way that cannot be automatically migrated. -->
 <script lang="ts">
 	import {
 		ExpectedUserMessageStore,
@@ -14,18 +13,22 @@
 
 	const modalStore = getModalStore();
 
-	export let speechRecognitionSupported: boolean = false;
-	let speechInput: boolean = false;
-	let liveFeedback: boolean = false;
-	let mounted: boolean = false;
-	let message: string = '';
+	interface Props {
+		class?: string;
+		speechRecognitionSupported?: boolean;
+	}
 
-	$: if (mounted) {
+	let { class: className = '', speechRecognitionSupported = false }: Props = $props();
+	let mounted = $state(false);
+	let message = $state('');
+
+	$effect(() => {
+		if (!mounted) return;
 		const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
-		if (inputBox.value !== null) {
+		if (inputBox?.value != null) {
 			message = inputBox.value;
 		}
-	}
+	});
 
 	const dispatch = createEventDispatcher();
 
@@ -47,31 +50,31 @@
 		dispatch('submit');
 	};
 
-	ExpectedUserMessageStore.subscribe((value) => {
-		if (value !== '') {
-			resetBox();
-			const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
+	function fillInputFromStore(value: string) {
+		resetBox();
+		const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
+		if (inputBox) {
 			inputBox.value = value;
-			message = value;
-			UserMessageStore.set(message);
+		}
+		message = value;
+		UserMessageStore.set(value);
+	}
+
+	$effect(() => {
+		const expected = $ExpectedUserMessageStore;
+		if (expected !== '') {
+			fillInputFromStore(expected);
 			ExpectedUserMessageStore.set('');
 		}
 	});
 
-	SpeechBufferStore.subscribe((value) => {
-		if (value !== '') {
-			resetBox();
-			const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
-			inputBox.value = value;
-			message = value;
-			UserMessageStore.set(message);
+	$effect(() => {
+		const buffer = $SpeechBufferStore;
+		if (buffer !== '') {
+			fillInputFromStore(buffer);
 			SpeechBufferStore.set('');
 		}
 	});
-
-	$: SpeechInputEnabledStore.set(speechInput);
-
-	$: LiveFeedbackStore.set(liveFeedback);
 
 	onMount(() => {
 		mounted = true;
@@ -97,7 +100,7 @@
 </script>
 
 <div
-	class="p-1.5 card rounded-md max-w-lg min-h-72 flex flex-col grid-cols-1 gap-2 bg-neutral-600 text-white grow {$$props.class}"
+	class="p-1.5 card rounded-md max-w-lg min-h-72 flex flex-col grid-cols-1 gap-2 bg-neutral-600 text-white grow {className}"
 >
 	<div class="grow flex justify-self-stretch">
 		<textarea
@@ -118,14 +121,14 @@
 				<Switch
 					id="enable-live-feedback"
 					name="slider-label"
-					checked={liveFeedback}
+					checked={$LiveFeedbackStore}
 					active="bg-primary-500"
 					size="sm"
 					role="switch"
-					aria-checked={liveFeedback}
+					aria-checked={$LiveFeedbackStore}
 					aria-label="Toggle live feedback"
 					on:click={() => {
-						liveFeedback = !liveFeedback;
+						$LiveFeedbackStore = !$LiveFeedbackStore;
 					}}
 				/>
 				<div
@@ -147,15 +150,15 @@
 					<Switch
 						id="enable-voice-input"
 						name="slider-label"
-						checked={speechInput}
+						checked={$SpeechInputEnabledStore}
 						active="bg-primary-500"
 						size="sm"
 						role="switch"
-						aria-checked={speechInput}
+						aria-checked={$SpeechInputEnabledStore}
 						aria-label="Toggle speech input"
 						on:click={() => {
-							speechInput = !speechInput;
-							if (speechInput) {
+							$SpeechInputEnabledStore = !$SpeechInputEnabledStore;
+							if ($SpeechInputEnabledStore) {
 								modalStore.trigger({
 									type: 'alert',
 									title: 'Speech input is enabled',
@@ -185,7 +188,7 @@
 					<Switch
 						id="enable-voice-input"
 						name="slider-label"
-						checked={speechInput}
+						checked={$SpeechInputEnabledStore}
 						active="bg-primary-500"
 						size="sm"
 						disabled

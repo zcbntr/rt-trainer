@@ -1,29 +1,27 @@
 <script lang="ts">
-	import { createEventDispatcher, onMount } from 'svelte';
-	export let DialEnabled: boolean = false; // Dial not interactive if disabled
-	export let id: string = '';
-	let mounted: boolean = false;
-	let intervalId: any;
-	let defaultIntervalDuration: number = 200;
-	let intervalDuration: number = defaultIntervalDuration;
-	const minIntervalDuration: number = 20;
-	const intervalStep: number = 10;
+	import { createEventDispatcher } from 'svelte';
 
-	// Ensures that dial is mounted before modifying its properties
-	$: if (mounted) {
-		const frequencyDial = document.getElementById(
-			'double-frequency-dial-outer-' + id
-		) as HTMLDivElement;
-		if (DialEnabled) {
-			frequencyDial.classList.add('enabled');
-		} else {
-			frequencyDial.classList.remove('enabled');
+	interface Props {
+		class?: string;
+		DialEnabled?: boolean;
+		id?: string;
+	}
+
+	let { class: className = '', DialEnabled = false, id = '' }: Props = $props();
+
+	let intervalId: ReturnType<typeof setInterval> | undefined;
+	const defaultIntervalDuration = 200;
+	const minIntervalDuration = 20;
+	const intervalStep = 10;
+	let intervalDuration = $state(defaultIntervalDuration);
+
+	const outerEnabledClass = $derived(DialEnabled ? 'enabled' : '');
+
+	$effect(() => {
+		if (!DialEnabled) {
+			clearInterval(intervalId);
 		}
-	}
-
-	$: if (!DialEnabled) {
-		clearInterval(intervalId);
-	}
+	});
 
 	const dispatch = createEventDispatcher();
 
@@ -102,13 +100,9 @@
 			incrementMethod();
 		}
 	}
-
-	onMount(() => {
-		mounted = true;
-	});
 </script>
 
-<div {id} class="flex items-center justify-center">
+<div {id} class="flex items-center justify-center {className}">
 	<div id={'dial-container-' + id} class="relative">
 		<div
 			id={'frequency-center-div-' + id}
@@ -117,7 +111,7 @@
 		></div>
 		<button
 			id={'double-frequency-dial-outer-' + id}
-			class="double-frequency-dial-outer flex"
+			class="double-frequency-dial-outer flex {outerEnabledClass}"
 			aria-label="Outer Dial"
 		>
 			<div class="absolute" style="left: 8px; top: 30%; width: 12px; pointer-events: none;">
@@ -151,22 +145,22 @@
 				class="absolute flex flex-row"
 				style="top: 0px; left: 0px; width: 100%; height: 100%;"
 			>
-				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					class="relative"
 					style="width: 50%;"
 					aria-label="Outer Dial Anti-Clockwise"
-					on:mousedown={startIncrementingOuterAntiClockwiseHold}
-					on:mouseup={stopIncrementingOuterAntiClockwiseHold}
-					on:mouseleave={stopIncrementingOuterAntiClockwiseHold}
+					onmousedown={startIncrementingOuterAntiClockwiseHold}
+					onmouseup={stopIncrementingOuterAntiClockwiseHold}
+					onmouseleave={stopIncrementingOuterAntiClockwiseHold}
 				></div>
-				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					style="width: 50%;"
 					aria-label="Outer Dial Clockwise"
-					on:mousedown={startIncrementingOuterClockwiseHold}
-					on:mouseup={stopIncrementingOuterClockwiseHold}
-					on:mouseleave={stopIncrementingOuterClockwiseHold}
+					onmousedown={startIncrementingOuterClockwiseHold}
+					onmouseup={stopIncrementingOuterClockwiseHold}
+					onmouseleave={stopIncrementingOuterClockwiseHold}
 				></div>
 			</div>
 		</button>
@@ -202,23 +196,23 @@
 				>
 			</div>
 			<div class="absolute flex flex-row" style="top: 0px; left: 0px; width:100%; height:100%;">
-				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					class="relative"
 					style="width: 50%;"
 					aria-label="Inner Dial Anti-Clockwise"
-					on:mousedown={startIncrementingInnerAntiClockwiseHold}
-					on:mouseup={stopIncrementingInnerAntiClockwiseHold}
-					on:mouseleave={stopIncrementingInnerAntiClockwiseHold}
+					onmousedown={startIncrementingInnerAntiClockwiseHold}
+					onmouseup={stopIncrementingInnerAntiClockwiseHold}
+					onmouseleave={stopIncrementingInnerAntiClockwiseHold}
 				></div>
-				<!-- svelte-ignore a11y-no-static-element-interactions -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					class="relative"
 					style="width: 50%;"
 					aria-label="Inner Dial Clockwise"
-					on:mousedown={startIncrementingInnerClockwiseHold}
-					on:mouseup={stopIncrementingInnerClockwiseHold}
-					on:mouseleave={stopIncrementingInnerClockwiseHold}
+					onmousedown={startIncrementingInnerClockwiseHold}
+					onmouseup={stopIncrementingInnerClockwiseHold}
+					onmouseleave={stopIncrementingInnerClockwiseHold}
 				></div>
 			</div></button
 		>
