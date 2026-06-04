@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { AppBar } from '@skeletonlabs/skeleton-svelte';
-	import { createEventDispatcher } from 'svelte';
 	import { GithubSolid } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
+	import { drawer } from '$lib/components/singletons/drawer.svelte';
+
 	interface Props {
 		burgerButton: string;
 		enabled: boolean;
@@ -10,11 +11,9 @@
 
 	let { burgerButton, enabled }: Props = $props();
 
-	const dispatch = createEventDispatcher();
-
-	const burgerButtonClicked = () => {
-		dispatch('burgerButtonClicked');
-	};
+	function burgerButtonClicked(): void {
+		drawer.toggle();
+	}
 </script>
 
 <!-- Hide app bar if not enabled -->

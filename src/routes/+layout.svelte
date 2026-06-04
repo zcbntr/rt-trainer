@@ -2,8 +2,11 @@
 	import '../app.css';
 
 	import TopAppBar from '$lib/components/TopAppBar.svelte';
+	import NavigationDrawer from '$lib/components/NavigationDrawer.svelte';
 	import { Toast } from '@skeletonlabs/skeleton-svelte';
 	import { toaster } from '$lib/components/singletons/toaster';
+	import { drawer } from '$lib/components/singletons/drawer.svelte';
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import Navigation from '$lib/components/NAVSidebar.svelte';
 	import ScenarioPlanSidebar from '$lib/components/ScenarioPlanSidebar.svelte';
@@ -64,6 +67,12 @@
 	const classesAppBar = $derived(layoutShell.classesAppBar);
 	const classesSidebar = $derived(layoutShell.classesSidebar);
 	const burgerButton = $derived(layoutShell.burgerButton);
+	const drawerWidth = $derived(showRoutePlanSidebar ? 'w-80' : 'w-64');
+	const drawerTitle = $derived(showNavigation && !showRoutePlanSidebar ? 'Navigation' : undefined);
+
+	afterNavigate(() => {
+		drawer.close();
+	});
 </script>
 
 <svelte:head>
@@ -78,17 +87,15 @@
 	applicationName="RT Trainer"
 />
 
-<!-- Navigation Drawer -->
-<!-- <Drawer width="w-64">
-	{#if showRoutePlanSidebar}
-		<ScenarioPlanSidebar />
-	{:else if showNavigation}
-		<h2 class="p-4">Navigation</h2>
-		<hr />
-
-		<Navigation />
-	{/if}
-</Drawer> -->
+{#if showNavigation || showRoutePlanSidebar}
+	<NavigationDrawer width={drawerWidth} title={drawerTitle}>
+		{#if showRoutePlanSidebar}
+			<ScenarioPlanSidebar />
+		{:else if showNavigation}
+			<Navigation />
+		{/if}
+	</NavigationDrawer>
+{/if}
 
 <Toast.Group {toaster}>
 	{#snippet children(toast)}
@@ -113,7 +120,8 @@
 		<!-- App Bar -->
 		{#if showTopAppBar}
 			<TopAppBar {burgerButton} enabled={true} />
-			<!-- <TopAppBar {burgerButton} enabled={true} on:burgerButtonClicked={drawerOpen} /> -->
+		{:else if showNavigation || showRoutePlanSidebar}
+			<TopAppBar {burgerButton} enabled={false} />
 		{/if}
 	</header>
 	<aside class={classesSidebar}>
