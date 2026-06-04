@@ -1,12 +1,13 @@
 import { init } from '@paralleldrive/cuid2';
+import type { LngLat } from '../utils';
 
 const CUID = init({ length: 12 });
 
-/* Point in space along a route. */
+/* Point in space along a route. location is stored as [longitude, latitude]. */
 export default class Waypoint {
 	id: string;
 	type: WaypointType;
-	location: [number, number];
+	location: LngLat;
 	index: number;
 	name: string;
 	referenceObjectId: string | undefined;
@@ -14,7 +15,7 @@ export default class Waypoint {
 
 	constructor(
 		name: string,
-		location: [number, number],
+		location: LngLat,
 		waypointType: WaypointType,
 		index: number,
 		referenceObjectId: string | undefined = undefined,

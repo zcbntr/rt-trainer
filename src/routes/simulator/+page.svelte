@@ -40,7 +40,7 @@
 		fetchAirports,
 		fetchAirspaces
 	} from '$lib/stores';
-	import { isCallsignStandardRegistration, replaceWithPhoneticAlphabet } from '$lib/logic/utils';
+	import { isCallsignStandardRegistration, replaceWithPhoneticAlphabet, toLeafletLatLng, wellesbourneMountfordLatLng } from '$lib/logic/utils';
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
 	import RadioCall from '$lib/logic/RadioCall';
@@ -238,8 +238,14 @@
 
 	const aircraftPosition = $derived.by((): [number, number] => {
 		const pos = $CurrentScenarioPointStore?.pose.position;
-		if (!pos) return [0, 0];
-		return [pos[1], pos[0]];
+		if (!pos) return wellesbourneMountfordLatLng;
+		return toLeafletLatLng(pos);
+	});
+
+	const mapView = $derived.by((): [number, number] => {
+		const pos = $ScenarioStore?.getCurrentPoint()?.pose.position;
+		if (!pos) return wellesbourneMountfordLatLng;
+		return toLeafletLatLng(pos);
 	});
 
 	const displayHeading = $derived(
@@ -684,12 +690,12 @@
 
 			<div class="card p-2 rounded-md w-[420px] h-[452px] bg-neutral-600 flex flex-row grow">
 				<div class="w-full h-full">
-					<Map view={$ScenarioStore?.getCurrentPoint().pose.position} zoom={9}>
+					<Map view={mapView} zoom={9}>
 						{#if $WaypointPointsMapStore.length > 0}
 							{#each $WaypointsStore as waypoint (waypoint.index)}
 								{#if waypoint.index == $WaypointsStore.length - 1 || waypoint.type == WaypointType.Airport}
 									<Marker
-										latLng={[waypoint.location[1], waypoint.location[0]]}
+										latLng={toLeafletLatLng(waypoint.location)}
 										width={50}
 										height={50}
 										aeroObject={waypoint}
@@ -714,7 +720,7 @@
 									>
 								{:else}
 									<Marker
-										latLng={[waypoint.location[1], waypoint.location[0]]}
+										latLng={toLeafletLatLng(waypoint.location)}
 										width={50}
 										height={50}
 										aeroObject={waypoint}
@@ -757,7 +763,7 @@
 						{#each $OnRouteAirspacesStore as airspace}
 							{#if airspace.type == 14}
 								<Polygon
-									latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
+									latLngArray={airspace.coordinates[0].map(toLeafletLatLng)}
 									color={'red'}
 									fillOpacity={0.2}
 									weight={1}
@@ -770,7 +776,7 @@
 								/>
 							{:else}
 								<Polygon
-									latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
+									latLngArray={airspace.coordinates[0].map(toLeafletLatLng)}
 									color={'blue'}
 									fillOpacity={0.2}
 									weight={1}
@@ -791,9 +797,8 @@
 								<Popup
 									><div class="flex flex-col gap-2">
 										<div>
-											<!-- Lat, Long format -->
-											<div>{aircraftPosition[1].toFixed(6)}</div>
-											<div>{aircraftPosition[0].toFixed(6)}</div>
+											<div>{$CurrentScenarioPointStore?.pose.position[1].toFixed(6)}</div>
+											<div>{$CurrentScenarioPointStore?.pose.position[0].toFixed(6)}</div>
 										</div>
 									</div></Popup
 								>

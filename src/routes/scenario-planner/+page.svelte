@@ -22,7 +22,12 @@
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import Polygon from '$lib/components/leaflet/Polygon.svelte';
-	import { getNthPhoneticAlphabetLetter, wellesbourneMountfordCoords } from '$lib/logic/utils';
+	import {
+		getNthPhoneticAlphabetLetter,
+		lngLatBoundsToLeaflet,
+		toLeafletLatLng,
+		wellesbourneMountfordLatLng
+	} from '$lib/logic/utils';
 	import type * as Leaflet from 'leaflet';
 	import type { MarkerLayerDetail, PolygonLayerDetail } from '$lib/components/leaflet/types';
 	import Polyline from '$lib/components/leaflet/Polyline.svelte';
@@ -52,14 +57,10 @@
 			return undefined;
 		}
 
-		const lats = waypoints.map((w) => w.location[1]);
-		const lngs = waypoints.map((w) => w.location[0]);
-		const margin = 0.08;
-
-		return [
-			[Math.min(...lats) - margin, Math.min(...lngs) - margin],
-			[Math.max(...lats) + margin, Math.max(...lngs) + margin]
-		];
+		return lngLatBoundsToLeaflet(
+			waypoints.map((waypoint) => waypoint.location),
+			0.08
+		);
 	});
 
 	const startButtonDisabled = $derived(
@@ -114,8 +115,8 @@
 		if (!waypoint) return;
 
 		const { lat, lng } = detail.marker.getLatLng();
-		waypoint.location[1] = +parseFloat(lat.toFixed(6));
 		waypoint.location[0] = +parseFloat(lng.toFixed(6));
+		waypoint.location[1] = +parseFloat(lat.toFixed(6));
 		WaypointsStore.set([...waypoints]);
 	}
 
@@ -145,8 +146,8 @@
 			parseFloat(lngStringElement.value)
 		) {
 			waypoint.name = nameElement.value;
-			waypoint.location[1] = +parseFloat(parseFloat(lngStringElement.value).toFixed(6));
-			waypoint.location[0] = +parseFloat(parseFloat(latStringElement.value).toFixed(6));
+			waypoint.location[0] = +parseFloat(parseFloat(lngStringElement.value).toFixed(6));
+			waypoint.location[1] = +parseFloat(parseFloat(latStringElement.value).toFixed(6));
 			WaypointsStore.set([...get(WaypointsStore)]);
 		}
 	}
@@ -199,7 +200,7 @@
 		<div class="xs:pr-3 flex min-h-0 flex-1 flex-col">
 			<Map
 				bounds={routeBounds}
-				view={wellesbourneMountfordCoords}
+				view={wellesbourneMountfordLatLng}
 				zoom={8}
 				fitPadding={40}
 				resizeKey={`${$WaypointsStore.length}-${$WaypointPointsMapStore.length}`}
@@ -208,7 +209,7 @@
 				{#each $AllAirportsStore as airport (airport.id)}
 					{#if showAllAirports || $WaypointsStore.some((waypoint) => waypoint.referenceObjectId === airport.id)}
 						<Marker
-							latLng={[airport.coordinates[1], airport.coordinates[0]]}
+							latLng={toLeafletLatLng(airport.coordinates)}
 							width={30}
 							height={30}
 							aeroObject={airport}
@@ -236,7 +237,7 @@
 					{#if showAllAirspaces}
 						{#if airspace.type == 14}
 							<Polygon
-								latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
+								latLngArray={airspace.coordinates[0].map(toLeafletLatLng)}
 								color="red"
 								fillOpacity={0.2}
 								weight={1}
@@ -260,7 +261,7 @@
 							</Polygon>
 						{:else}
 							<Polygon
-								latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
+								latLngArray={airspace.coordinates[0].map(toLeafletLatLng)}
 								color="blue"
 								fillOpacity={0.2}
 								weight={1}
@@ -289,7 +290,7 @@
 				{#each $WaypointsStore as waypoint (waypoint.id)}
 					{#key waypoint.location}
 						{#if waypoint.type == WaypointType.Airport}<Marker
-								latLng={[waypoint.location[1], waypoint.location[0]]}
+								latLng={toLeafletLatLng(waypoint.location)}
 								width={50}
 								height={50}
 								aeroObject={waypoint}
@@ -304,8 +305,8 @@
 									><div class="flex flex-col gap-2">
 										<div class="flex flex-col gap-2">
 											<div id="waypoint-{waypoint.id}-name">{waypoint.name}</div>
-											<div id="waypoint-{waypoint.id}-lat">{waypoint.location[0]}</div>
-											<div id="waypoint-{waypoint.id}-lng">{waypoint.location[1]}</div>
+											<div id="waypoint-{waypoint.id}-lat">{waypoint.location[1]}</div>
+											<div id="waypoint-{waypoint.id}-lng">{waypoint.location[0]}</div>
 										</div>
 
 										<button class="btn preset-filled" onclick={() => deleteWaypoint(waypoint)}
@@ -318,7 +319,7 @@
 								>
 							</Marker>{:else if waypoint.index == $WaypointsStore.length - 1}
 							<Marker
-								latLng={[waypoint.location[1], waypoint.location[0]]}
+								latLng={toLeafletLatLng(waypoint.location)}
 								width={50}
 								height={50}
 								aeroObject={waypoint}
@@ -332,9 +333,9 @@
 										<textarea id="waypoint-{waypoint.id}-name" class="textarea" rows="1"
 											>{waypoint.name}</textarea
 										><textarea id="waypoint-{waypoint.id}-lat" class="textarea" rows="1"
-											>{waypoint.location[0]}</textarea
-										><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
 											>{waypoint.location[1]}</textarea
+										><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
+											>{waypoint.location[0]}</textarea
 										>
 										<button class="varient-filled btn" onclick={() => saveWaypointEdit(waypoint)}
 											>Save</button
@@ -349,7 +350,7 @@
 								>
 							</Marker>
 						{:else}<Marker
-								latLng={[waypoint.location[1], waypoint.location[0]]}
+								latLng={toLeafletLatLng(waypoint.location)}
 								width={50}
 								height={50}
 								aeroObject={waypoint}
@@ -364,9 +365,9 @@
 										<textarea id="waypoint-{waypoint.id}-name" class="textarea" rows="1"
 											>{waypoint.name}</textarea
 										><textarea id="waypoint-{waypoint.id}-lat" class="textarea" rows="1"
-											>{waypoint.location[0]}</textarea
-										><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
 											>{waypoint.location[1]}</textarea
+										><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
+											>{waypoint.location[0]}</textarea
 										>
 										<button class="varient-filled btn" onclick={() => saveWaypointEdit(waypoint)}
 											>Save</button

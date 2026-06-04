@@ -1,11 +1,49 @@
-import type { Position } from '@turf/turf';
+import type { Position } from 'geojson';
 import type Airspace from './aeronautics/Airspace';
 import * as turf from '@turf/turf';
 
+/** Internal storage format matching GeoJSON / Turf: [longitude, latitude] */
+export type LngLat = [longitude: number, latitude: number];
+
+/** Leaflet map format: [latitude, longitude] */
+export type LatLng = [latitude: number, longitude: number];
+
+/** Normalizes a GeoJSON position to the app's [lng, lat] coordinate pair */
+export function toCoordinatePair(position: Position): LngLat {
+	return [position[0], position[1]];
+}
+
+/** Converts internal [lng, lat] to Leaflet [lat, lng] */
+export function toLeafletLatLng([lng, lat]: LngLat): LatLng {
+	return [lat, lng];
+}
+
+/** Converts Leaflet [lat, lng] to internal [lng, lat] */
+export function fromLeafletLatLng([lat, lng]: LatLng): LngLat {
+	return [lng, lat];
+}
+
+/** Builds Leaflet bounds from internal coordinates */
+export function lngLatBoundsToLeaflet(
+	coordinates: LngLat[],
+	margin = 0
+): [[LatLng[0], LatLng[1]], [LatLng[0], LatLng[1]]] {
+	const lats = coordinates.map((coord) => coord[1]);
+	const lngs = coordinates.map((coord) => coord[0]);
+
+	return [
+		[Math.min(...lats) - margin, Math.min(...lngs) - margin],
+		[Math.max(...lats) + margin, Math.max(...lngs) + margin]
+	];
+}
+
 /**
- * Default coordinates for the map center ([lat, lng] for Leaflet)
+ * Default map centre for the scenario planner ([lat, lng] for Leaflet)
  */
-export const wellesbourneMountfordCoords: [number, number] = [52.192, -1.614];
+export const wellesbourneMountfordLatLng: LatLng = [52.192, -1.614];
+
+/** @deprecated Use wellesbourneMountfordLatLng */
+export const wellesbourneMountfordCoords = wellesbourneMountfordLatLng;
 
 /** SW / NE corners ([lat, lng]) for scenario planner initial view over the UK */
 export const ukPlannerBounds: [[number, number], [number, number]] = [
@@ -447,7 +485,7 @@ export function calculateDistanceAlongRoute(route: Position[], targetPoint: Posi
 }
 
 export interface Intersection {
-	position: Position;
+	position: LngLat;
 	airspaceId: string;
 	enteringAirspace: boolean; // True if the intersection is the entering of an airspace, false if it is the exiting
 	distanceAlongRoute: number;
@@ -476,7 +514,7 @@ export function findIntersections(route: Position[], airspaces: Airspace[]): Int
 					if (turf.booleanIntersects(lineSegment, airspacePolygon)) {
 						const intersection = turf.lineIntersect(lineSegment, airspacePolygon);
 						intersection.features.forEach((feature) => {
-							const intersectionPoint: Position = feature.geometry.coordinates;
+							const intersectionPoint = toCoordinatePair(feature.geometry.coordinates);
 
 							const distanceAlongRoute = calculateDistanceAlongRoute(route, intersectionPoint);
 

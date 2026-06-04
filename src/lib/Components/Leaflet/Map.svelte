@@ -1,9 +1,8 @@
 <script lang="ts">
-	/* Structure inspired by ShipBit's youtube tutorial https://www.youtube.com/watch?v=JFctWXEzFZw
-
-	The coordinates used in the rest of the application are in the format [long, lat],
-	here they must be converted to [lat, long] for Leaflet to understand them correctly.
-	*/
+	/*
+	 * Leaflet expects [lat, lng]. Internal app coordinates use GeoJSON order [lng, lat];
+	 * convert at the boundary with toLeafletLatLng / fromLeafletLatLng from utils.
+	 */
 	import { onDestroy, onMount, setContext, tick } from 'svelte';
 	import type * as Leaflet from 'leaflet';
 	import { getLeaflet } from './leaflet';

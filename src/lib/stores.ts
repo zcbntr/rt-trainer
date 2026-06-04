@@ -14,7 +14,7 @@ import * as turf from '@turf/turf';
 import axios from 'axios';
 import type { AirportData, AirspaceData } from './logic/aeronautics/OpenAIPTypes';
 import { airspaceFromPlain, airportFromPlain } from './logic/transform';
-import { countAirspaceCrossings } from './logic/utils';
+import { countAirspaceCrossings, toLeafletLatLng } from './logic/utils';
 
 const initialAircraftDetails: AircraftDetails = {
 	prefix: 'STUDENT',
@@ -83,7 +83,7 @@ export const ScenarioPointsStore = derived(ScenarioStore, ($ScenarioStore) => {
 export const WaypointsStore = writable<Waypoint[]>([]);
 
 export const WaypointPointsMapStore = derived(WaypointsStore, ($WaypointsStore) => {
-	return $WaypointsStore.map((waypoint) => [waypoint.location[1], waypoint.location[0]]);
+	return $WaypointsStore.map((waypoint) => toLeafletLatLng(waypoint.location));
 });
 
 export const RouteDistanceMetersStore = derived(WaypointsStore, ($RoutePointStore) => {

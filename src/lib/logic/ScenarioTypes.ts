@@ -1,7 +1,9 @@
+import type { LngLat } from './utils';
+
 export interface WaypointURLObject {
 	id: string;
 	type: number;
-	location: [number, number];
+	location: LngLat;
 	index: number;
 	name: string;
 	referenceObjectId?: string;
@@ -15,7 +17,8 @@ export enum EmergencyType {
 
 /* Represents location, heading altitude and airSpeed of the aircraft. Term borrowed from robotics */
 export type Pose = {
-	position: [number, number];
+	/** [longitude, latitude] */
+	position: LngLat;
 	trueHeading: number;
 	altitude: number;
 	airSpeed: number;
@@ -37,5 +40,5 @@ export enum FlightRules {
 export type FrequencyChangePoint = {
 	oldAirspaceId: string | undefined;
 	newAirspaceId: string | undefined;
-	coordinates: [number, number];
+	coordinates: LngLat;
 };

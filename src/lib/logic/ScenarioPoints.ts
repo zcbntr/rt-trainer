@@ -18,13 +18,13 @@ import {
 	getRandomFrequency,
 	getRandomSqwuakCode,
 	calculateDistanceAlongRoute,
-	getSeededTimeInMinutes
+	getSeededTimeInMinutes,
+	toCoordinatePair
 } from './utils';
 import * as turf from '@turf/turf';
 import type Airport from './aeronautics/Airport';
 import type Waypoint from './aeronautics/Waypoint';
 import type Airspace from './aeronautics/Airspace';
-import type { Position } from '@turf/turf';
 
 const AIRCRAFT_AVERAGE_SPEED = 3.75; // km per minute. 225 km/h, 120 knots, 140 mph (Cessna 172 max cruise speed)
 const NAUTICAL_MILE = 1852;
@@ -219,8 +219,7 @@ export function getStartAirportScenarioPoints(
 
 	if (startAirport.isControlled() && takeoffAirspace) {
 		const firstRouteSegment = [waypoints[0].location, waypoints[1].location];
-		const leavingZonePosition: Position = findIntersections(firstRouteSegment, [takeoffAirspace])[0]
-			.position;
+		const leavingZonePosition = findIntersections(firstRouteSegment, [takeoffAirspace])[0].position;
 		const leavingZonePose: Pose = {
 			position: leavingZonePosition,
 			trueHeading: initialRouteHeading,
@@ -360,14 +359,16 @@ export function getStartAirportScenarioPoints(
 		stages.push(reportLeavingZone);
 	} else {
 		const firstRouteSegment = [waypoints[0].location, waypoints[1].location];
-		let leavingZonePosition: Position = [0, 0];
+		let leavingZonePosition: [number, number] = [0, 0];
 		if (takeoffAirspace)
 			leavingZonePosition = findIntersections(firstRouteSegment, [takeoffAirspace])[0].position;
 		// 3.3 should be 4 but this avoids a bug for the demo
 		else
-			leavingZonePosition = turf.destination(waypoints[0].location, 3.3, initialRouteHeading, {
-				units: 'kilometers'
-			}).geometry.coordinates;
+			leavingZonePosition = toCoordinatePair(
+				turf.destination(waypoints[0].location, 3.3, initialRouteHeading, {
+					units: 'kilometers'
+				}).geometry.coordinates
+			);
 
 		const leavingZonePose: Pose = {
 			position: leavingZonePosition,
@@ -900,13 +901,15 @@ export function getAirborneScenarioPoints(
 			Math.round((distanceFromPrevPoint / AIRCRAFT_AVERAGE_SPEED) * FLIGHT_TIME_MULTIPLIER);
 
 		const heading = Math.round(
-			turf.bearingToAngle(turf.bearing(previousPosition, airspaceIntersectionPoints[i].position))
+			turf.bearingToAzimuth(turf.bearing(previousPosition, airspaceIntersectionPoints[i].position))
 		);
 
 		const preIntersectionPose: Pose = {
-			position: turf.destination(airspaceIntersectionPoints[i].position, -0.5, heading, {
-				units: 'kilometers'
-			}).geometry.coordinates,
+			position: toCoordinatePair(
+				turf.destination(airspaceIntersectionPoints[i].position, -0.5, heading, {
+					units: 'kilometers'
+				}).geometry.coordinates
+			),
 			trueHeading: heading,
 			altitude: 2000,
 			airSpeed: 130
@@ -1104,13 +1107,15 @@ export function getAirborneScenarioPoints(
 			scenarioPoints[emergencyScenarioPointIndex].pose.position,
 			scenarioPoints[emergencyScenarioPointIndex + 1].pose.position
 		);
-		const emergencyPosition: Position = turf.along(
-			turf.lineString([
-				scenarioPoints[emergencyScenarioPointIndex].pose.position,
-				scenarioPoints[emergencyScenarioPointIndex + 1].pose.position
-			]),
-			segmentDistance * lerpPercentage
-		).geometry.coordinates;
+		const emergencyPosition = toCoordinatePair(
+			turf.along(
+				turf.lineString([
+					scenarioPoints[emergencyScenarioPointIndex].pose.position,
+					scenarioPoints[emergencyScenarioPointIndex + 1].pose.position
+				]),
+				segmentDistance * lerpPercentage
+			).geometry.coordinates
+		);
 		emergencyPosition[0] = parseFloat(emergencyPosition[0].toFixed(8));
 		emergencyPosition[1] = parseFloat(emergencyPosition[1].toFixed(8));
 

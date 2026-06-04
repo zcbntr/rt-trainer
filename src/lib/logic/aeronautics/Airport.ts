@@ -3,7 +3,7 @@ import Runway from './Runway';
 import { METORData, METORDataSample } from './METORData';
 import type { AirportReportingPointDBData } from '../OpenAIPHandler';
 import * as turf from '@turf/turf';
-import { getRandomFrequency, getSeededTimeInMinutes, simpleHash } from '../utils';
+import { getRandomFrequency, getSeededTimeInMinutes, simpleHash, toCoordinatePair, type LngLat } from '../utils';
 
 /* Airport data. */
 export default class Airport {
@@ -14,7 +14,7 @@ export default class Airport {
 	altIdentifier: string;
 	type: number;
 	country: string;
-	coordinates: [number, number];
+	coordinates: LngLat;
 	reportingPoints: AirportReportingPointDBData[];
 	elevation: number;
 	trafficType: number[];
@@ -37,7 +37,7 @@ export default class Airport {
 		altIdentifier: string,
 		type: number,
 		country: string,
-		coordinates: [number, number],
+		coordinates: LngLat,
 		airportReportingPoints: AirportReportingPointDBData[],
 		elevation: number,
 		trafficType: number[],
@@ -126,10 +126,12 @@ export default class Airport {
 	 * @param distance - Distance in kilometers
 	 * @returns Position of the point
 	 */
-	public getPointAlongTakeoffRunwayVector(seed: number, distance: number): turf.Position {
+	public getPointAlongTakeoffRunwayVector(seed: number, distance: number): LngLat {
 		const runway = this.getTakeoffRunway(seed);
-		return turf.destination(this.coordinates, distance, runway.trueHeading, { units: 'kilometers' })
-			.geometry.coordinates;
+		return toCoordinatePair(
+			turf.destination(this.coordinates, distance, runway.trueHeading, { units: 'kilometers' })
+				.geometry.coordinates
+		);
 	}
 
 	/**
@@ -138,10 +140,12 @@ export default class Airport {
 	 * @param distance - Distance in kilometers
 	 * @returns Position of the point
 	 */
-	public getPointAlongLandingRunwayVector(seed: number, distance: number): turf.Position {
+	public getPointAlongLandingRunwayVector(seed: number, distance: number): LngLat {
 		const runway = this.getLandingRunway(seed);
-		return turf.destination(this.coordinates, distance, runway.trueHeading, { units: 'kilometers' })
-			.geometry.coordinates;
+		return toCoordinatePair(
+			turf.destination(this.coordinates, distance, runway.trueHeading, { units: 'kilometers' })
+				.geometry.coordinates
+		);
 	}
 
 	/**
