@@ -91,6 +91,9 @@
 		marker.on('mouseup', (e) => {
 			dispatch('mouseup', { event: e, aeroObject, marker });
 		});
+		marker.on('dragend', (e) => {
+			dispatch('dragend', { event: e, aeroObject, marker });
+		});
 	});
 
 	onDestroy(() => {

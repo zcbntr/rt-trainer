@@ -33,7 +33,6 @@
 	let showAllAirports = $state(true);
 	let showAllAirspaces = $state(true);
 	let unnamedWaypointCount = $state(1);
-	let draggedWaypoint = $state<Waypoint | undefined>(undefined);
 
 	$effect(() => {
 		if ($AllAirportsStore.length === 0) {
@@ -106,18 +105,17 @@
 		WaypointsStore.set([...waypoints, waypoint]);
 	}
 
-	function onWaypointDrag(e: CustomEvent<{ aeroObject: Waypoint }>) {
-		draggedWaypoint = get(WaypointsStore).find((wp) => wp.id === e.detail.aeroObject.id);
-	}
-
-	function onWaypointMouseUp(e: CustomEvent<{ aeroObject: Waypoint }>) {
+	function onWaypointDragEnd(
+		e: CustomEvent<{ aeroObject: Waypoint; marker: Leaflet.Marker }>
+	) {
 		const waypoints = get(WaypointsStore);
 		const waypoint = waypoints.find((wp) => wp.id === e.detail.aeroObject.id);
-		if (draggedWaypoint === waypoint && waypoint) {
-			waypoint.location[1] = parseFloat(e.detail.aeroObject.location[1].toFixed(6));
-			waypoint.location[0] = parseFloat(e.detail.aeroObject.location[0].toFixed(6));
-			WaypointsStore.set([...waypoints]);
-		}
+		if (!waypoint) return;
+
+		const { lat, lng } = e.detail.marker.getLatLng();
+		waypoint.location[1] = +parseFloat(lat.toFixed(6));
+		waypoint.location[0] = +parseFloat(lng.toFixed(6));
+		WaypointsStore.set([...waypoints]);
 	}
 
 	function deleteWaypoint(waypoint: Waypoint) {
@@ -326,8 +324,7 @@
 								width={50}
 								height={50}
 								aeroObject={waypoint}
-								on:drag={onWaypointDrag}
-								on:mouseup={onWaypointMouseUp}
+								on:dragend={onWaypointDragEnd}
 								draggable={true}
 							>
 								<div class="text-2xl">🏁</div>
@@ -359,8 +356,7 @@
 								height={50}
 								aeroObject={waypoint}
 								iconAnchor={[8, 26]}
-								on:drag={onWaypointDrag}
-								on:mouseup={onWaypointMouseUp}
+								on:dragend={onWaypointDragEnd}
 								draggable={true}
 							>
 								<div class="text-2xl">🚩</div>
