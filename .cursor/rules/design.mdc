@@ -1,0 +1,15 @@
+---
+alwaysApply: true
+---
+
+Where possible stick to the Svelte, SvelteKit, Skeleton Svelte UI, Leaflet best practices.
+
+Simplicity, maintainability, and scalability are priorities.
+
+No code is sacred and anything can be fundamentally redesigned.
+
+Keep changes minimal per commit/PR.
+
+Storing user data is intended once the upgrades to Svelte 5 and Skeleton UI 4 are complete so that users can save routes and progress.
+
+This is a non commercial project and paid libraries/hosting is to be avoided.
