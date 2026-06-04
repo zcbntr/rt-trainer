@@ -104,7 +104,11 @@
 
 <!-- Previously was the App Shell, now just a div -->
 
-<div class="appbar bg-surface-500/5 {classesAppBar} ">
+<div
+	class="appbar bg-surface-500/5 {classesAppBar} {showRoutePlanSidebar
+		? 'appbar--viewport-locked'
+		: ''}"
+>
 	<header>
 		<!-- App Bar -->
 		{#if showTopAppBar}
@@ -120,7 +124,7 @@
 			<ScenarioPlanSidebar />
 		{/if}
 	</aside>
-	<main class="min-h-0 flex-1">
+	<main class="min-h-0 {showRoutePlanSidebar ? 'h-full overflow-hidden' : 'flex-1'}">
 		<!-- Page Route Content -->
 		{@render children?.()}
 	</main>

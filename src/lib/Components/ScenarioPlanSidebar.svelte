@@ -103,8 +103,10 @@
 	}
 </script>
 
-<div class="sidebar-container flex grow flex-col overflow-clip py-0">
-	<div class="sticky top-0 z-50 flex flex-col bg-surface-100 p-3 dark:bg-surface-900">
+<div
+	class="sidebar-container grid h-full min-h-0 w-full grid-rows-[auto_minmax(0,1fr)_minmax(0,40%)] overflow-hidden py-0"
+>
+	<div class="flex shrink-0 flex-col bg-surface-100 p-3 dark:bg-surface-900">
 		<strong><a href={resolve('/')} class="btn text-xl uppercase sm:text-2xl">RT Trainer</a></strong>
 
 		<ol class="flex flex-row gap-2 pb-2 pl-3.5 font-light">
@@ -114,8 +116,8 @@
 		<hr />
 	</div>
 
-	<div class="overflow-auto px-3 pb-2">
-		<div class="flex flex-col gap-2 px-2">
+	<section class="min-h-0 overflow-y-auto overscroll-contain px-3">
+		<div class="flex flex-col gap-2 px-2 pb-2">
 			<div><strong>Route Waypoints</strong></div>
 			{#if $WaypointsStore.length == 0}
 				<div class="px-1">
@@ -165,7 +167,9 @@
 				</div>
 			{/each}
 		</div>
+	</section>
 
+	<div class="min-h-0 overflow-y-auto overscroll-contain px-3 pb-2">
 		<div class="flex flex-col gap-2 p-2">
 			<div>
 				<strong>Scenario Settings</strong>

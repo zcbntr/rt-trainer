@@ -8,6 +8,7 @@
 		HasEmergenciesStore,
 		OnRouteAirportsStore,
 		OnRouteAirspacesStore,
+		OnRouteAirspaceCrossingsStore,
 		RouteDistanceDisplayStore,
 		ScenarioSeedStore,
 		WaypointPointsMapStore,
@@ -418,6 +419,15 @@
 					<div class="text-sm">Unique Airspaces</div>
 					<div class="text-xl">
 						{$OnRouteAirspacesStore.length}
+					</div>
+				</div>
+			</div>
+			<div class="vr h-full border border-surface-200 dark:border-surface-700"></div>
+			<div class="flex flex-row place-content-center p-4">
+				<div class="flex flex-col place-content-center">
+					<div class="text-sm">Airspace Crossings</div>
+					<div class="text-xl">
+						{$OnRouteAirspaceCrossingsStore}
 					</div>
 				</div>
 			</div>

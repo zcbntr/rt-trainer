@@ -508,6 +508,40 @@ export function findIntersections(route: Position[], airspaces: Airspace[]): Int
 }
 
 /**
+ * Counts airspace boundary crossings along a route using the same rules as scenario generation.
+ */
+export function countAirspaceCrossings(route: Position[], airspaces: Airspace[]): number {
+	if (route.length < 2 || airspaces.length === 0) return 0;
+
+	const intersections = findIntersections(route, airspaces);
+	let count = 0;
+
+	for (let i = 0; i < intersections.length; i++) {
+		let distanceToNextPoint = -1;
+		if (i < intersections.length - 1) {
+			distanceToNextPoint = turf.distance(
+				intersections[i].position,
+				intersections[i + 1].position,
+				{ units: 'kilometers' }
+			);
+		}
+
+		const switchingAirspace = distanceToNextPoint < 0.01 && distanceToNextPoint > 0;
+
+		const currentAirspace = airspaces.find((x) => x.id === intersections[i].airspaceId);
+		const nextAirspace = airspaces.find((x) => x.id === intersections[i + 1]?.airspaceId);
+
+		if (switchingAirspace && currentAirspace?.name === nextAirspace?.name) {
+			continue;
+		}
+
+		count++;
+	}
+
+	return count;
+}
+
+/**
  * Checks if a point is inside an airspace using the Turf library
  * @remarks The function first checks if the airspace's lower limit is greater than the max flight level, if so it returns false
  * @param point - point to check

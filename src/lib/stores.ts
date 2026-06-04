@@ -14,6 +14,7 @@ import * as turf from '@turf/turf';
 import axios from 'axios';
 import type { AirportData, AirspaceData } from './logic/aeronautics/OpenAIPTypes';
 import { airspaceFromPlain, airportFromPlain } from './logic/transform';
+import { countAirspaceCrossings } from './logic/utils';
 
 const initialAircraftDetails: AircraftDetails = {
 	prefix: 'STUDENT',
@@ -144,6 +145,16 @@ export const OnRouteAirspacesStore = derived(
 			}
 		});
 		return filteredAirspaces;
+	}
+);
+
+export const OnRouteAirspaceCrossingsStore = derived(
+	[OnRouteAirspacesStore, WaypointsStore],
+	([$OnRouteAirspacesStore, $WaypointStore]) => {
+		if ($OnRouteAirspacesStore.length === 0 || $WaypointStore.length < 2) return 0;
+
+		const route = $WaypointStore.map((waypoint) => waypoint.location);
+		return countAirspaceCrossings(route, $OnRouteAirspacesStore);
 	}
 );
 
