@@ -7,7 +7,9 @@
 	import { dialog } from '$lib/components/singletons/dialog.svelte';
 	import { toaster } from '$lib/components/singletons/toaster';
 	import QuickLoadScenarioDataModal from '$lib/components/dialogs/QuickLoadScenarioDataModal.svelte';
+	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
 	import { generateScenario } from '$lib/logic/ScenarioGenerator';
+	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import 'leaflet/dist/leaflet.css';
 	import { onMount } from 'svelte';
 	import {
@@ -36,8 +38,11 @@
 		AllAirspacesStore,
 		OnRouteAirportsStore,
 		StartPointIndexStore,
+		ensureAeronauticalData,
 		fetchAirports,
-		fetchAirspaces
+		fetchAirspaces,
+		getAirspacesAlongRoute,
+		maxFlightLevelStore
 	} from '$lib/stores';
 	import {
 		isCallsignStandardRegistration,
@@ -176,31 +181,73 @@
 		if ($AllAirportsStore.length === 0) fetchAirports();
 	});
 
-	if (criticalDataMissing) {
-		// Set a short timeout then trigger modal to load scenario data
-		setTimeout(() => {
+	type QuickLoadScenarioData = {
+		routeSeed: string;
+		scenarioSeed: string;
+		hasEmergencies: boolean;
+	};
+
+	$effect(() => {
+		if (!criticalDataMissing) return;
+
+		const timeout = setTimeout(() => {
 			dialog.trigger({
 				type: 'component',
 				component: QuickLoadScenarioDataModal,
 				response: (r) => {
-					if (r && typeof r === 'object' && 'scenarioSeed' in r) {
-						const data = r as { scenarioSeed: string; hasEmergencies: boolean };
-						seed = data.scenarioSeed;
-						hasEmergencies = data.hasEmergencies;
-						loadScenario();
+					if (r && typeof r === 'object' && 'scenarioSeed' in r && 'routeSeed' in r) {
+						void loadScenarioFromSeeds(r as QuickLoadScenarioData);
 					}
 				}
 			});
 		}, 1000);
+
+		return () => clearTimeout(timeout);
+	});
+
+	async function loadScenarioFromSeeds(data: QuickLoadScenarioData): Promise<void> {
+		try {
+			await ensureAeronauticalData();
+
+			const routeData = generateFRTOLRouteFromSeed(
+				data.routeSeed,
+				get(AllAirportsStore),
+				get(AllAirspacesStore),
+				get(maxFlightLevelStore)
+			);
+
+			if (!routeData) {
+				dialog.trigger({
+					type: 'alert',
+					title: 'Route generation failed',
+					body: 'No feasible route was found for that seed. Please try another route seed.'
+				});
+				return;
+			}
+
+			loadRouteData(routeData);
+			seed = data.scenarioSeed;
+			hasEmergencies = data.hasEmergencies;
+			criticalDataMissing = false;
+			loadScenario();
+		} catch (e) {
+			console.error(e);
+			dialog.trigger({
+				type: 'alert',
+				title: 'Could not load scenario',
+				body: e instanceof Error ? e.message : 'An unexpected error occurred.'
+			});
+		}
 	}
 
-	function loadScenario() {
+	function loadScenario(): boolean {
 		try {
+			const airspaces = getAirspacesAlongRoute();
 			const scenario = generateScenario(
 				seed,
 				get(WaypointsStore),
 				get(OnRouteAirportsStore),
-				get(OnRouteAirspacesStore),
+				airspaces,
 				hasEmergencies
 			);
 			ScenarioStore.set(scenario);
@@ -210,8 +257,15 @@
 			} else {
 				EndPointIndexStore.set(endPointIndex);
 			}
+			return true;
 		} catch (e) {
 			console.error(e);
+			dialog.trigger({
+				type: 'alert',
+				title: 'Could not load scenario',
+				body: e instanceof Error ? e.message : 'Scenario generation failed.'
+			});
+			return false;
 		}
 	}
 
@@ -595,9 +649,17 @@
 		}
 	});
 	run(() => {
-		if (!criticalDataMissing && $AllAirportsStore.length > 0 && $AllAirspacesStore.length > 0) {
-			loadScenario();
+		if (
+			criticalDataMissing ||
+			get(ScenarioStore) !== undefined ||
+			$AllAirportsStore.length === 0 ||
+			$AllAirspacesStore.length === 0 ||
+			$WaypointsStore.length === 0 ||
+			getAirspacesAlongRoute().length === 0
+		) {
+			return;
 		}
+		loadScenario();
 	});
 	run(() => {
 		if (serverNotResponding) {

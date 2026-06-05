@@ -1,4 +1,4 @@
-import { derived, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 import type {
 	AircraftDetails,
 	AltimeterState,
@@ -283,10 +283,30 @@ export function ClearSimulationStores(): void {
 	NullRouteStore.set(false);
 }
 
+/** Airspaces along the current route, filtered by max flight level. */
+export function getAirspacesAlongRoute(): Airspace[] {
+	const waypoints = get(WaypointsStore);
+	const maxFL = get(maxFlightLevelStore);
+	const allAirspaces = get(AllAirspacesStore);
+
+	if (waypoints.length === 0 || allAirspaces.length === 0) return [];
+
+	const route = waypoints.map((waypoint) => waypoint.location);
+	return allAirspaces.filter(
+		(airspace) => airspace.lowerLimit <= maxFL && airspace.isIncludedInRoute(route, maxFL)
+	);
+}
+
+export async function ensureAeronauticalData(): Promise<void> {
+	await Promise.all([
+		get(AllAirportsStore).length === 0 ? fetchAirports() : Promise.resolve(),
+		get(AllAirspacesStore).length === 0 ? fetchAirspaces() : Promise.resolve()
+	]);
+}
+
 export async function fetchAirspaces() {
 	const response = await axios.get('/api/airspaces');
 
-	// Turn into instances of Airspace class and set in store
 	AllAirspacesStore.set(
 		response.data.map((airspace: AirspaceData) => airspaceFromPlain(airspace))
 	);
@@ -295,7 +315,6 @@ export async function fetchAirspaces() {
 export async function fetchAirports() {
 	const response = await axios.get('/api/airports');
 
-	// Turn into instances of Airport class and set in store
 	AllAirportsStore.set(
 		response.data.map((airport: AirportData) => airportFromPlain(airport))
 	);

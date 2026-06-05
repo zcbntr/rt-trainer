@@ -5,6 +5,7 @@
 	const shortCuid = init({ length: 8 });
 
 	const formData = $state({
+		routeSeed: shortCuid(),
 		scenarioSeed: shortCuid(),
 		hasEmergencies: true
 	});
@@ -15,6 +16,7 @@
 
 	function onSubmit(): void {
 		dialog.close({
+			routeSeed: formData.routeSeed,
 			scenarioSeed: formData.scenarioSeed,
 			hasEmergencies: formData.hasEmergencies
 		});
@@ -24,9 +26,18 @@
 <div class={cBase} aria-label="Load scenario data">
 	<header class={cHeader}>Load Scenario</header>
 	<p class="text-sm text-surface-600-400">
-		No scenario seed was provided. Enter a seed to generate a practice scenario.
+		No route was provided. Enter seeds to generate a practice route and scenario.
 	</p>
 	<form class="space-y-4 {cForm}" onsubmit={(e) => e.preventDefault()}>
+		<label class="label">
+			<span class="text-sm">Route Seed (required)</span>
+			<input
+				class="input"
+				type="text"
+				bind:value={formData.routeSeed}
+				placeholder="My Route"
+			/>
+		</label>
 		<label class="label">
 			<span class="text-sm">Scenario Seed (required)</span>
 			<input
@@ -57,7 +68,7 @@
 		<button
 			type="button"
 			class="btn preset-filled"
-			disabled={!formData.scenarioSeed?.length}
+			disabled={!formData.routeSeed?.length || !formData.scenarioSeed?.length}
 			onclick={onSubmit}
 		>
 			Load

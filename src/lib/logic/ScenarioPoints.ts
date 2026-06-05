@@ -1090,9 +1090,21 @@ export function getAirborneScenarioPoints(
 		if (switchingAirspace) i++;
 	}
 
-	if (hasEmergencies && scenarioPoints.length > 0) {
-		// Add emergency before a random waypoint on the route
-		const emergencyScenarioPointIndex = endStageIndexes[seed % (endStageIndexes.length - 1)] - 1;
+	if (hasEmergencies && scenarioPoints.length >= 2) {
+		// Add emergency along a segment between two consecutive scenario points.
+		// Requires at least two stage boundaries when using endStageIndexes; otherwise
+		// fall back to picking any valid segment (avoids seed % 0 when only one crossing).
+		let emergencyScenarioPointIndex: number;
+		if (endStageIndexes.length >= 2) {
+			const stagePick = seed % (endStageIndexes.length - 1);
+			emergencyScenarioPointIndex = endStageIndexes[stagePick] - 1;
+		} else {
+			emergencyScenarioPointIndex = seed % (scenarioPoints.length - 1);
+		}
+		emergencyScenarioPointIndex = Math.max(
+			0,
+			Math.min(emergencyScenarioPointIndex, scenarioPoints.length - 2)
+		);
 
 		// Get a random emergency type which is not none
 		const emergencyTypeIndex = seed % (Object.keys(EmergencyType).length - 1);
