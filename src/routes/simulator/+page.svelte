@@ -31,7 +31,6 @@
 		WaypointsStore,
 		OnRouteAirspacesStore,
 		CurrentScenarioPointStore,
-		CurrentScenarioContextStore,
 		SpeechNoiseStore,
 		AllAirportsStore,
 		AllAirspacesStore,
@@ -40,7 +39,12 @@
 		fetchAirports,
 		fetchAirspaces
 	} from '$lib/stores';
-	import { isCallsignStandardRegistration, replaceWithPhoneticAlphabet, toLeafletLatLng, wellesbourneMountfordLatLng } from '$lib/logic/utils';
+	import {
+		isCallsignStandardRegistration,
+		replaceWithPhoneticAlphabet,
+		toLeafletLatLng,
+		wellesbourneMountfordLatLng
+	} from '$lib/logic/utils';
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
 	import RadioCall from '$lib/logic/RadioCall';
@@ -58,6 +62,8 @@
 	import MessageInput from '$lib/components/simulator/MessageInput.svelte';
 	import Altimeter from '$lib/components/simulator/Altimeter.svelte';
 	import Map from '$lib/components/leaflet/Map.svelte';
+	import { Steps } from '@skeletonlabs/skeleton-svelte';
+	import { resolve } from '$app/paths';
 
 	// Scenario settings
 	let seed: string = '';
@@ -226,13 +232,21 @@
 
 	// Page settings
 	let speechRecognitionSupported: boolean = $state(false);
-	let tutorialStep4: boolean = $state(false);
+	let tutorialStep4Valid: boolean = $state(false);
 
 	let tutorialComplete: boolean = $state(false);
-	let tutorialStep: number = 1;
+	let tutorialCurrentStep: number = $state(0);
+
+	const tutorialStepCount = 4;
+	const tutorialStepTitles = [
+		'Get Started!',
+		'Turning on your Radio Stack',
+		'Setting Your Radio Frequency',
+		'Make your first Radio Call',
+		'Well Done!'
+	];
 
 	// Server state
-	let awaitingRadioCallCheck: boolean = false;
 	let serverNotResponding: boolean = false;
 	let nullRoute: boolean = false;
 
@@ -459,7 +473,7 @@
 			});
 		}
 
-		tutorialStep4 = true;
+		tutorialStep4Valid = true;
 		// Reset failed attempts
 		failedAttempts = 0;
 
@@ -539,7 +553,7 @@
 				body: 'Do you want view your feedback?',
 				response: (r) => {
 					if (r) {
-						goto('/scenario/results/');
+						goto(resolve('/scenario/results/'));
 					}
 				}
 			});
@@ -555,13 +569,18 @@
 		MostRecentlyReceivedMessageStore.set(response.responseCall);
 	}
 
-	function onStepHandler(e: {
-		detail: { state: { current: number; total: number }; step: number };
-	}): void {
-		tutorialStep = e.detail.state.current + 1;
+	function isTutorialStepValid(index: number): boolean {
+		if (index === 1) return tutorialStep2Valid;
+		if (index === 2) return tutorialStep3Valid;
+		if (index === 3) return tutorialStep4Valid;
+		return true;
 	}
 
-	function onCompleteHandler(e: Event): void {
+	function onTutorialStepChange(details: { step: number }): void {
+		tutorialCurrentStep = details.step;
+	}
+
+	function onTutorialComplete(): void {
 		tutorialComplete = true;
 	}
 
@@ -577,11 +596,7 @@
 		}
 	});
 	run(() => {
-		if (
-			!criticalDataMissing &&
-			$AllAirportsStore.length > 0 &&
-			$AllAirspacesStore.length > 0
-		) {
+		if (!criticalDataMissing && $AllAirportsStore.length > 0 && $AllAirspacesStore.length > 0) {
 			loadScenario();
 		}
 	});
@@ -608,10 +623,10 @@
 			TTSWithNoise($SpeechNoiseStore);
 		}
 	});
-	let tutorialStep2 = $derived(
+	let tutorialStep2Valid = $derived(
 		$TransponderStateStore?.dialMode == 'SBY' && $RadioStateStore?.dialMode == 'SBY'
 	);
-	let tutorialStep3 = $derived(
+	let tutorialStep3Valid = $derived(
 		$RadioStateStore?.activeFrequency ==
 			$ScenarioStore?.getCurrentPoint().updateData.currentTargetFrequency
 	);
@@ -619,66 +634,86 @@
 
 <div class="flex" style="justify-content: center;">
 	<div class="w-full max-w-screen-lg p-5">
-		<div class="flex flex-row place-content-center gap-5 flex-wrap">
+		<div class="flex flex-row flex-wrap place-content-center gap-5">
 			{#if $TutorialStore && !tutorialComplete}
-				<div class="card bg-primary-900 text-white p-3 rounded-lg sm:w-7/12 sm:mx-10">
-					<Stepper on:complete={onCompleteHandler} on:step={onStepHandler}>
-						<Step>
-							{#snippet header()}
-								Get Started!
-							{/snippet}
+				<div class="card rounded-lg bg-primary-900 p-3 text-white sm:mx-10 sm:w-7/12">
+					<Steps
+						class="w-full"
+						count={tutorialStepCount}
+						linear
+						isStepValid={isTutorialStepValid}
+						onStepChange={onTutorialStepChange}
+						onStepComplete={onTutorialComplete}
+					>
+						<Steps.List class="mb-4">
+							{#each tutorialStepTitles as title, index (index)}
+								<Steps.Item {index}>
+									<Steps.Trigger>
+										<Steps.Indicator>{index + 1}</Steps.Indicator>
+										<span class="hidden sm:inline">{title}</span>
+									</Steps.Trigger>
+									{#if index < tutorialStepTitles.length - 1}
+										<Steps.Separator />
+									{/if}
+								</Steps.Item>
+							{/each}
+						</Steps.List>
+
+						<Steps.Content index={0}>
+							<h3 class="mb-2 h3">{tutorialStepTitles[0]}</h3>
 							Welcome to RT Trainer. This tutorial will explain how to use the simulator.
 							<br />Click
 							<span class="underline">next</span>
 							to continue.
-							{#snippet navigation()}
-								<button class="btn preset-tonal-warning border border-warning-500" onclick={cancelTutorial}
-									>Skip Tutorial</button
-								>
-							{/snippet}
-						</Step>
-						<Step locked={!tutorialStep2}>
-							{#snippet header()}
-								Turning on your Radio Stack
-							{/snippet}
-							<ul class="list-disc ml-5">
+						</Steps.Content>
+						<Steps.Content index={1}>
+							<h3 class="mb-2 h3">{tutorialStepTitles[1]}</h3>
+							<ul class="ml-5 list-disc">
 								<li>Turn on your radio by clicking on the dial or standby (SBY) label.</li>
 								<li>Set your transponder to standby in the same way.</li>
 							</ul>
-						</Step>
-						<Step locked={!tutorialStep3}>
-							{#snippet header()}
-								Setting Your Radio Frequency
-							{/snippet}
+						</Steps.Content>
+						<Steps.Content index={2}>
+							<h3 class="mb-2 h3">{tutorialStepTitles[2]}</h3>
 							Set your radio frequency to the current target frequency shown in the message output box.
-						</Step>
-						<Step locked={!tutorialStep4}>
-							{#snippet header()}
-								Make your first Radio Call
-							{/snippet}
+						</Steps.Content>
+						<Steps.Content index={3}>
+							<h3 class="mb-2 h3">{tutorialStepTitles[3]}</h3>
 							Now you are ready to make your first radio call.
-							<ul class="list-disc ml-5">
+							<ul class="ml-5 list-disc">
 								<li>Type your message in the input box.</li>
 								<li>Or enable speech input and say your message out loud.</li>
 								<li>
 									Your callsign is `{$AircraftDetailsStore.prefix}
-									{$AircraftDetailsStore.callsign}`. You can change this in your
-									<a href="/profile">profile settings</a>.
+									{$AircraftDetailsStore.callsign}`.
 								</li>
 							</ul>
-						</Step>
-						<Step>
-							{#snippet header()}
-								Well Done!
-							{/snippet}
+						</Steps.Content>
+						<Steps.Content index={4}>
+							<h3 class="mb-2 h3">{tutorialStepTitles[4]}</h3>
 							You have completed the basic tutorial. Familiarise yourself with the rest of the simulator
 							and complete the route.
-						</Step>
-					</Stepper>
+						</Steps.Content>
+
+						<div class="mt-4 flex items-center justify-between gap-2">
+							<Steps.PrevTrigger class="btn preset-tonal">Back</Steps.PrevTrigger>
+							<div class="flex gap-2">
+								{#if tutorialCurrentStep === 0}
+									<button
+										class="btn border border-warning-500 preset-tonal-warning"
+										onclick={cancelTutorial}
+									>
+										Skip Tutorial
+									</button>
+								{/if}
+								<Steps.NextTrigger class="btn preset-tonal">Next</Steps.NextTrigger>
+							</div>
+						</div>
+					</Steps>
 				</div>
 			{/if}
 
-			<div class="flex flex-col place-content-evenly sm:grid sm:grid-cols-2 gap-5">
+			<div class="flex flex-col place-content-evenly gap-5 sm:grid sm:grid-cols-2">
 				<MessageOutput />
 
 				<MessageInput {speechRecognitionSupported} submit={handleSubmit} />
@@ -688,8 +723,8 @@
 
 			<Transponder />
 
-			<div class="card p-2 rounded-md w-[420px] h-[452px] bg-neutral-600 flex flex-row grow">
-				<div class="w-full h-full">
+			<div class="flex h-[452px] w-[420px] grow flex-row card rounded-md bg-neutral-600 p-2">
+				<div class="h-full w-full">
 					<Map view={mapView} zoom={9}>
 						{#if $WaypointPointsMapStore.length > 0}
 							{#each $WaypointsStore as waypoint (waypoint.index)}
@@ -744,7 +779,7 @@
 							{/each}
 						{/if}
 
-						{#each $WaypointPointsMapStore as waypointPoint, index}
+						{#each $WaypointPointsMapStore as waypointPoint, index (index)}
 							{#if index > 0}
 								{#key [$WaypointPointsMapStore[index - 1], $WaypointPointsMapStore[index]]}
 									<Polyline
@@ -760,11 +795,11 @@
 							{/if}
 						{/each}
 
-						{#each $OnRouteAirspacesStore as airspace}
+						{#each $OnRouteAirspacesStore as airspace (airspace.id)}
 							{#if airspace.type == 14}
 								<Polygon
 									latLngArray={airspace.coordinates[0].map(toLeafletLatLng)}
-									color={'red'}
+									color="red"
 									fillOpacity={0.2}
 									weight={1}
 									mouseover={(detail: PolygonLayerDetail) => {
@@ -777,7 +812,7 @@
 							{:else}
 								<Polygon
 									latLngArray={airspace.coordinates[0].map(toLeafletLatLng)}
-									color={'blue'}
+									color="blue"
 									fillOpacity={0.2}
 									weight={1}
 									mouseover={(detail: PolygonLayerDetail) => {
@@ -810,7 +845,7 @@
 
 			<Altimeter />
 
-			<div class="w-full flex flex-row flex-wrap gap-5 p-2 text-neutral-600/50">
+			<div class="flex w-full flex-row flex-wrap gap-5 p-2 text-neutral-600/50">
 				<div>
 					Your callsign: {$AircraftDetailsStore.prefix}
 					{$AircraftDetailsStore.callsign}
