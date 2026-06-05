@@ -53,7 +53,6 @@
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import { WaypointType } from '$lib/logic/aeronautics/Waypoint';
-	import type * as Leaflet from 'leaflet';
 	import type { MarkerLayerDetail, PolygonLayerDetail } from '$lib/components/leaflet/types';
 	import Parser, { type ParseResult } from '$lib/logic/Parser';
 	import Radio from '$lib/components/simulator/Radio.svelte';

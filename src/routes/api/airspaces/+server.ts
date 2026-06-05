@@ -8,5 +8,9 @@ export const GET: RequestHandler = async () => {
 		error(404, 'Airspaces not found');
 	}
 
-	return new Response(JSON.stringify(airspaces));
+	return new Response(JSON.stringify(airspaces), {
+		headers: {
+			'Cache-Control': 'public, max-age=86400'
+		}
+	});
 };

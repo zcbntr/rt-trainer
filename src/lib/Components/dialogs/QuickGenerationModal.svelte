@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
 
-	import { AllAirportsStore, AllAirspacesStore, fetchAirports, fetchAirspaces } from '$lib/stores';
+	import {
+		AllAirportsStore,
+		AllAirspacesStore,
+		DEFAULT_MAX_FLIGHT_LEVEL,
+		fetchAirports,
+		fetchAirspaces
+	} from '$lib/stores';
 	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
 	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import { init } from '@paralleldrive/cuid2';
@@ -31,7 +37,7 @@
 			formData.routeSeed,
 			get(AllAirportsStore),
 			get(AllAirspacesStore),
-			30
+			DEFAULT_MAX_FLIGHT_LEVEL
 		);
 		if (routeData) {
 			loadRouteData(routeData);

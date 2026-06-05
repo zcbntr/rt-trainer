@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { OPENAIPKEY } from '$env/static/private';
+import { getCachedOrFetch } from '$lib/server/openAIPCache';
 import type {
 	AirportData,
 	AirportReportingPointData,
@@ -114,6 +115,10 @@ export function airspaceDataToAirspace(airspaceData: AirspaceData): Airspace {
 }
 
 export async function getAllUKAirportsFromOpenAIP(): Promise<AirportData[]> {
+	return getCachedOrFetch('uk-airports', fetchUKAirportsFromOpenAIP);
+}
+
+async function fetchUKAirportsFromOpenAIP(): Promise<AirportData[]> {
 	try {
 		const response = await axios.get(`https://api.core.openaip.net/api/airports`, {
 			headers: {
@@ -137,6 +142,10 @@ export async function getAllUKAirportsFromOpenAIP(): Promise<AirportData[]> {
 }
 
 export async function getAllUKAirspaceFromOpenAIP(): Promise<AirspaceData[]> {
+	return getCachedOrFetch('uk-airspaces', fetchUKAirspacesFromOpenAIP);
+}
+
+async function fetchUKAirspacesFromOpenAIP(): Promise<AirspaceData[]> {
 	try {
 		const response1 = await axios.get(`https://api.core.openaip.net/api/airspaces`, {
 			headers: {
@@ -171,6 +180,10 @@ export async function getAllUKAirspaceFromOpenAIP(): Promise<AirspaceData[]> {
 export async function getAllUKAirportReportingPointsFromOpenAIP(): Promise<
 	AirportReportingPointData[]
 > {
+	return getCachedOrFetch('uk-reporting-points', fetchUKReportingPointsFromOpenAIP);
+}
+
+async function fetchUKReportingPointsFromOpenAIP(): Promise<AirportReportingPointData[]> {
 	try {
 		const response = await axios.get(`https://api.core.openaip.net/api/reporting-points`, {
 			headers: {

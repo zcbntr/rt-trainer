@@ -113,7 +113,10 @@ export const RouteDistanceDisplayStore = derived(
 
 export const AllAirspacesStore = writable<Airspace[]>([]);
 
-export const maxFlightLevelStore = writable<number>(0);
+/** Default max FL for FRTOL route generation and scenario filtering (FL30 = 3000 ft). */
+export const DEFAULT_MAX_FLIGHT_LEVEL = 30;
+
+export const maxFlightLevelStore = writable<number>(DEFAULT_MAX_FLIGHT_LEVEL);
 
 export const FilteredAirspacesStore = derived(
 	[AllAirspacesStore, maxFlightLevelStore],
