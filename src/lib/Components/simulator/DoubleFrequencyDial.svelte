@@ -241,7 +241,9 @@
 	.double-frequency-dial-inner {
 		width: 50px;
 		height: 50px;
-		top: 25%;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
 		border: 2px solid #fff;
 		border-radius: 50%;
 		transition: all 0.35s ease-in-out 0s;
