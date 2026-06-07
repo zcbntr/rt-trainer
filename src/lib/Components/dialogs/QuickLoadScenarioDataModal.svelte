@@ -10,7 +10,7 @@
 		hasEmergencies: true
 	});
 
-	const cBase = 'w-full space-y-4';
+	const cBase = 'w-full space-y-4 p-5';
 	const cHeader = 'text-2xl font-bold';
 	const cForm = 'space-y-4 rounded-container';
 
@@ -31,12 +31,7 @@
 	<form class="space-y-4 {cForm}" onsubmit={(e) => e.preventDefault()}>
 		<label class="label">
 			<span class="text-sm">Route Seed (required)</span>
-			<input
-				class="input"
-				type="text"
-				bind:value={formData.routeSeed}
-				placeholder="My Route"
-			/>
+			<input class="input" type="text" bind:value={formData.routeSeed} placeholder="My Route" />
 		</label>
 		<label class="label">
 			<span class="text-sm">Scenario Seed (required)</span>

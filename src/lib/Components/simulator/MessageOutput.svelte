@@ -14,6 +14,9 @@
 
 	let { class: className = '' }: Props = $props();
 
+	const switchControlClass =
+		'inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors preset-filled-secondary-50-950 data-[state=checked]:preset-filled-primary-500';
+
 	const currentContextDisplay = $derived(
 		$CurrentScenarioContextStore === ''
 			? 'Context for your current point in the scenario will appear here'
@@ -38,17 +41,16 @@
 					<div class="flex flex-row place-content-start gap-2">
 						<Switch
 							id="enabled-audio-messages"
-							name="slider-label"
+							name="enabled-audio-messages"
 							checked={$SpeechOutputEnabledStore}
-							active="bg-primary-500"
-							size="sm"
-							role="switch"
-							aria-checked={$SpeechOutputEnabledStore}
 							aria-label="Toggle text-to-speech audio messages"
-							onclick={() => {
-								$SpeechOutputEnabledStore = !$SpeechOutputEnabledStore;
-							}}
-						/>
+							onCheckedChange={(e) => SpeechOutputEnabledStore.set(e.checked)}
+						>
+							<Switch.Control class={switchControlClass}>
+								<Switch.Thumb />
+							</Switch.Control>
+							<Switch.HiddenInput />
+						</Switch>
 						<HoverTooltip label="Read Aloud Received Calls">
 							<p>Audio messages read aloud when you receive a call from ATC or another aircraft.</p>
 						</HoverTooltip>
@@ -56,17 +58,17 @@
 					<div class="flex flex-row place-content-start gap-2">
 						<Switch
 							id="enabled-audio-messages-noise"
-							name="slider-label"
-							active="bg-primary-500"
-							size="sm"
+							name="enabled-audio-messages-noise"
+							checked={$SpeechNoiseStore > 0}
 							disabled={!$SpeechOutputEnabledStore}
-							role="switch"
-							aria-checked={$SpeechNoiseStore > 0}
 							aria-label="Toggle interference noise"
-							onclick={() => {
-								$SpeechNoiseStore = $SpeechNoiseStore === 0 ? 0.1 : 0;
-							}}
-						/>
+							onCheckedChange={(e) => SpeechNoiseStore.set(e.checked ? 0.1 : 0)}
+						>
+							<Switch.Control class={switchControlClass}>
+								<Switch.Thumb />
+							</Switch.Control>
+							<Switch.HiddenInput />
+						</Switch>
 						<HoverTooltip label="Interference Noise">
 							<p>
 								Adds static noise to read out calls. <br />Requires Read Aloud Recieved Calls to be

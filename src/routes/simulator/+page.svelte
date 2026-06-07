@@ -423,12 +423,7 @@
 			});
 			return false;
 		} else if (altimeterState.pressure != scenario?.getCurrentPoint().updateData.currentPressure) {
-			// dialog.trigger({
-			// 	type: 'alert',
-			// 	title: 'Error',
-			// 	body: 'Altimeter pressure setting incorrect'
-			// });
-			// return false;
+			// ATC should respond with say again/negative to correct the pressure
 		}
 
 		return true;

@@ -25,6 +25,9 @@
 	let mounted = $state(false);
 	let message = $state('');
 
+	const switchControlClass =
+		'inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors preset-filled-secondary-50-950 data-[state=checked]:preset-filled-primary-500';
+
 	$effect(() => {
 		if (!mounted) return;
 		const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
@@ -103,17 +106,16 @@
 			<div class="flex flex-row place-content-start gap-2">
 				<Switch
 					id="enable-live-feedback"
-					name="slider-label"
+					name="enable-live-feedback"
 					checked={$LiveFeedbackStore}
-					active="bg-primary-500"
-					size="sm"
-					role="switch"
-					aria-checked={$LiveFeedbackStore}
 					aria-label="Toggle live feedback"
-					onclick={() => {
-						$LiveFeedbackStore = !$LiveFeedbackStore;
-					}}
-				/>
+					onCheckedChange={(e) => LiveFeedbackStore.set(e.checked)}
+				>
+					<Switch.Control class={switchControlClass}>
+						<Switch.Thumb />
+					</Switch.Control>
+					<Switch.HiddenInput />
+				</Switch>
 				<HoverTooltip label="Feedback">
 					<p>Shows feedback immediately, instead of just at the end of the scenario.</p>
 				</HoverTooltip>
@@ -125,16 +127,12 @@
 				<div class="flex flex-row place-content-start gap-2">
 					<Switch
 						id="enable-voice-input"
-						name="slider-label"
+						name="enable-voice-input"
 						checked={$SpeechInputEnabledStore}
-						active="bg-primary-500"
-						size="sm"
-						role="switch"
-						aria-checked={$SpeechInputEnabledStore}
 						aria-label="Toggle speech input"
-						onclick={() => {
-							$SpeechInputEnabledStore = !$SpeechInputEnabledStore;
-							if ($SpeechInputEnabledStore) {
+						onCheckedChange={(e) => {
+							SpeechInputEnabledStore.set(e.checked);
+							if (e.checked) {
 								dialog.trigger({
 									type: 'alert',
 									title: 'Speech input is enabled',
@@ -142,7 +140,12 @@
 								});
 							}
 						}}
-					/>
+					>
+						<Switch.Control class={switchControlClass}>
+							<Switch.Thumb />
+						</Switch.Control>
+						<Switch.HiddenInput />
+					</Switch>
 					<HoverTooltip label="Voice Input">
 						<p>Speech recognition is experimental, you may need to correct the recorded text.</p>
 					</HoverTooltip>
@@ -153,12 +156,16 @@
 				<div class="flex flex-row place-content-start gap-2">
 					<Switch
 						id="enable-voice-input"
-						name="slider-label"
+						name="enable-voice-input"
 						checked={$SpeechInputEnabledStore}
-						active="bg-primary-500"
-						size="sm"
 						disabled
-					/>
+						aria-label="Toggle speech input"
+					>
+						<Switch.Control class={switchControlClass}>
+							<Switch.Thumb />
+						</Switch.Control>
+						<Switch.HiddenInput />
+					</Switch>
 					<HoverTooltip label="Voice Input">
 						<p>
 							Speech recognition is not supported in this browser.<br />Please use a different
