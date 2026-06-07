@@ -40,7 +40,8 @@
 	import FixWaypointMarkerIcon, {
 		FIX_WAYPOINT_MARKER_DEFAULTS,
 		fixWaypointMarkerAnchor,
-		isRouteEndpoint
+		isRouteEndpoint,
+		WAYPOINT_MARKER_Z_INDEX_OFFSET
 	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
 	import AirportMarker from '$lib/components/leaflet/AirportMarker.svelte';
 	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
@@ -462,6 +463,7 @@
 								height={FIX_WAYPOINT_MARKER_DEFAULTS.size}
 								aeroObject={waypoint}
 								iconAnchor={fixWaypointMarkerAnchor()}
+								zIndexOffset={WAYPOINT_MARKER_Z_INDEX_OFFSET}
 								dragend={onWaypointDragEnd}
 								draggable={true}
 							>
@@ -516,6 +518,7 @@
 						width={FIX_WAYPOINT_MARKER_DEFAULTS.size}
 						height={FIX_WAYPOINT_MARKER_DEFAULTS.size}
 						iconAnchor={fixWaypointMarkerAnchor()}
+						zIndexOffset={WAYPOINT_MARKER_Z_INDEX_OFFSET}
 					>
 						<FixWaypointMarkerIcon />
 					</Marker>

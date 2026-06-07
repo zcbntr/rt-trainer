@@ -16,6 +16,7 @@
 		aeroObject?: Waypoint | Airport | undefined;
 		draggable?: boolean;
 		iconAnchor?: Leaflet.PointExpression;
+		zIndexOffset?: number;
 		children?: import('svelte').Snippet;
 		drag?: (detail: MarkerLayerDetail) => void;
 		click?: (detail: MarkerLayerDetail) => void;
@@ -33,6 +34,7 @@
 		aeroObject = undefined,
 		draggable = false,
 		iconAnchor,
+		zIndexOffset = 0,
 		children,
 		drag = () => {},
 		click = () => {},
@@ -75,6 +77,11 @@
 		marker.setIcon(createDivIcon(leafletApi));
 	});
 
+	$effect(() => {
+		if (!marker) return;
+		marker.setZIndexOffset(zIndexOffset);
+	});
+
 	onMount(async () => {
 		const map = getMap();
 		if (!map) return;
@@ -86,7 +93,8 @@
 			icon: createDivIcon(leafletApi),
 			rotationAngle: rotation,
 			rotationOrigin: 'center center',
-			title: aeroObject?.name
+			title: aeroObject?.name,
+			zIndexOffset
 		}).addTo(map);
 
 		if (draggable) marker.dragging?.enable();

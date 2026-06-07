@@ -54,8 +54,14 @@
 	import FixWaypointMarkerIcon, {
 		FIX_WAYPOINT_MARKER_DEFAULTS,
 		fixWaypointMarkerAnchor,
-		isRouteEndpoint
+		isRouteEndpoint,
+		WAYPOINT_MARKER_Z_INDEX_OFFSET
 	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
+	import AircraftMarkerIcon, {
+		AIRCRAFT_MARKER_DEFAULTS,
+		AIRCRAFT_MARKER_Z_INDEX_OFFSET,
+		aircraftMarkerAnchor
+	} from '$lib/components/leaflet/AircraftMarkerIcon.svelte';
 	import AirportMarker from '$lib/components/leaflet/AirportMarker.svelte';
 	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
 	import type Airport from '$lib/logic/aeronautics/Airport';
@@ -832,6 +838,7 @@
 										height={FIX_WAYPOINT_MARKER_DEFAULTS.size}
 										aeroObject={waypoint}
 										iconAnchor={fixWaypointMarkerAnchor()}
+										zIndexOffset={WAYPOINT_MARKER_Z_INDEX_OFFSET}
 										mouseover={(detail: MarkerLayerDetail) => {
 											detail.marker.openPopup();
 										}}
@@ -881,8 +888,15 @@
 						{/each}
 
 						{#key aircraftPosition}
-							<Marker latLng={aircraftPosition} width={50} height={50} rotation={displayHeading}>
-								<div class="text-2xl">🛩️</div>
+							<Marker
+								latLng={aircraftPosition}
+								width={AIRCRAFT_MARKER_DEFAULTS.size}
+								height={AIRCRAFT_MARKER_DEFAULTS.size}
+								iconAnchor={aircraftMarkerAnchor()}
+								rotation={displayHeading}
+								zIndexOffset={AIRCRAFT_MARKER_Z_INDEX_OFFSET}
+							>
+								<AircraftMarkerIcon />
 
 								<Popup
 									><div class="flex flex-col gap-2">

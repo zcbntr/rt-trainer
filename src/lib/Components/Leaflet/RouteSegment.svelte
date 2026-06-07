@@ -10,7 +10,9 @@
 		arrowViewBoxWidth: 24,
 		arrowViewBoxHeight: 18,
 		arrowStrokeWidth: 4,
-		arrowPath: 'M 5 15 L 12 3 L 19 15'
+		arrowPath: 'M 5 15 L 12 3 L 19 15',
+		/** Below waypoint markers regardless of mount order. */
+		arrowZIndexOffset: -400
 	} as const;
 
 	export function routeSegmentArrowAnchor(
@@ -100,6 +102,7 @@
 		height={ROUTE_SEGMENT_DEFAULTS.arrowMarkerHeight}
 		rotation={arrow.rotation}
 		iconAnchor={arrowAnchor}
+		zIndexOffset={ROUTE_SEGMENT_DEFAULTS.arrowZIndexOffset}
 	>
 		<svg
 			viewBox="0 0 {ROUTE_SEGMENT_DEFAULTS.arrowViewBoxWidth} {ROUTE_SEGMENT_DEFAULTS.arrowViewBoxHeight}"

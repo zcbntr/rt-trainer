@@ -6,6 +6,7 @@
 		AIRPORT_MARKER_DEFAULTS,
 		airportMarkerAnchor
 	} from '$lib/components/leaflet/AirportMarkerIcon.svelte';
+	import { WAYPOINT_MARKER_Z_INDEX_OFFSET } from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
 	import { getZoomScaledAirportSize } from '$lib/components/leaflet/airportMarkerGeometry';
 	import type { RunwaySymbolInput } from '$lib/components/leaflet/airportMarkerGeometry';
 	import type Airport from '$lib/logic/aeronautics/Airport';
@@ -57,6 +58,7 @@
 	width={iconSize}
 	height={iconSize}
 	iconAnchor={airportMarkerAnchor(iconSize)}
+	zIndexOffset={WAYPOINT_MARKER_Z_INDEX_OFFSET}
 	{drag}
 	{click}
 	{mouseover}

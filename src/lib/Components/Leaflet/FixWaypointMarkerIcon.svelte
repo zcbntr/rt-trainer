@@ -19,6 +19,9 @@ export function isRouteEndpoint(index: number, waypointCount: number): boolean {
 	return waypointCount > 0 && (index === 0 || index === waypointCount - 1);
 }
 
+/** Leaflet stacking order within the marker pane; higher draws above. */
+export const WAYPOINT_MARKER_Z_INDEX_OFFSET = 100;
+
 export function fixWaypointMarkerAnchor(
 	size: number = FIX_WAYPOINT_MARKER_DEFAULTS.size
 ): [number, number] {
