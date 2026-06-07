@@ -484,6 +484,24 @@ export function calculateDistanceAlongRoute(route: Position[], targetPoint: Posi
 	return totalDistanceAlongRoute;
 }
 
+/**
+ * Returns the index of the route segment that contains the target point.
+ * Segment i spans route[i] to route[i + 1].
+ */
+export function findRouteSegmentIndex(route: Position[], targetPoint: Position): number {
+	for (let i = 0; i < route.length - 1; i++) {
+		const segmentLength = turf.distance(route[i], route[i + 1], { units: 'meters' });
+		const distanceToTarget = turf.distance(route[i], targetPoint, { units: 'meters' });
+		const distanceToNext = turf.distance(route[i + 1], targetPoint, { units: 'meters' });
+
+		if (distanceToTarget + distanceToNext - segmentLength < 5) {
+			return i;
+		}
+	}
+
+	return Math.max(0, route.length - 2);
+}
+
 export interface Intersection {
 	position: LngLat;
 	airspaceId: string;

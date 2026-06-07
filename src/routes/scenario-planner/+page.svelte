@@ -36,7 +36,11 @@
 	} from '$lib/logic/aeronautics/ukPracticeArea';
 	import type * as Leaflet from 'leaflet';
 	import type { MarkerLayerDetail, PolygonLayerDetail } from '$lib/components/leaflet/types';
-	import Polyline from '$lib/components/leaflet/Polyline.svelte';
+	import RouteSegment from '$lib/components/leaflet/RouteSegment.svelte';
+	import FixWaypointMarkerIcon, {
+		FIX_WAYPOINT_MARKER_DEFAULTS,
+		fixWaypointMarkerAnchor
+	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
 	import { Icon } from 'svelte-icons-pack';
 	import { BsAirplaneFill } from 'svelte-icons-pack/bs';
 	import { goto } from '$app/navigation';
@@ -358,48 +362,16 @@
 										>
 									</div></Popup
 								>
-							</Marker>{:else if waypoint.index == $WaypointsStore.length - 1}
-							<Marker
+							</Marker>{:else}<Marker
 								latLng={toLeafletLatLng(waypoint.location)}
-								width={50}
-								height={50}
+								width={FIX_WAYPOINT_MARKER_DEFAULTS.size}
+								height={FIX_WAYPOINT_MARKER_DEFAULTS.size}
 								aeroObject={waypoint}
+								iconAnchor={fixWaypointMarkerAnchor()}
 								dragend={onWaypointDragEnd}
 								draggable={true}
 							>
-								<div class="text-2xl">🏁</div>
-
-								<Popup
-									><div class="flex flex-col gap-2">
-										<textarea id="waypoint-{waypoint.id}-name" class="textarea" rows="1"
-											>{waypoint.name}</textarea
-										><textarea id="waypoint-{waypoint.id}-lat" class="textarea" rows="1"
-											>{waypoint.location[1]}</textarea
-										><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
-											>{waypoint.location[0]}</textarea
-										>
-										<button class="varient-filled btn" onclick={() => saveWaypointEdit(waypoint)}
-											>Save</button
-										>
-										<button class="btn preset-filled" onclick={() => deleteWaypoint(waypoint)}
-											><div class="grid w-full grid-cols-4 gap-2">
-												<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
-												<div class="col-span-3 col-start-2">Delete</div>
-											</div></button
-										>
-									</div></Popup
-								>
-							</Marker>
-						{:else}<Marker
-								latLng={toLeafletLatLng(waypoint.location)}
-								width={50}
-								height={50}
-								aeroObject={waypoint}
-								iconAnchor={[8, 26]}
-								dragend={onWaypointDragEnd}
-								draggable={true}
-							>
-								<div class="text-2xl">🚩</div>
+								<FixWaypointMarkerIcon />
 
 								<Popup
 									><div class="flex flex-col gap-2">
@@ -429,14 +401,11 @@
 				{#each $WaypointPointsMapStore as waypointPoint, index (waypointPoint.toString() + index.toString())}
 					{#if index > 0}
 						{#key [$WaypointPointsMapStore[index - 1], $WaypointPointsMapStore[index]]}
-							<Polyline
+							<RouteSegment
 								latLngArray={[
 									$WaypointPointsMapStore[index - 1] as [number, number],
 									$WaypointPointsMapStore[index] as [number, number]
 								]}
-								colour="#FF69B4"
-								fillOpacity={1}
-								weight={7}
 							/>
 						{/key}
 					{/if}

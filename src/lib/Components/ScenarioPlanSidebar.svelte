@@ -19,11 +19,13 @@
 	} from '$lib/stores';
 	import { resolve } from '$app/paths';
 	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
+	import { WaypointType } from '$lib/logic/aeronautics/Waypoint';
 	import { flip } from 'svelte/animate';
 	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { get } from 'svelte/store';
+	import FixWaypointMarkerIcon from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
 
 	const shortCUID = init({ length: 8 });
 
@@ -149,7 +151,14 @@
 				>
 					<div class="flex flex-col place-content-center">
 						{#if waypoint.index == 0}
-							🛩️{:else if waypoint.index == $WaypointsStore.length - 1}🏁{:else}🚩{/if}
+							🛩️
+						{:else if waypoint.index == $WaypointsStore.length - 1 && waypoint.type == WaypointType.Airport}
+							🏁
+						{:else if waypoint.type == WaypointType.Airport}
+							🛫
+						{:else}
+							<FixWaypointMarkerIcon />
+						{/if}
 					</div>
 					<div class="flex flex-col place-content-center">
 						<textarea class="textarea" rows="1" placeholder={waypoint.name}></textarea>

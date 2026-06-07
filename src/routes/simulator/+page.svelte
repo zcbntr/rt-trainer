@@ -41,6 +41,7 @@
 		maxFlightLevelStore
 	} from '$lib/stores';
 	import {
+		findRouteSegmentIndex,
 		isCallsignStandardRegistration,
 		replaceWithPhoneticAlphabet,
 		toLeafletLatLng,
@@ -49,7 +50,11 @@
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
 	import RadioCall from '$lib/logic/RadioCall';
-	import Polyline from '$lib/components/leaflet/Polyline.svelte';
+	import RouteSegment from '$lib/components/leaflet/RouteSegment.svelte';
+	import FixWaypointMarkerIcon, {
+		FIX_WAYPOINT_MARKER_DEFAULTS,
+		fixWaypointMarkerAnchor
+	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
 	import AirspacePolygon from '$lib/components/leaflet/AirspacePolygon.svelte';
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import Marker from '$lib/components/leaflet/Marker.svelte';
@@ -311,6 +316,16 @@
 			? $CurrentScenarioPointStore.pose.trueHeading - 45
 			: 0
 	);
+
+	const currentRouteSegmentIndex = $derived.by(() => {
+		const position = $CurrentScenarioPointStore?.pose.position;
+		if (!position || $WaypointsStore.length < 2) return -1;
+
+		return findRouteSegmentIndex(
+			$WaypointsStore.map((waypoint) => waypoint.location),
+			position
+		);
+	});
 
 	/**
 	 * Reads out the current atc message using the speech synthesis API, with added static noise
@@ -781,7 +796,7 @@
 					<Map view={mapView} zoom={9}>
 						{#if $WaypointPointsMapStore.length > 0}
 							{#each $WaypointsStore as waypoint (waypoint.index)}
-								{#if waypoint.index == $WaypointsStore.length - 1 || waypoint.type == WaypointType.Airport}
+								{#if waypoint.type == WaypointType.Airport}
 									<Marker
 										latLng={toLeafletLatLng(waypoint.location)}
 										width={50}
@@ -796,7 +811,7 @@
 									>
 										{#if waypoint.index == $WaypointsStore.length - 1}
 											<div class="text-2xl">🏁</div>
-										{:else if waypoint.type == WaypointType.Airport}
+										{:else}
 											<div class="text-2xl">🛫</div>
 										{/if}
 
@@ -809,10 +824,10 @@
 								{:else}
 									<Marker
 										latLng={toLeafletLatLng(waypoint.location)}
-										width={50}
-										height={50}
+										width={FIX_WAYPOINT_MARKER_DEFAULTS.size}
+										height={FIX_WAYPOINT_MARKER_DEFAULTS.size}
 										aeroObject={waypoint}
-										iconAnchor={[8, 26]}
+										iconAnchor={fixWaypointMarkerAnchor()}
 										mouseover={(detail: MarkerLayerDetail) => {
 											detail.marker.openPopup();
 										}}
@@ -820,7 +835,7 @@
 											detail.marker.closePopup();
 										}}
 									>
-										<div class="text-2xl">🚩</div>
+										<FixWaypointMarkerIcon />
 
 										<Popup
 											><div class="flex flex-col gap-2">
@@ -835,14 +850,12 @@
 						{#each $WaypointPointsMapStore as waypointPoint, index (index)}
 							{#if index > 0}
 								{#key [$WaypointPointsMapStore[index - 1], $WaypointPointsMapStore[index]]}
-									<Polyline
+									<RouteSegment
 										latLngArray={[
 											$WaypointPointsMapStore[index - 1] as [number, number],
 											$WaypointPointsMapStore[index] as [number, number]
 										]}
-										colour="#FF69B4"
-										fillOpacity={1}
-										weight={7}
+										highlighted={index - 1 === currentRouteSegmentIndex}
 									/>
 								{/key}
 							{/if}
