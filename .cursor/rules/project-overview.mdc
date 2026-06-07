@@ -1,0 +1,11 @@
+---
+alwaysApply: true
+---
+
+RT-Trainer is a web based platform for practicing UK radiotelephony (pilot speak) as defined in the CAP 413 Radiotelephony Manual.
+
+The main feature is the simulator which presents users with a mock cockpit complete with map, transponder, radio, and prompts to respond to. Users can speak to the app using the browser's speech recognition capabilities, and have ATC/other aircraft speak back with TTS. The app then evaluates whether the call the user made is correct or not, giving a level of granular feedback.
+
+The other main feature is the scenario planner, which lets users design their own flight paths from takeoff to landing, or anything in between, which they can practice in the simulator.
+
+The project was originally built for a uni dissertation hence it could not store user data and there was minimal focus on visual design and usability. These are now priorities, alongside upgrading the existing Svelte 4 and Skeleton UI v2 dependencies to v5 and v4 respectively. No code or design pattern is sacred and the current focus is on restoring the existing functionality before improvements and features can be added alongside a test suite.

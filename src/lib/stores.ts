@@ -1,19 +1,25 @@
-import { derived, writable } from 'svelte/store';
+import { derived, get, writable } from 'svelte/store';
 import type {
 	AircraftDetails,
 	AltimeterState,
 	RadioState,
 	TransponderState
-} from './ts/SimulatorTypes';
-import type RadioCall from './ts/RadioCall';
-import type Scenario from './ts/Scenario';
-import Airspace from './ts/AeronauticalClasses/Airspace';
-import type Waypoint from './ts/AeronauticalClasses/Waypoint';
-import Airport from './ts/AeronauticalClasses/Airport';
+} from './logic/SimulatorTypes';
+import type RadioCall from './logic/RadioCall';
+import type Scenario from './logic/Scenario';
+import Airspace from './logic/aeronautics/Airspace';
+import type Waypoint from './logic/aeronautics/Waypoint';
+import Airport from './logic/aeronautics/Airport';
 import * as turf from '@turf/turf';
 import axios from 'axios';
-import type { AirportData, AirspaceData } from './ts/AeronauticalClasses/OpenAIPTypes';
-import { plainToInstance } from 'class-transformer';
+import type { AirportData, AirspaceData } from './logic/aeronautics/OpenAIPTypes';
+import { airspaceFromPlain, airportFromPlain } from './logic/transform';
+import { countAirspaceCrossings, toLeafletLatLng } from './logic/utils';
+import {
+	describeUnsupportedRouteRegions,
+	getRouteUnsupportedRegions,
+	type UnsupportedPracticeRegion
+} from './logic/aeronautics/ukPracticeArea';
 
 const initialAircraftDetails: AircraftDetails = {
 	prefix: 'STUDENT',
@@ -24,14 +30,14 @@ const initialAircraftDetails: AircraftDetails = {
 const initialRadioState: RadioState = {
 	mode: 'OFF',
 	dialMode: 'OFF',
-	activeFrequency: '000.000',
-	standbyFrequency: '000.000',
-	tertiaryFrequency: '000.000'
+	activeFrequency: '121.800',
+	standbyFrequency: '129.800',
+	tertiaryFrequency: '177.200'
 };
 
 const initialTransponderState: TransponderState = {
 	dialMode: 'OFF',
-	frequency: '0000',
+	frequency: '7000',
 	identEnabled: false,
 	vfrHasExecuted: false
 };
@@ -44,7 +50,7 @@ export const AircraftDetailsStore = writable<AircraftDetails>(initialAircraftDet
 
 export const ScenarioSeedStore = writable<string>('');
 
-export const HasEmergencyEventsStore = writable<boolean>(false);
+export const HasEmergenciesStore = writable<boolean>(false);
 
 export const SpeechInputEnabledStore = writable<boolean>(false);
 
@@ -82,7 +88,7 @@ export const ScenarioPointsStore = derived(ScenarioStore, ($ScenarioStore) => {
 export const WaypointsStore = writable<Waypoint[]>([]);
 
 export const WaypointPointsMapStore = derived(WaypointsStore, ($WaypointsStore) => {
-	return $WaypointsStore.map((waypoint) => [waypoint.location[1], waypoint.location[0]]);
+	return $WaypointsStore.map((waypoint) => toLeafletLatLng(waypoint.location));
 });
 
 export const RouteDistanceMetersStore = derived(WaypointsStore, ($RoutePointStore) => {
@@ -110,9 +116,27 @@ export const RouteDistanceDisplayStore = derived(
 	}
 );
 
+export const RouteUnsupportedRegionsStore = derived(WaypointsStore, ($WaypointsStore) => {
+	return getRouteUnsupportedRegions($WaypointsStore.map((waypoint) => waypoint.location));
+});
+
+export const RouteUnsupportedRegionsWarningStore = derived(
+	RouteUnsupportedRegionsStore,
+	($RouteUnsupportedRegionsStore): string | undefined => {
+		if ($RouteUnsupportedRegionsStore.length === 0) return undefined;
+
+		return describeUnsupportedRouteRegions($RouteUnsupportedRegionsStore);
+	}
+);
+
+export type { UnsupportedPracticeRegion };
+
 export const AllAirspacesStore = writable<Airspace[]>([]);
 
-export const maxFlightLevelStore = writable<number>(0);
+/** Default max FL for FRTOL route generation and scenario filtering (FL30 = 3000 ft). */
+export const DEFAULT_MAX_FLIGHT_LEVEL = 30;
+
+export const maxFlightLevelStore = writable<number>(DEFAULT_MAX_FLIGHT_LEVEL);
 
 export const FilteredAirspacesStore = derived(
 	[AllAirspacesStore, maxFlightLevelStore],
@@ -144,6 +168,16 @@ export const OnRouteAirspacesStore = derived(
 			}
 		});
 		return filteredAirspaces;
+	}
+);
+
+export const OnRouteAirspaceCrossingsStore = derived(
+	[OnRouteAirspacesStore, WaypointsStore],
+	([$OnRouteAirspacesStore, $WaypointStore]) => {
+		if ($OnRouteAirspacesStore.length === 0 || $WaypointStore.length < 2) return 0;
+
+		const route = $WaypointStore.map((waypoint) => waypoint.location);
+		return countAirspaceCrossings(route, $OnRouteAirspacesStore);
 	}
 );
 
@@ -251,7 +285,7 @@ export const AwaitingServerResponseStore = writable<boolean>(false);
 export function ClearSimulationStores(): void {
 	AircraftDetailsStore.set(initialAircraftDetails);
 	ScenarioSeedStore.set('');
-	HasEmergencyEventsStore.set(false);
+	HasEmergenciesStore.set(false);
 	SpeechInputEnabledStore.set(false);
 	SpeechOutputEnabledStore.set(false);
 	SpeechNoiseStore.set(0);
@@ -269,22 +303,61 @@ export function ClearSimulationStores(): void {
 	NullRouteStore.set(false);
 }
 
-export async function fetchAirspaces() {
-	const response = await axios.get('/api/airspaces');
+/** Airspaces along the current route, filtered by max flight level. */
+export function getAirspacesAlongRoute(): Airspace[] {
+	const waypoints = get(WaypointsStore);
+	const maxFL = get(maxFlightLevelStore);
+	const allAirspaces = get(AllAirspacesStore);
 
-	// Turn into instances of Airspace class and set in store
-	AllAirspacesStore.set(
-		response.data.map((airspace: AirspaceData) =>
-			plainToInstance(Airspace, airspace as AirspaceData)
-		)
+	if (waypoints.length === 0 || allAirspaces.length === 0) return [];
+
+	const route = waypoints.map((waypoint) => waypoint.location);
+	return allAirspaces.filter(
+		(airspace) => airspace.lowerLimit <= maxFL && airspace.isIncludedInRoute(route, maxFL)
 	);
 }
 
-export async function fetchAirports() {
-	const response = await axios.get('/api/airports');
+export async function ensureAeronauticalData(): Promise<void> {
+	await Promise.all([fetchAirports(), fetchAirspaces()]);
+}
 
-	// Turn into instances of Airport class and set in store
-	AllAirportsStore.set(
-		response.data.map((airport: AirportData) => plainToInstance(Airport, airport as AirportData))
-	);
+let airspacesFetchPromise: Promise<void> | null = null;
+let airportsFetchPromise: Promise<void> | null = null;
+
+export async function fetchAirspaces(): Promise<void> {
+	if (get(AllAirspacesStore).length > 0) return;
+
+	if (!airspacesFetchPromise) {
+		airspacesFetchPromise = axios
+			.get('/api/airspaces')
+			.then((response) => {
+				AllAirspacesStore.set(
+					response.data.map((airspace: AirspaceData) => airspaceFromPlain(airspace))
+				);
+			})
+			.finally(() => {
+				airspacesFetchPromise = null;
+			});
+	}
+
+	await airspacesFetchPromise;
+}
+
+export async function fetchAirports(): Promise<void> {
+	if (get(AllAirportsStore).length > 0) return;
+
+	if (!airportsFetchPromise) {
+		airportsFetchPromise = axios
+			.get('/api/airports')
+			.then((response) => {
+				AllAirportsStore.set(
+					response.data.map((airport: AirportData) => airportFromPlain(airport))
+				);
+			})
+			.finally(() => {
+				airportsFetchPromise = null;
+			});
+	}
+
+	await airportsFetchPromise;
 }

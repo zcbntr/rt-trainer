@@ -1,121 +1,256 @@
 <script lang="ts">
-	import Map from '$lib/Components/Leaflet/Map.svelte';
+	import Map from '$lib/components/leaflet/Map.svelte';
 	import {
 		AllAirportsStore,
+		AllAirspacesStore,
 		AwaitingServerResponseStore,
 		FilteredAirspacesStore,
-		HasEmergencyEventsStore,
+		HasEmergenciesStore,
+		OnRouteAirportsStore,
 		OnRouteAirspacesStore,
+		OnRouteAirspaceCrossingsStore,
 		RouteDistanceDisplayStore,
-		RouteDistanceMetersStore,
+		RouteUnsupportedRegionsWarningStore,
 		ScenarioSeedStore,
 		WaypointPointsMapStore,
 		WaypointsStore,
 		fetchAirports,
 		fetchAirspaces
 	} from '$lib/stores';
-	import Waypoint, { WaypointType } from '$lib/ts/AeronauticalClasses/Waypoint';
+	import Waypoint, { WaypointType } from '$lib/logic/aeronautics/Waypoint';
 	import { TrashBinOutline, PlayOutline } from 'flowbite-svelte-icons';
-	import { AllAirspacesStore } from '$lib/stores';
-	import { plainToInstance } from 'class-transformer';
-	import type Airspace from '$lib/ts/AeronauticalClasses/Airspace';
-	import Airport from '$lib/ts/AeronauticalClasses/Airport';
-	import Marker from '$lib/Components/Leaflet/Marker.svelte';
-	import Popup from '$lib/Components/Leaflet/Popup.svelte';
-	import Polygon from '$lib/Components/Leaflet/Polygon.svelte';
-	import { getNthPhoneticAlphabetLetter, wellesbourneMountfordCoords } from '$lib/ts/utils';
-	import Polyline from '$lib/Components/Leaflet/Polyline.svelte';
-	import { Icon } from 'svelte-icons-pack';
-	import { BsAirplaneFill } from 'svelte-icons-pack/bs';
+	import type Airport from '$lib/logic/aeronautics/Airport';
+	import Marker from '$lib/components/leaflet/Marker.svelte';
+	import Popup from '$lib/components/leaflet/Popup.svelte';
+	import AirspacePolygon from '$lib/components/leaflet/AirspacePolygon.svelte';
+	import {
+		getNthPhoneticAlphabetLetter,
+		lngLatBoundsToLeaflet,
+		toLeafletLatLng,
+		ukPlannerBounds,
+		wellesbourneMountfordLatLng
+	} from '$lib/logic/utils';
+	import {
+		isValidUkPracticeWaypoint,
+		ukPracticeAreaRejectionMessage
+	} from '$lib/logic/aeronautics/ukPracticeArea';
+	import type * as Leaflet from 'leaflet';
+	import type {
+		MarkerLayerDetail,
+		PolygonLayerDetail,
+		PolylineLayerDetail
+	} from '$lib/components/leaflet/types';
+	import RouteSegment from '$lib/components/leaflet/RouteSegment.svelte';
+	import FixWaypointMarkerIcon, {
+		FIX_WAYPOINT_MARKER_DEFAULTS,
+		fixWaypointMarkerAnchor,
+		isRouteEndpoint,
+		WAYPOINT_MARKER_Z_INDEX_OFFSET
+	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
+	import AirportMarker from '$lib/components/leaflet/AirportMarker.svelte';
+	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
 	import { goto } from '$app/navigation';
-	import L from 'leaflet';
-	import { LightSwitch } from '@skeletonlabs/skeleton';
+	import { get } from 'svelte/store';
+	import WarningBannerStack from '$lib/components/WarningBannerStack.svelte';
+	import type { WarningBannerItem } from '$lib/components/WarningBanner.types';
 
-	let showAllAirports: boolean = true;
-	let showAllAirspaces: boolean = true;
+	let showAllAirports = $state(true);
+	let showAllAirspaces = $state(true);
+	let unnamedWaypointCount = $state(1);
+	let dismissedBannerIds = $state<string[]>([]);
+	let suppressNextMapClick = $state(false);
+	let insertDragMap: Leaflet.Map | undefined;
+	let insertingWaypoint = $state<{ segmentIndex: number; lat: number; lng: number } | undefined>(
+		undefined
+	);
 
-	let unnamedWaypointCount: number = 1;
-
-	let draggedWaypoint: Waypoint | undefined;
-
-	let startButtonDisabled: boolean = true;
-
-	let awaitingServerResponse: boolean = false;
-	AwaitingServerResponseStore.subscribe((value) => {
-		awaitingServerResponse = value;
-	});
-
-	const airports: Airport[] = [];
-	AllAirportsStore.subscribe((value) => {
-		airports.length = 0;
-		for (const airport of value) {
-			airports.push(plainToInstance(Airport, airport as Airport));
+	$effect(() => {
+		if ($AllAirportsStore.length === 0) {
+			fetchAirports();
+		}
+		if ($AllAirspacesStore.length === 0) {
+			fetchAirspaces();
 		}
 	});
-	if (airports.length === 0) fetchAirports();
 
-	let airspaces: Airspace[] = [];
-	AllAirspacesStore.subscribe((value) => {
-		airspaces = value;
-	});
-	if (airspaces.length === 0) fetchAirspaces();
+	const durationEstimate = $derived(
+		$OnRouteAirportsStore.length * 8 + $OnRouteAirspacesStore.length * 5
+	);
 
-	let filteredAirspaces: Airspace[] = [];
-	FilteredAirspacesStore.subscribe((value) => {
-		filteredAirspaces = value;
-	});
+	const routeBounds = $derived.by((): Leaflet.LatLngBoundsExpression | undefined => {
+		const waypoints = $WaypointsStore;
+		if (waypoints.length === 0) {
+			return undefined;
+		}
 
-	let onRouteAirspaces: Airspace[] = [];
-	OnRouteAirspacesStore.subscribe((value) => {
-		onRouteAirspaces = value;
-	});
-
-	$: durationEstimate = onRouteAirports.length * 8 + onRouteAirspaces.length * 5;
-
-	const onRouteAirports: Airport[] = [];
-
-	let waypoints: Waypoint[] = [];
-	WaypointsStore.subscribe((value) => {
-		waypoints = value;
+		return lngLatBoundsToLeaflet(
+			waypoints.map((waypoint) => waypoint.location),
+			0.08
+		);
 	});
 
-	let waypointPoints: number[][] = [];
-	WaypointPointsMapStore.subscribe((value) => {
-		waypointPoints = value;
+	const startButtonDisabled = $derived(
+		$WaypointsStore.length < 2 ||
+			$OnRouteAirportsStore.length > 2 ||
+			($OnRouteAirportsStore.length == 1 &&
+				$WaypointsStore[0]?.type !== WaypointType.Airport &&
+				$WaypointsStore[$WaypointsStore.length - 1]?.type !== WaypointType.Airport) ||
+			($OnRouteAirportsStore.length == 2 &&
+				$WaypointsStore[0]?.type !== WaypointType.Airport &&
+				$WaypointsStore[$WaypointsStore.length - 1]?.type !== WaypointType.Airport) ||
+			$AwaitingServerResponseStore
+	);
+
+	const plannerBanners = $derived.by((): WarningBannerItem[] => {
+		const banners: WarningBannerItem[] = [
+			{
+				id: 'student-project-disclaimer',
+				message:
+					'RT Trainer is a student project and may have inaccuracies. Do not rely on just this tool for your practice.',
+				variant: 'info'
+			}
+		];
+
+		if ($RouteUnsupportedRegionsWarningStore) {
+			banners.push({
+				id: 'unsupported-route',
+				title: 'Unsupported route areas',
+				message: $RouteUnsupportedRegionsWarningStore,
+				variant: 'warning',
+				dismissible: true
+			});
+		}
+
+		return banners;
 	});
 
-	let routeDistanceMeters = 0;
-	RouteDistanceMetersStore.subscribe((value) => {
-		routeDistanceMeters = value;
-	});
+	function dismissBanner(id: string) {
+		if (dismissedBannerIds.includes(id)) return;
+		dismissedBannerIds = [...dismissedBannerIds, id];
+	}
 
-	let routeDistanceDisplayValue: string = '0 nm';
-	RouteDistanceDisplayStore.subscribe((value) => {
-		routeDistanceDisplayValue = value;
-	});
+	function onMapClick(event: Leaflet.LeafletMouseEvent) {
+		if (suppressNextMapClick) {
+			suppressNextMapClick = false;
+			return;
+		}
+		if ($AwaitingServerResponseStore) return;
 
-	function onMapClick(event: CustomEvent<{ latlng: { lat: number; lng: number } }>) {
-		// If user is awaiting routegen ignore map click
-		if (awaitingServerResponse) return;
-
-		addWaypoint(
-			+parseFloat(event.detail.latlng.lat.toFixed(6)),
-			+parseFloat(event.detail.latlng.lng.toFixed(6))
+		tryAddWaypoint(
+			+parseFloat(event.latlng.lat.toFixed(6)),
+			+parseFloat(event.latlng.lng.toFixed(6))
 		);
 	}
 
+	function roundCoord(value: number) {
+		return +parseFloat(value.toFixed(6));
+	}
+
+	function insertWaypointAt(index: number, lat: number, lng: number) {
+		const waypoints = get(WaypointsStore);
+		const waypoint = new Waypoint(
+			'Waypoint ' + getNthPhoneticAlphabetLetter(unnamedWaypointCount++),
+			[lng, lat],
+			WaypointType.Fix,
+			index
+		);
+		const updated = [...waypoints];
+		updated.splice(index, 0, waypoint);
+		updated.forEach((wp, wpIndex) => {
+			wp.index = wpIndex;
+		});
+		WaypointsStore.set(updated);
+	}
+
+	function cleanupInsertDrag() {
+		if (insertDragMap) {
+			insertDragMap.dragging.enable();
+			insertDragMap.off('mousemove', onInsertDragMove);
+			insertDragMap.off('mouseup', onInsertDragEnd);
+			insertDragMap = undefined;
+		}
+	}
+
+	function finishInsertDrag(finalLat: number, finalLng: number) {
+		if (!insertingWaypoint) return;
+
+		const segmentIndex = insertingWaypoint.segmentIndex;
+		const lat = roundCoord(finalLat);
+		const lng = roundCoord(finalLng);
+
+		insertingWaypoint = undefined;
+		suppressNextMapClick = true;
+		cleanupInsertDrag();
+
+		if (!isValidUkPracticeWaypoint([lng, lat])) {
+			alert(ukPracticeAreaRejectionMessage);
+			return;
+		}
+
+		insertWaypointAt(segmentIndex + 1, lat, lng);
+	}
+
+	function onRouteSegmentInsertStart(segmentIndex: number, detail: PolylineLayerDetail) {
+		if ($AwaitingServerResponseStore) return;
+
+		detail.event.originalEvent.preventDefault();
+		detail.event.originalEvent.stopPropagation();
+
+		insertingWaypoint = {
+			segmentIndex,
+			lat: roundCoord(detail.event.latlng.lat),
+			lng: roundCoord(detail.event.latlng.lng)
+		};
+
+		insertDragMap = detail.map;
+		detail.map.dragging.disable();
+		detail.map.on('mousemove', onInsertDragMove);
+		detail.map.on('mouseup', onInsertDragEnd);
+	}
+
+	function onInsertDragMove(event: Leaflet.LeafletMouseEvent) {
+		if (!insertingWaypoint) return;
+
+		insertingWaypoint = {
+			...insertingWaypoint,
+			lat: roundCoord(event.latlng.lat),
+			lng: roundCoord(event.latlng.lng)
+		};
+	}
+
+	function onInsertDragEnd(event: Leaflet.LeafletMouseEvent) {
+		finishInsertDrag(event.latlng.lat, event.latlng.lng);
+	}
+
+	function onInsertDragWindowMouseUp() {
+		if (!insertingWaypoint) return;
+		finishInsertDrag(insertingWaypoint.lat, insertingWaypoint.lng);
+	}
+
+	function tryAddWaypoint(lat: number, lng: number) {
+		if (!isValidUkPracticeWaypoint([lng, lat])) return;
+
+		addWaypoint(lat, lng);
+	}
+
 	function addWaypoint(lat: number, lng: number) {
+		const waypoints = get(WaypointsStore);
 		const waypoint = new Waypoint(
 			'Waypoint ' + getNthPhoneticAlphabetLetter(unnamedWaypointCount++),
 			[lng, lat],
 			WaypointType.Fix,
 			waypoints.length
 		);
-		waypoints.push(waypoint);
-		WaypointsStore.set(waypoints);
+		WaypointsStore.set([...waypoints, waypoint]);
+	}
+
+	function getAirportForWaypoint(waypoint: Waypoint): Airport | undefined {
+		if (!waypoint.referenceObjectId) return undefined;
+		return get(AllAirportsStore).find((airport) => airport.id === waypoint.referenceObjectId);
 	}
 
 	function addAirportWaypoint(airport: Airport) {
+		const waypoints = get(WaypointsStore);
 		const waypoint = new Waypoint(
 			airport.name,
 			airport.coordinates,
@@ -123,46 +258,40 @@
 			waypoints.length,
 			airport.id
 		);
-		waypoints.push(waypoint);
-		WaypointsStore.set(waypoints);
-
-		onRouteAirports.push(airport);
+		WaypointsStore.set([...waypoints, waypoint]);
 	}
 
-	function onWaypointDrag(e: any) {
-		const waypoint = waypoints.find((waypoint) => waypoint.id === e.detail.aeroObject.id);
-		draggedWaypoint = waypoint;
-	}
+	function onWaypointDragEnd(detail: MarkerLayerDetail) {
+		if (!detail.aeroObject || !(detail.aeroObject instanceof Waypoint)) return;
 
-	function onWaypointMouseUp(e: any) {
-		const waypoint = waypoints.find((waypoint) => waypoint.id === e.detail.aeroObject.id);
-		if (draggedWaypoint == waypoint) {
-			if (waypoint) {
-				waypoint.location = [
-					parseFloat(e.detail.event.latlng.lng.toFixed(6)),
-					parseFloat(e.detail.event.latlng.lat.toFixed(6))
-				];
-				WaypointsStore.set(waypoints);
-			}
+		const waypoints = get(WaypointsStore);
+		const waypoint = waypoints.find((wp) => wp.id === detail.aeroObject!.id);
+		if (!waypoint) return;
+
+		const previousLocation: [number, number] = [waypoint.location[0], waypoint.location[1]];
+		const { lat, lng } = detail.marker.getLatLng();
+		const nextLng = +parseFloat(lng.toFixed(6));
+		const nextLat = +parseFloat(lat.toFixed(6));
+
+		if (!isValidUkPracticeWaypoint([nextLng, nextLat])) {
+			detail.marker.setLatLng(toLeafletLatLng(previousLocation));
+			alert(ukPracticeAreaRejectionMessage);
+			return;
 		}
+
+		waypoint.location[0] = nextLng;
+		waypoint.location[1] = nextLat;
+		WaypointsStore.set([...waypoints]);
 	}
 
 	function deleteWaypoint(waypoint: Waypoint) {
-		if (waypoint.type === WaypointType.Airport) {
-			onRouteAirports.splice(
-				onRouteAirports.findIndex((airport) => airport.id === waypoint.referenceObjectId),
-				1
-			);
-		}
-
-		waypoints = waypoints.filter((w) => w.id !== waypoint.id);
-		waypoints.forEach((waypoint, index) => {
-			waypoint.index = index;
+		const filtered = get(WaypointsStore).filter((w) => w.id !== waypoint.id);
+		filtered.forEach((wp, index) => {
+			wp.index = index;
 		});
-		WaypointsStore.set(waypoints);
+		WaypointsStore.set(filtered);
 	}
 
-	// TODO: Figure out how to only show save option when values have been changed
 	function saveWaypointEdit(waypoint: Waypoint) {
 		const nameElement = document.getElementById(
 			`waypoint-${waypoint.id}-name`
@@ -174,48 +303,36 @@
 			`waypoint-${waypoint.id}-lng`
 		) as HTMLTextAreaElement;
 		if (
-			nameElement &&
-			nameElement.value &&
-			latStringElement &&
+			nameElement?.value &&
+			latStringElement?.value &&
 			parseFloat(latStringElement.value) &&
-			lngStringElement &&
+			lngStringElement?.value &&
 			parseFloat(lngStringElement.value)
 		) {
+			const nextLng = +parseFloat(parseFloat(lngStringElement.value).toFixed(6));
+			const nextLat = +parseFloat(parseFloat(latStringElement.value).toFixed(6));
+
+			if (!isValidUkPracticeWaypoint([nextLng, nextLat])) {
+				alert(ukPracticeAreaRejectionMessage);
+				return;
+			}
+
 			waypoint.name = nameElement.value;
-			waypoint.location[1] = +parseFloat(parseFloat(lngStringElement.value).toFixed(6));
-			waypoint.location[0] = +parseFloat(parseFloat(latStringElement.value).toFixed(6));
-			WaypointsStore.set(waypoints);
+			waypoint.location[0] = nextLng;
+			waypoint.location[1] = nextLat;
+			WaypointsStore.set([...get(WaypointsStore)]);
 		}
 	}
 
-	$: {
-		// Waypoints must be at least 2 to create a scenario
-		// onRouteAirports must be at most 2 to create a scenario
-		// Airports, if there are any, must be at the start or end of the route
-		// awaitingServerResponse must be false (no route generation in progress)
-		startButtonDisabled =
-			waypoints.length < 2 ||
-			onRouteAirports.length > 2 ||
-			onRouteAirports.length == 1 && (waypoints[0].type !== WaypointType.Airport &&
-			waypoints[waypoints.length - 1].type !== WaypointType.Airport) ||
-			(onRouteAirports.length == 2 &&
-				waypoints[0].type !== WaypointType.Airport &&
-				waypoints[waypoints.length - 1].type !== WaypointType.Airport) ||
-			awaitingServerResponse;
-	}
-
 	function onPracticeClick() {
-		// Check for route validity, then redirect to scenario page with the scenario data in the URL
-		// May need to look into URL shortening for this, which would basically be a lookup table of scenario data
-		// and a short URL that redirects to the full URL/fetches the scenario data if using own DB/key-value store
+		const waypoints = get(WaypointsStore);
+		const onRouteAirports = get(OnRouteAirportsStore);
 
-		// Check for at least 2 waypoints
 		if (waypoints.length < 2) {
 			alert('Please add at least 2 waypoints to create a scenario.');
 			return;
 		}
 
-		// Check for no more than 2 airports
 		if (onRouteAirports.length > 2) {
 			alert(
 				'Please add no more than 2 airports to create a scenario. More airports are not yet supported.'
@@ -223,7 +340,6 @@
 			return;
 		}
 
-		// Ensure airports are at the start or end of the route
 		if (onRouteAirports.length > 0) {
 			if (
 				waypoints[0].type !== WaypointType.Airport &&
@@ -236,254 +352,211 @@
 			}
 		}
 
-		let scenarioSeed: string = '';
-		ScenarioSeedStore.subscribe((value) => {
-			scenarioSeed = value;
-		});
-
-		let hasEmergencies: boolean = false;
-		HasEmergencyEventsStore.subscribe((value) => {
-			hasEmergencies = value;
-		});
-
-		const scenarioURLString: string =
+		const scenarioURLString =
 			'/simulator?seed=' +
-			scenarioSeed +
+			get(ScenarioSeedStore) +
 			'&hasEmergencies=' +
-			hasEmergencies +
+			get(HasEmergenciesStore) +
 			'&waypoints=' +
 			JSON.stringify(waypoints) +
 			'&airports=' +
 			onRouteAirports.map((airport) => airport.id).toString();
 
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		goto(scenarioURLString);
 	}
 </script>
 
-<div class="flex flex-col place-content-center w-full h-full">
-	<div class="flex flex-col place-content-center sm:place-content-start w-full h-full">
-		<div class="flex flex-col xs:pr-3 w-full h-full">
-			<Map view={wellesbourneMountfordCoords} zoom={9} on:click={onMapClick}>
-				{#each airports as airport}
-					{#if showAllAirports || waypoints.some((waypoint) => waypoint.referenceObjectId === airport.id)}
-						<Marker
-							latLng={[airport.coordinates[1], airport.coordinates[0]]}
-							width={30}
-							height={30}
+<svelte:window onmouseup={onInsertDragWindowMouseUp} />
+
+<div class="flex min-h-0 flex-1 flex-col">
+	<div class="flex min-h-0 flex-1 flex-col">
+		<WarningBannerStack
+			banners={plannerBanners}
+			dismissedIds={dismissedBannerIds}
+			ondismiss={dismissBanner}
+		/>
+		<div class="xs:pr-3 flex min-h-0 flex-1 flex-col">
+			<Map
+				bounds={routeBounds}
+				view={wellesbourneMountfordLatLng}
+				zoom={8}
+				fitPadding={40}
+				maxBounds={ukPlannerBounds}
+				resizeKey={`${$WaypointsStore.length}-${$WaypointPointsMapStore.length}`}
+				click={onMapClick}
+			>
+				{#each $AllAirportsStore as airport (airport.id)}
+					{#if showAllAirports || $WaypointsStore.some((waypoint) => waypoint.referenceObjectId === airport.id)}
+						<AirportMarker
+							latLng={toLeafletLatLng(airport.coordinates)}
 							aeroObject={airport}
-							draggable={false}
-							on:click={(e) => {
-								e.preventDefault();
-								addAirportWaypoint(e.detail.aeroObject);
+							runways={runwaysToSymbolInput(airport.runways)}
+							showIcon={!$WaypointsStore.some(
+								(waypoint) => waypoint.referenceObjectId === airport.id
+							)}
+							click={(detail: MarkerLayerDetail) => {
+								if (detail.aeroObject) addAirportWaypoint(detail.aeroObject as Airport);
 							}}
-							on:mouseover={(e) => {
-								e.detail.marker.openPopup();
+							mouseover={(detail: MarkerLayerDetail) => {
+								detail.marker.openPopup();
 							}}
-							on:mouseout={(e) => {
-								e.detail.marker.closePopup();
+							mouseout={(detail: MarkerLayerDetail) => {
+								detail.marker.closePopup();
 							}}
 						>
-							{#if !waypoints.some((waypoint) => waypoint.referenceObjectId === airport.id)}
-								<Icon src={BsAirplaneFill} color="black" size="16" />
-							{/if}
-
 							<Popup><div>{airport.name}</div></Popup>
-						</Marker>
+						</AirportMarker>
 					{/if}
 				{/each}
 
-				{#each filteredAirspaces as airspace}
+				{#each $FilteredAirspacesStore as airspace (airspace.id)}
 					{#if showAllAirspaces}
-						{#if airspace.type == 14}
-							<Polygon
-								latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
-								color={'red'}
-								fillOpacity={0.2}
-								weight={1}
-								aeroObject={airspace}
-								on:click={(e) => {
-									e.preventDefault();
-									addWaypoint(
-										+parseFloat(e.detail.event.latlng.lat.toFixed(6)),
-										+parseFloat(e.detail.event.latlng.lng.toFixed(6))
-									);
-								}}
-								on:mouseover={(e) => {
-									e.detail.polygon.openPopup();
-								}}
-								on:mouseout={(e) => {
-									e.detail.polygon.closePopup();
-								}}
-							>
-								<Popup>
-									<div>{airspace.name} MATZ</div>
-								</Popup>
-							</Polygon>
-						{:else}
-							<Polygon
-								latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
-								color={'blue'}
-								fillOpacity={0.2}
-								weight={1}
-								aeroObject={airspace}
-								on:click={(e) => {
-									e.preventDefault();
-									addWaypoint(
-										+parseFloat(e.detail.event.latlng.lat.toFixed(6)),
-										+parseFloat(e.detail.event.latlng.lng.toFixed(6))
-									);
-								}}
-								on:mouseover={(e) => {
-									e.detail.polygon.openPopup();
-								}}
-								on:mouseout={(e) => {
-									e.detail.polygon.closePopup();
-								}}
-							>
-								<Popup>
-									<div>{airspace.name}</div>
-								</Popup></Polygon
-							>
-						{/if}
+						<AirspacePolygon
+							coordinates={airspace.coordinates[0]}
+							airspaceType={airspace.type}
+							aeroObject={airspace}
+							click={(detail: PolygonLayerDetail) => {
+								tryAddWaypoint(
+									+parseFloat(detail.event.latlng.lat.toFixed(6)),
+									+parseFloat(detail.event.latlng.lng.toFixed(6))
+								);
+							}}
+							mouseover={(detail: PolygonLayerDetail) => {
+								detail.polygon.openPopup();
+							}}
+							mouseout={(detail: PolygonLayerDetail) => {
+								detail.polygon.closePopup();
+							}}
+						>
+							<Popup>
+								<div>{airspace.getDisplayName()}</div>
+							</Popup>
+						</AirspacePolygon>
 					{/if}
 				{/each}
 
-				{#each waypoints as waypoint (waypoint.index)}
-					{#key waypoint.id}
-						{#key waypoint.location}
-							{#if waypoint.type == WaypointType.Airport}<Marker
-									latLng={[waypoint.location[1], waypoint.location[0]]}
-									width={50}
-									height={50}
-									aeroObject={waypoint}
+				{#each $WaypointsStore as waypoint, index (waypoint.id)}
+					{#key waypoint.location}
+						{#if waypoint.type == WaypointType.Airport}<AirportMarker
+								latLng={toLeafletLatLng(waypoint.location)}
+								aeroObject={waypoint}
+								baseSize={36}
+								runways={runwaysToSymbolInput(getAirportForWaypoint(waypoint)?.runways)}
+								showRouteEndpoint={isRouteEndpoint(index, $WaypointsStore.length)}
+							>
+								<Popup
+									><div class="flex flex-col gap-2">
+										<div class="flex flex-col gap-2">
+											<div id="waypoint-{waypoint.id}-name">{waypoint.name}</div>
+											<div id="waypoint-{waypoint.id}-lat">{waypoint.location[1]}</div>
+											<div id="waypoint-{waypoint.id}-lng">{waypoint.location[0]}</div>
+										</div>
+
+										<button class="btn preset-filled" onclick={() => deleteWaypoint(waypoint)}
+											><div class="grid w-full grid-cols-4 gap-2">
+												<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
+												<div class="col-span-3 col-start-2">Delete</div>
+											</div></button
+										>
+									</div></Popup
 								>
-									{#if waypoint.index == waypoints.length - 1}
-										<div class="text-2xl">🏁</div>
-									{:else}
-										<div class="text-2xl">🛫</div>
-									{/if}
+							</AirportMarker>{:else}<Marker
+								latLng={toLeafletLatLng(waypoint.location)}
+								width={FIX_WAYPOINT_MARKER_DEFAULTS.size}
+								height={FIX_WAYPOINT_MARKER_DEFAULTS.size}
+								aeroObject={waypoint}
+								iconAnchor={fixWaypointMarkerAnchor()}
+								zIndexOffset={WAYPOINT_MARKER_Z_INDEX_OFFSET}
+								dragend={onWaypointDragEnd}
+								draggable={true}
+							>
+								<FixWaypointMarkerIcon
+									showRouteEndpoint={isRouteEndpoint(index, $WaypointsStore.length)}
+								/>
 
-									<Popup
-										><div class="flex flex-col gap-2">
-											<div class="flex flex-col gap-2">
-												<div id="waypoint-{waypoint.id}-name">{waypoint.name}</div>
-												<div id="waypoint-{waypoint.id}-lat">{waypoint.location[0]}</div>
-												<div id="waypoint-{waypoint.id}-lng">{waypoint.location[1]}</div>
-											</div>
-
-											<button class="btn variant-filled" on:click={() => deleteWaypoint(waypoint)}
-												><div class="grid grid-cols-4 gap-2 w-full">
-													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
-													<div class="col-span-3 col-start-2">Delete</div>
-												</div></button
-											>
-										</div></Popup
-									>
-								</Marker>{:else if waypoint.index == waypoints.length - 1}
-								<Marker
-									latLng={[waypoint.location[1], waypoint.location[0]]}
-									width={50}
-									height={50}
-									aeroObject={waypoint}
-									on:drag={onWaypointDrag}
-									on:mouseup={onWaypointMouseUp}
-									draggable={true}
+								<Popup
+									><div class="flex flex-col gap-2">
+										<textarea id="waypoint-{waypoint.id}-name" class="textarea" rows="1"
+											>{waypoint.name}</textarea
+										><textarea id="waypoint-{waypoint.id}-lat" class="textarea" rows="1"
+											>{waypoint.location[1]}</textarea
+										><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
+											>{waypoint.location[0]}</textarea
+										>
+										<button class="varient-filled btn" onclick={() => saveWaypointEdit(waypoint)}
+											>Save</button
+										>
+										<button class="btn preset-filled" onclick={() => deleteWaypoint(waypoint)}
+											><div class="grid w-full grid-cols-4 gap-2">
+												<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
+												<div class="col-span-3 col-start-2">Delete</div>
+											</div></button
+										>
+									</div></Popup
 								>
-									<div class="text-2xl">🏁</div>
-
-									<Popup
-										><div class="flex flex-col gap-2">
-											<textarea id="waypoint-{waypoint.id}-name" class="textarea" rows="1"
-												>{waypoint.name}</textarea
-											><textarea id="waypoint-{waypoint.id}-lat" class="textarea" rows="1"
-												>{waypoint.location[0]}</textarea
-											><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
-												>{waypoint.location[1]}</textarea
-											>
-											<button class="btn varient-filled" on:click={() => saveWaypointEdit(waypoint)}
-												>Save</button
-											>
-											<button class="btn variant-filled" on:click={() => deleteWaypoint(waypoint)}
-												><div class="grid grid-cols-4 gap-2 w-full">
-													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
-													<div class="col-span-3 col-start-2">Delete</div>
-												</div></button
-											>
-										</div></Popup
-									>
-								</Marker>
-							{:else}<Marker
-									latLng={[waypoint.location[1], waypoint.location[0]]}
-									width={50}
-									height={50}
-									aeroObject={waypoint}
-									iconAnchor={L.point(8, 26)}
-									on:drag={onWaypointDrag}
-									on:mouseup={onWaypointMouseUp}
-									draggable={true}
-								>
-									<div class="text-2xl">🚩</div>
-
-									<Popup
-										><div class="flex flex-col gap-2">
-											<textarea id="waypoint-{waypoint.id}-name" class="textarea" rows="1"
-												>{waypoint.name}</textarea
-											><textarea id="waypoint-{waypoint.id}-lat" class="textarea" rows="1"
-												>{waypoint.location[0]}</textarea
-											><textarea id="waypoint-{waypoint.id}-lng" class="textarea" rows="1"
-												>{waypoint.location[1]}</textarea
-											>
-											<button class="btn varient-filled" on:click={() => saveWaypointEdit(waypoint)}
-												>Save</button
-											>
-											<button class="btn variant-filled" on:click={() => deleteWaypoint(waypoint)}
-												><div class="grid grid-cols-4 gap-2 w-full">
-													<div class="col-span-1 col-start-1"><TrashBinOutline /></div>
-													<div class="col-span-3 col-start-2">Delete</div>
-												</div></button
-											>
-										</div></Popup
-									>
-								</Marker>
-							{/if}
-						{/key}
+							</Marker>
+						{/if}
 					{/key}
 				{/each}
 
-				{#each waypointPoints as waypointPoint, index}
+				{#each $WaypointPointsMapStore as waypointPoint, index (waypointPoint.toString() + index.toString())}
 					{#if index > 0}
-						<!-- Force redraw if either waypoint of the line changes location -->
-						{#key [waypointPoints[index - 1], waypointPoints[index]]}
-							<Polyline
-								latLngArray={[waypointPoints[index - 1], waypointPoints[index]]}
-								colour="#FF69B4"
-								fillOpacity={1}
-								weight={7}
+						{#key [$WaypointPointsMapStore[index - 1], $WaypointPointsMapStore[index]]}
+							<RouteSegment
+								latLngArray={[
+									$WaypointPointsMapStore[index - 1] as [number, number],
+									$WaypointPointsMapStore[index] as [number, number]
+								]}
+								segmentIndex={index - 1}
+								insertable={true}
+								insertDragStart={onRouteSegmentInsertStart}
 							/>
 						{/key}
 					{/if}
 				{/each}
+
+				{#if insertingWaypoint}
+					<Marker
+						latLng={[insertingWaypoint.lat, insertingWaypoint.lng]}
+						width={FIX_WAYPOINT_MARKER_DEFAULTS.size}
+						height={FIX_WAYPOINT_MARKER_DEFAULTS.size}
+						iconAnchor={fixWaypointMarkerAnchor()}
+						zIndexOffset={WAYPOINT_MARKER_Z_INDEX_OFFSET}
+					>
+						<FixWaypointMarkerIcon />
+					</Marker>
+				{/if}
 			</Map>
 		</div>
-		<div class="flex flex-row w-full h-20">
+		<div class="flex h-20 w-full flex-row">
 			<div class="flex flex-row place-content-center p-4">
 				<div class="flex flex-col place-content-center">
 					<div class="text-sm">Est. Distance</div>
 					<div class="text-xl">
-						{routeDistanceDisplayValue}
+						{$RouteDistanceDisplayStore}
 					</div>
 				</div>
 			</div>
-			<div class="vr h-full border border-surface-200 dark:border-surface-700" />
+			<div class="vr h-full border border-surface-200 dark:border-surface-700"></div>
 			<div class="flex flex-row place-content-center p-4">
 				<div class="flex flex-col place-content-center">
 					<div class="text-sm">Unique Airspaces</div>
 					<div class="text-xl">
-						{onRouteAirspaces.length}
+						{$OnRouteAirspacesStore.length}
 					</div>
 				</div>
 			</div>
-			<div class="vr h-full border border-surface-200 dark:border-surface-700" />
+			<div class="vr h-full border border-surface-200 dark:border-surface-700"></div>
+			<div class="flex flex-row place-content-center p-4">
+				<div class="flex flex-col place-content-center">
+					<div class="text-sm">Airspace Crossings</div>
+					<div class="text-xl">
+						{$OnRouteAirspaceCrossingsStore}
+					</div>
+				</div>
+			</div>
+			<div class="vr h-full border border-surface-200 dark:border-surface-700"></div>
 			<div class="flex flex-row place-content-center p-4">
 				<div class="flex flex-col place-content-center">
 					<div class="text-sm">Est. Scenario Duration</div>
@@ -493,22 +566,20 @@
 				</div>
 			</div>
 
-			<div class="flex flex-row place-content-end grow p-2 gap-3">
+			<div class="flex grow flex-row place-content-end gap-3 p-2">
 				<div class="flex flex-col place-content-center">
 					<button
-						class="h-10 btn variant-filled text-sm"
+						class="btn h-10 preset-filled text-sm"
 						disabled={startButtonDisabled}
-						on:click={onPracticeClick}><span><PlayOutline /></span><span>Start</span></button
+						onclick={onPracticeClick}><span><PlayOutline /></span><span>Start</span></button
 					>
 				</div>
-
-				<div class="flex flex-col place-content-center"><LightSwitch /></div>
 			</div>
 		</div>
 	</div>
 </div>
 
-<style lang="postcss">
+<style>
 	:global(.textarea) {
 		resize: none;
 	}

@@ -1,19 +1,13 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import type Scenario from '$lib/ts/Scenario';
-	import type { WaypointURLObject } from '$lib/ts/ScenarioTypes';
-	import Waypoint from '$lib/ts/AeronauticalClasses/Waypoint';
-	import type Airspace from '$lib/ts/AeronauticalClasses/Airspace';
-	import type Airport from '$lib/ts/AeronauticalClasses/Airport';
-	import {
-		getModalStore,
-		getToastStore,
-		Stepper,
-		Step,
-		type ModalSettings,
-		type ToastSettings
-	} from '@skeletonlabs/skeleton';
-	import { generateScenario } from '$lib/ts/ScenarioGenerator';
+	import { page } from '$app/state';
+	import type { WaypointURLObject } from '$lib/logic/ScenarioTypes';
+	import Waypoint from '$lib/logic/aeronautics/Waypoint';
+	import { dialog } from '$lib/components/singletons/dialog.svelte';
+	import { toaster } from '$lib/components/singletons/toaster';
+	import QuickLoadScenarioDataModal from '$lib/components/dialogs/QuickLoadScenarioDataModal.svelte';
+	import { generatePracticeRoute } from '$lib/logic/RouteGeneration';
+	import { generateScenario } from '$lib/logic/ScenarioGenerator';
+	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import 'leaflet/dist/leaflet.css';
 	import { onMount } from 'svelte';
 	import {
@@ -37,39 +31,54 @@
 		WaypointsStore,
 		OnRouteAirspacesStore,
 		CurrentScenarioPointStore,
-		CurrentScenarioContextStore,
 		SpeechNoiseStore,
 		AllAirportsStore,
 		AllAirspacesStore,
 		OnRouteAirportsStore,
 		StartPointIndexStore,
-		fetchAirports,
-		fetchAirspaces
+		ensureAeronauticalData,
+		getAirspacesAlongRoute,
+		maxFlightLevelStore
 	} from '$lib/stores';
-	import type {
-		TransponderState,
-		AircraftDetails,
-		RadioState,
-		AltimeterState
-	} from '$lib/ts/SimulatorTypes';
-	import { isCallsignStandardRegistration, replaceWithPhoneticAlphabet } from '$lib/ts/utils';
+	import {
+		findRouteSegmentIndex,
+		isCallsignStandardRegistration,
+		replaceWithPhoneticAlphabet,
+		toLeafletLatLng,
+		wellesbourneMountfordLatLng
+	} from '$lib/logic/utils';
 	import { goto } from '$app/navigation';
-	import RadioCall from '$lib/ts/RadioCall';
-	import Polyline from '$lib/Components/Leaflet/Polyline.svelte';
-	import Polygon from '$lib/Components/Leaflet/Polygon.svelte';
-	import Popup from '$lib/Components/Leaflet/Popup.svelte';
-	import Marker from '$lib/Components/Leaflet/Marker.svelte';
-	import { WaypointType } from '$lib/ts/AeronauticalClasses/Waypoint';
-	import L from 'leaflet';
-	import Parser, { type ParseResult } from '$lib/ts/Parser';
-	import Radio from '$lib/Components/SimulatorComponents/Radio.svelte';
-	import Transponder from '$lib/Components/SimulatorComponents/Transponder.svelte';
-	import MessageOutput from '$lib/Components/SimulatorComponents/MessageOutput.svelte';
-	import MessageInput from '$lib/Components/SimulatorComponents/MessageInput.svelte';
-	import Altimeter from '$lib/Components/SimulatorComponents/Altimeter.svelte';
-	import Map from '$lib/Components/Leaflet/Map.svelte';
-
-	const modalStore = getModalStore();
+	import { get } from 'svelte/store';
+	import RadioCall from '$lib/logic/RadioCall';
+	import RouteSegment from '$lib/components/leaflet/RouteSegment.svelte';
+	import FixWaypointMarkerIcon, {
+		FIX_WAYPOINT_MARKER_DEFAULTS,
+		fixWaypointMarkerAnchor,
+		isRouteEndpoint,
+		WAYPOINT_MARKER_Z_INDEX_OFFSET
+	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
+	import AircraftMarkerIcon, {
+		AIRCRAFT_MARKER_DEFAULTS,
+		AIRCRAFT_MARKER_Z_INDEX_OFFSET,
+		aircraftMarkerAnchor
+	} from '$lib/components/leaflet/AircraftMarkerIcon.svelte';
+	import AirportMarker from '$lib/components/leaflet/AirportMarker.svelte';
+	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
+	import type Airport from '$lib/logic/aeronautics/Airport';
+	import AirspacePolygon from '$lib/components/leaflet/AirspacePolygon.svelte';
+	import Popup from '$lib/components/leaflet/Popup.svelte';
+	import Marker from '$lib/components/leaflet/Marker.svelte';
+	import { WaypointType } from '$lib/logic/aeronautics/Waypoint';
+	import type { MarkerLayerDetail, PolygonLayerDetail } from '$lib/components/leaflet/types';
+	import Parser, { type ParseResult } from '$lib/logic/Parser';
+	import Radio from '$lib/components/simulator/Radio.svelte';
+	import Transponder from '$lib/components/simulator/Transponder.svelte';
+	import MessageOutput from '$lib/components/simulator/MessageOutput.svelte';
+	import MessageInput from '$lib/components/simulator/MessageInput.svelte';
+	import Altimeter from '$lib/components/simulator/Altimeter.svelte';
+	import Map from '$lib/components/leaflet/Map.svelte';
+	import { Steps } from '@skeletonlabs/skeleton-svelte';
+	import { resolve } from '$app/paths';
 
 	// Scenario settings
 	let seed: string = '';
@@ -79,61 +88,55 @@
 	let aircraftType: string = 'Cessna 172';
 
 	// Flag to check if critical data is missing and the user must be prompted to enter it
-	let criticalDataMissing: boolean = false;
-
-	// Scenario objects
-	let waypoints: Waypoint[] = [];
-	let airportIDs: string[] = [];
+	let criticalDataMissing: boolean = $state(false);
 
 	// Check whether the seed is specified - if not then warn user
-	const seedString: string | null = $page.url.searchParams.get('seed');
+	const seedString: string | null = page.url.searchParams.get('seed');
 	if (seedString != null && seedString != '') {
 		seed = seedString;
 	} else {
 		criticalDataMissing = true;
 	}
 
-	// Check whether the hasEmergency is specified
-	const hasEmergencyString: string | null = $page.url.searchParams.get('hasEmergency');
-	if (hasEmergencyString != null) {
-		hasEmergencies = hasEmergencyString === 'true';
+	const hasEmergenciesString: string | null = page.url.searchParams.get('hasEmergencies');
+	if (hasEmergenciesString != null) {
+		hasEmergencies = hasEmergenciesString === 'true';
 	}
 
 	// Get waypoints from the URL's JSON.stringify form
-	const waypointsString: string | null = $page.url.searchParams.get('waypoints');
+	const waypointsString: string | null = page.url.searchParams.get('waypoints');
 	if (waypointsString != null) {
 		const waypointsDataArray: WaypointURLObject[] = JSON.parse(waypointsString);
-		waypoints = waypointsDataArray.map(
-			(waypoint) =>
-				new Waypoint(
-					waypoint.name,
-					waypoint.location,
-					waypoint.type,
-					waypoint.index,
-					waypoint.referenceObjectId
-				)
+		WaypointsStore.set(
+			waypointsDataArray.map(
+				(waypoint) =>
+					new Waypoint(
+						waypoint.name,
+						waypoint.location,
+						waypoint.type,
+						waypoint.index,
+						waypoint.referenceObjectId
+					)
+			)
 		);
-		WaypointsStore.set(waypoints);
 	} else {
 		criticalDataMissing = true;
 	}
 
 	// Get airports from the URL's JSON.stringify form
-	const airportsString: string | null = $page.url.searchParams.get('airports');
-	if (airportsString != null) {
-		airportIDs = airportsString.split(',');
-	} else {
+	const airportsString: string | null = page.url.searchParams.get('airports');
+	if (airportsString == null) {
 		criticalDataMissing = true;
 	}
 
 	// Check whether the callsign is specified
-	const callsignString: string | null = $page.url.searchParams.get('callsign');
+	const callsignString: string | null = page.url.searchParams.get('callsign');
 	if (callsignString != null && callsignString != '') {
 		callsign = callsignString;
 	}
 
 	// Check whether the prefix is specified
-	const prefixString: string | null = $page.url.searchParams.get('prefix');
+	const prefixString: string | null = page.url.searchParams.get('prefix');
 	if (prefixString != null) {
 		if (
 			prefixString == '' ||
@@ -149,14 +152,14 @@
 	}
 
 	// Check whether the aircraft type is specified
-	const aircraftTypeString: string | null = $page.url.searchParams.get('aircraftType');
+	const aircraftTypeString: string | null = page.url.searchParams.get('aircraftType');
 	if (aircraftTypeString != null && aircraftTypeString != '') {
 		aircraftType = aircraftTypeString;
 	}
 
 	// Check whether start point index has been set
 	let startPointIndex: number = 0;
-	const startPointIndexString: string | null = $page.url.searchParams.get('startPoint');
+	const startPointIndexString: string | null = page.url.searchParams.get('startPoint');
 	if (startPointIndexString != null) {
 		startPointIndex = parseInt(startPointIndexString);
 		if (startPointIndex < 0) {
@@ -166,7 +169,7 @@
 
 	// Check whether end point index has been set
 	let endPointIndex: number = -1;
-	const endPointIndexString: string | null = $page.url.searchParams.get('endPoint');
+	const endPointIndexString: string | null = page.url.searchParams.get('endPoint');
 	if (endPointIndexString != null) {
 		endPointIndex = parseInt(endPointIndexString);
 		if (endPointIndex < 0 || endPointIndex >= startPointIndex) {
@@ -175,86 +178,107 @@
 	}
 
 	let tutorial: boolean = false;
-	const tutorialString: string | null = $page.url.searchParams.get('tutorial');
+	const tutorialString: string | null = page.url.searchParams.get('tutorial');
 	if (tutorialString != null) {
 		tutorial = tutorialString === 'true';
 	}
 
-	// Load stores if not populated
-	let airspaces: Airspace[] = [];
-	AllAirspacesStore.subscribe((value) => {
-		airspaces = value;
-	});
-	if (airspaces.length === 0) fetchAirspaces();
+	type QuickLoadScenarioData = {
+		routeSeed: string;
+		scenarioSeed: string;
+		hasEmergencies: boolean;
+	};
 
-	let onRouteAirspaces: Airspace[] = [];
-	OnRouteAirspacesStore.subscribe((value) => {
-		onRouteAirspaces = value;
-	});
+	$effect(() => {
+		if (!criticalDataMissing) return;
 
-	let airports: Airport[] = [];
-	AllAirportsStore.subscribe((value) => {
-		airports = value;
-	});
-	if (airports.length === 0) fetchAirports();
-
-	let onRouteAirports: Airport[] = [];
-	OnRouteAirportsStore.subscribe((value) => {
-		onRouteAirports = value;
-	});
-
-	WaypointsStore.subscribe((value) => {
-		waypoints = value;
-	});
-
-	let scenario: Scenario | undefined = undefined;
-
-	if (criticalDataMissing) {
-		// Set a short timeout then trigger modal to load scenario data
-		setTimeout(() => {
-			const modal: ModalSettings = {
+		const timeout = setTimeout(() => {
+			dialog.trigger({
 				type: 'component',
-				component: 'quickLoadScenarioDataComponent',
-				response: (r: any) => {
-					if (r) {
-						seed = r.scenarioSeed;
-						hasEmergencies = r.hasEmergencies;
-						loadScenario();
+				component: QuickLoadScenarioDataModal,
+				response: (r) => {
+					if (r && typeof r === 'object' && 'scenarioSeed' in r && 'routeSeed' in r) {
+						void loadScenarioFromSeeds(r as QuickLoadScenarioData);
 					}
 				}
-			};
-			modalStore.trigger(modal);
+			});
 		}, 1000);
+
+		return () => clearTimeout(timeout);
+	});
+
+	function getAirportForWaypoint(waypoint: Waypoint): Airport | undefined {
+		if (!waypoint.referenceObjectId) return undefined;
+		return get(AllAirportsStore).find((airport) => airport.id === waypoint.referenceObjectId);
 	}
 
-	$: if (!criticalDataMissing && airports.length > 0 && airspaces.length > 0) {
-		loadScenario();
-	}
-
-	function loadScenario() {
+	async function loadScenarioFromSeeds(data: QuickLoadScenarioData): Promise<void> {
 		try {
-			scenario = generateScenario(
-				seed,
-				waypoints,
-				onRouteAirports,
-				onRouteAirspaces,
-				hasEmergencies
+			await ensureAeronauticalData();
+
+			const result = generatePracticeRoute(
+				data.routeSeed,
+				data.scenarioSeed,
+				get(AllAirportsStore),
+				get(AllAirspacesStore),
+				get(maxFlightLevelStore),
+				data.hasEmergencies
 			);
+
+			if (!result) {
+				dialog.trigger({
+					type: 'alert',
+					title: 'Route generation failed',
+					body: 'No feasible route was found for that seed. Please try another route seed.'
+				});
+				return;
+			}
+
+			loadRouteData(result.routeData);
+			seed = data.scenarioSeed;
+			hasEmergencies = data.hasEmergencies;
+			criticalDataMissing = false;
+			loadScenario();
 		} catch (e) {
 			console.error(e);
-			return;
-		}
-
-		ScenarioStore.set(scenario);
-
-		if (endPointIndex == -1) {
-			EndPointIndexStore.set(scenario.scenarioPoints.length - 1);
-		} else {
-			EndPointIndexStore.set(endPointIndex);
+			dialog.trigger({
+				type: 'alert',
+				title: 'Could not load scenario',
+				body: e instanceof Error ? e.message : 'An unexpected error occurred.'
+			});
 		}
 	}
 
-	ScenarioStore.set(scenario);
+	function loadScenario(): boolean {
+		try {
+			const airspaces = getAirspacesAlongRoute();
+			const scenario = generateScenario(
+				seed,
+				get(WaypointsStore),
+				get(OnRouteAirportsStore),
+				airspaces,
+				hasEmergencies
+			);
+			ScenarioStore.set(scenario);
+
+			if (endPointIndex == -1) {
+				EndPointIndexStore.set(scenario.scenarioPoints.length - 1);
+			} else {
+				EndPointIndexStore.set(endPointIndex);
+			}
+			return true;
+		} catch (e) {
+			console.error(e);
+			dialog.trigger({
+				type: 'alert',
+				title: 'Could not load scenario',
+				body: e instanceof Error ? e.message : 'Scenario generation failed.'
+			});
+			return false;
+		}
+	}
+
+	ScenarioStore.set(undefined);
 	CurrentScenarioPointIndexStore.set(startPointIndex);
 	StartPointIndexStore.set(startPointIndex);
 
@@ -265,140 +289,50 @@
 		aircraftType: aircraftType
 	});
 
-	// Simulator state and settings
-	let aircraftDetails: AircraftDetails; // Current settings of the simulator
-	let radioState: RadioState; // Current radio settings
-	let transponderState: TransponderState; // Current transponder settings
-	let altimeterState: AltimeterState;
-	let atcMessage: string;
-	let userMessage: string;
-	let currentTarget: string;
-	let currentTargetFrequency: string;
-	let currentRoutePointIndex: number = 0;
 	let failedAttempts: number = 0;
 	let currentRadioCall: RadioCall;
-	let currentSimConext: string;
 
 	// Page settings
-	let speechRecognitionSupported: boolean = false; // Speech recognition is not supported in all browsers e.g. firefox
-	let speechNoiseLevel: number = 0;
-	let readRecievedCalls: boolean = false;
-	let liveFeedback: boolean = false;
-	let tutorialStep4: boolean = false;
+	let speechRecognitionSupported: boolean = $state(false);
+	let tutorialStep4Valid: boolean = $state(false);
 
-	// Tutorial state
-	let tutorialEnabled: boolean = false;
-	let tutorialComplete: boolean = false;
-	let tutorialStep: number = 1;
+	let tutorialComplete: boolean = $state(false);
+	let tutorialCurrentStep: number = $state(0);
+
+	const tutorialStepCount = 4;
+	const tutorialStepTitles = [
+		'Get Started!',
+		'Turning on your Radio Stack',
+		'Setting Your Radio Frequency',
+		'Make your first Radio Call'
+	];
 
 	// Server state
-	let awaitingRadioCallCheck: boolean = false;
-	let serverNotResponding: boolean = false;
-	let nullRoute: boolean = false;
+	let serverNotResponding = $state(false);
+	let nullRoute = $state(false);
 
-	const toastStore = getToastStore();
-
-	$: if (serverNotResponding) {
-		modalStore.trigger({
-			type: 'alert',
-			title: 'Server did not respond',
-			body: 'This may be due to a bad request or the feature you are trying to use not being implemented yet. This software is still early in development, expect errors like this one.'
-		});
-	}
-
-	$: if (nullRoute) {
-		modalStore.trigger({
-			type: 'alert',
-			title: 'No Route Generated',
-			body: 'After 1000 iterations no feasible route was generated for this seed. Please try another one. The route generation is not finalised and will frequently encounter issues like this one. '
-		});
-	}
-
-	$: if (readRecievedCalls && atcMessage) {
-		TTSWithNoise(speechNoiseLevel);
-	}
-
-	$: tutorialStep2 = transponderState?.dialMode == 'SBY' && radioState?.dialMode == 'SBY';
-	$: tutorialStep3 =
-		radioState?.activeFrequency == scenario?.getCurrentPoint().updateData.currentTargetFrequency;
-
-	ScenarioStore.subscribe((value) => {
-		scenario = value;
+	const aircraftPosition = $derived.by((): [number, number] => {
+		const pos = $CurrentScenarioPointStore?.pose.position;
+		if (!pos) return wellesbourneMountfordLatLng;
+		return toLeafletLatLng(pos);
 	});
 
-	SpeechOutputEnabledStore.subscribe((value) => {
-		readRecievedCalls = value;
+	const mapView = $derived.by((): [number, number] => {
+		const pos = $ScenarioStore?.getCurrentPoint()?.pose.position;
+		if (!pos) return wellesbourneMountfordLatLng;
+		return toLeafletLatLng(pos);
 	});
 
-	SpeechNoiseStore.subscribe((value) => {
-		speechNoiseLevel = value;
-	});
+	const displayHeading = $derived($CurrentScenarioPointStore?.pose.trueHeading ?? 0);
 
-	LiveFeedbackStore.subscribe((value) => {
-		liveFeedback = value;
-	});
+	const currentRouteSegmentIndex = $derived.by(() => {
+		const position = $CurrentScenarioPointStore?.pose.position;
+		if (!position || $WaypointsStore.length < 2) return -1;
 
-	AircraftDetailsStore.subscribe((value) => {
-		aircraftDetails = value;
-	});
-
-	RadioStateStore.subscribe((value) => {
-		radioState = value;
-	});
-
-	TransponderStateStore.subscribe((value) => {
-		transponderState = value;
-	});
-
-	AltimeterStateStore.subscribe((value) => {
-		altimeterState = value;
-	});
-
-	UserMessageStore.subscribe((value) => {
-		userMessage = value;
-	});
-
-	MostRecentlyReceivedMessageStore.subscribe((value) => {
-		atcMessage = value;
-	});
-
-	CurrentScenarioContextStore.subscribe((value) => {
-		currentSimConext = value;
-	});
-
-	CurrentScenarioPointIndexStore.subscribe((value) => {
-		currentRoutePointIndex = value;
-	});
-
-	CurrentTargetStore.subscribe((value) => {
-		currentTarget = value;
-	});
-
-	CurrentTargetFrequencyStore.subscribe((value) => {
-		currentTargetFrequency = value;
-	});
-
-	TutorialStore.subscribe((value) => {
-		tutorialEnabled = value;
-	});
-
-	let waypointPoints: number[][] = [];
-	let bounds: L.LatLngBounds;
-	let bbox: number[] = [];
-	WaypointPointsMapStore.subscribe((value) => {
-		waypointPoints = value;
-	});
-
-	let position: number[] = [0, 0];
-	let displayHeading: number = 0;
-	let altitude: number = 0;
-	let airSpeed: number = 0;
-
-	CurrentScenarioPointStore.subscribe((value) => {
-		position = value?.pose.position.reverse() ?? [0, 0];
-		displayHeading = value?.pose.trueHeading ? value?.pose.trueHeading - 45 : 0;
-		altitude = value?.pose.altitude ?? 0;
-		airSpeed = value?.pose.airSpeed ?? 0;
+		return findRouteSegmentIndex(
+			$WaypointsStore.map((waypoint) => waypoint.location),
+			position
+		);
 	});
 
 	/**
@@ -416,7 +350,7 @@
 			const audioContext = new AudioContext();
 
 			// Create speech synthesis utterance and noise buffer
-			const speech = new SpeechSynthesisUtterance(atcMessage);
+			const speech = new SpeechSynthesisUtterance(get(MostRecentlyReceivedMessageStore));
 			const noiseBuffer = generateStaticNoise(45, speech.rate * 44100);
 			const noiseSource = new AudioBufferSourceNode(audioContext, { buffer: noiseBuffer });
 			const gainNode = new GainNode(audioContext);
@@ -466,15 +400,20 @@
 	 * @returns boolean
 	 */
 	function checkClientSimStateCorrect(): boolean {
+		const radioState = get(RadioStateStore);
+		const transponderState = get(TransponderStateStore);
+		const altimeterState = get(AltimeterStateStore);
+		const scenario = get(ScenarioStore);
+
 		if (radioState.dialMode == 'OFF') {
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'Error',
 				body: 'Radio is off'
 			});
 			return false;
 		} else if (transponderState.dialMode == 'OFF') {
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'Error',
 				body: 'Transponder is off'
@@ -483,7 +422,7 @@
 		} else if (
 			radioState.activeFrequency != scenario?.getCurrentPoint().updateData.currentTargetFrequency
 		) {
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'Error',
 				body: 'Radio frequency incorrect'
@@ -493,19 +432,19 @@
 			transponderState.frequency !=
 			scenario?.getCurrentPoint().updateData.currentTransponderFrequency
 		) {
-			modalStore.trigger({
+			console.log(
+				'Transponder frequency incorrect',
+				transponderState.frequency,
+				scenario?.getCurrentPoint().updateData.currentTransponderFrequency
+			);
+			dialog.trigger({
 				type: 'alert',
 				title: 'Error',
 				body: 'Transponder frequency incorrect'
 			});
 			return false;
 		} else if (altimeterState.pressure != scenario?.getCurrentPoint().updateData.currentPressure) {
-			// modalStore.trigger({
-			// 	type: 'alert',
-			// 	title: 'Error',
-			// 	body: 'Altimeter pressure setting incorrect'
-			// });
-			// return false;
+			// ATC should respond with say again/negative to correct the pressure
 		}
 
 		return true;
@@ -531,20 +470,15 @@
 			return value;
 		});
 
-		if (liveFeedback) {
-			// Clear previous toasts so only one feedback shown at a time
-			toastStore.clear();
+		if (get(LiveFeedbackStore)) {
+			toaster.dismiss();
 
-			// Do nothing if the call was flawless
 			if (!feedback.isFlawless()) {
-				// Show current mistakes
-				const t: ToastSettings = {
-					message: feedback.getMistakes().join('<br>'),
-					timeout: 15000,
-					hoverable: true,
-					background: 'variant-filled-warning'
-				};
-				toastStore.trigger(t);
+				toaster.warning({
+					title: 'Mistakes',
+					description: feedback.getMistakes().join('\n'),
+					duration: 15000
+				});
 			}
 		}
 
@@ -558,27 +492,25 @@
 			failedAttempts++;
 
 			if (failedAttempts >= 3) {
-				// Show a modal asking the user if they want to be given the correct call or keep trying
-				const m: ModalSettings = {
+				dialog.trigger({
 					type: 'confirm',
 					title: 'Mistake',
 					body: 'Do you want to be given the correct call?',
-					response: (r: boolean) => {
+					response: (r) => {
 						if (r) {
-							// Put the correct call in the input box
 							ExpectedUserMessageStore.set(parseResult.expectedUserCall);
 						} else {
 							failedAttempts = -7;
 						}
 					}
-				};
-				modalStore.trigger(m);
+				});
 
 				return false;
 			}
 
 			// Make ATC respond with say again and do not advance the simulator
 			if (callsignMentioned) {
+				const aircraftDetails = get(AircraftDetailsStore);
 				if (isCallsignStandardRegistration(aircraftDetails.callsign)) {
 					MostRecentlyReceivedMessageStore.set(
 						aircraftDetails.prefix +
@@ -597,19 +529,21 @@
 
 			return false;
 		} else if (minorMistakes.length > 0) {
-			// Show a toast with the minor mistakes and advance scenario
-			const t: ToastSettings = {
-				message: 'Correct with minor mistakes: ' + minorMistakes.join('<br>') + '.'
-			};
-			toastStore.trigger(t);
+			toaster.info({
+				title: 'Almost',
+				description: `Correct with minor mistakes:\n${minorMistakes.join('\n')}.`
+			});
 		} else {
-			const t: ToastSettings = {
-				message: 'Correct!'
-			};
-			toastStore.trigger(t);
+			toaster.success({
+				title: 'Correct',
+				description: 'Your call was correct.'
+			});
 		}
 
-		tutorialStep4 = true;
+		tutorialStep4Valid = true;
+		if (get(TutorialStore)) {
+			cancelTutorial();
+		}
 		// Reset failed attempts
 		failedAttempts = 0;
 
@@ -626,7 +560,12 @@
 	 * @returns void
 	 */
 	function handleSubmit() {
-		// Check the call is not empty
+		const userMessage = get(UserMessageStore);
+		const scenario = get(ScenarioStore);
+		const aircraftDetails = get(AircraftDetailsStore);
+		const transponderState = get(TransponderStateStore);
+		const radioState = get(RadioStateStore);
+
 		if (
 			userMessage == undefined ||
 			userMessage == '' ||
@@ -635,10 +574,9 @@
 			return;
 		}
 
-		// Check sim state matches expected state
 		if (scenario == undefined) {
 			console.log('Error: No route');
-			modalStore.trigger({
+			dialog.trigger({
 				type: 'alert',
 				title: 'Scenario Error',
 				body: 'No scenario is loaded. Refresh the page to try again.'
@@ -662,8 +600,8 @@
 			aircraftDetails.callsign,
 			scenario.getCurrentPoint().updateData.callsignModified,
 			transponderState.vfrHasExecuted,
-			currentTarget,
-			currentTargetFrequency,
+			get(CurrentTargetStore),
+			get(CurrentTargetFrequencyStore),
 			radioState.activeFrequency,
 			transponderState.frequency,
 			aircraftDetails.aircraftType
@@ -678,18 +616,17 @@
 		if (!handleFeedback(response)) return;
 
 		// If the user has reached the end of the route, then show a modal asking if they want to view their feedback
-		if (currentRoutePointIndex == endPointIndex) {
-			const m: ModalSettings = {
+		if (get(CurrentScenarioPointIndexStore) == get(EndPointIndexStore)) {
+			dialog.trigger({
 				type: 'confirm',
 				title: 'Scenario Complete',
 				body: 'Do you want view your feedback?',
-				response: (r: boolean) => {
+				response: (r) => {
 					if (r) {
-						goto('/scenario/results/');
+						goto(resolve('/simulator/results'));
 					}
 				}
-			};
-			modalStore.trigger(m);
+			});
 
 			return;
 		}
@@ -702,18 +639,23 @@
 		MostRecentlyReceivedMessageStore.set(response.responseCall);
 	}
 
-	function onStepHandler(e: {
-		detail: { state: { current: number; total: number }; step: number };
-	}): void {
-		tutorialStep = e.detail.state.current + 1;
+	function isTutorialStepValid(index: number): boolean {
+		if (index === 1) return tutorialStep2Valid;
+		if (index === 2) return tutorialStep3Valid;
+		if (index === 3) return tutorialStep4Valid;
+		return true;
 	}
 
-	function onCompleteHandler(e: Event): void {
+	function onTutorialStepChange(details: { step: number }): void {
+		tutorialCurrentStep = details.step;
+	}
+
+	function onTutorialComplete(): void {
 		tutorialComplete = true;
 	}
 
 	function cancelTutorial(): void {
-		tutorialEnabled = false;
+		TutorialStore.set(false);
 	}
 
 	onMount(async () => {
@@ -722,121 +664,188 @@
 		} else {
 			speechRecognitionSupported = false;
 		}
+
+		await ensureAeronauticalData();
 	});
+	$effect(() => {
+		if (
+			criticalDataMissing ||
+			$ScenarioStore !== undefined ||
+			$AllAirportsStore.length === 0 ||
+			$AllAirspacesStore.length === 0 ||
+			$WaypointsStore.length === 0 ||
+			$OnRouteAirspacesStore.length === 0
+		) {
+			return;
+		}
+		loadScenario();
+	});
+
+	$effect(() => {
+		if (serverNotResponding) {
+			dialog.trigger({
+				type: 'alert',
+				title: 'Server did not respond',
+				body: 'This may be due to a bad request or the feature you are trying to use not being implemented yet. This software is still early in development, expect errors like this one.'
+			});
+		}
+	});
+
+	$effect(() => {
+		if (nullRoute) {
+			dialog.trigger({
+				type: 'alert',
+				title: 'No Route Generated',
+				body: 'After 1000 iterations no feasible route was generated for this seed. Please try another one. The route generation is not finalised and will frequently encounter issues like this one. '
+			});
+		}
+	});
+
+	$effect(() => {
+		if ($SpeechOutputEnabledStore && $MostRecentlyReceivedMessageStore) {
+			TTSWithNoise($SpeechNoiseStore);
+		}
+	});
+	let tutorialStep2Valid = $derived(
+		$TransponderStateStore?.dialMode == 'SBY' && $RadioStateStore?.dialMode == 'SBY'
+	);
+	let tutorialStep3Valid = $derived(
+		$RadioStateStore?.activeFrequency ==
+			$ScenarioStore?.getCurrentPoint().updateData.currentTargetFrequency
+	);
 </script>
 
 <div class="flex" style="justify-content: center;">
-	<div class="w-full max-w-screen-lg p-5">
-		<div class="flex flex-row place-content-center gap-5 flex-wrap">
-			{#if tutorialEnabled && !tutorialComplete}
-				<div class="card bg-primary-900 text-white p-3 rounded-lg sm:w-7/12 sm:mx-10">
-					<Stepper on:complete={onCompleteHandler} on:step={onStepHandler}>
-						<Step>
-							<svelte:fragment slot="header">Get Started!</svelte:fragment>
+	<div class="w-full max-w-5xl p-5">
+		<div class="flex flex-row flex-wrap place-content-center gap-5">
+			{#if $TutorialStore && !tutorialComplete}
+				<div class="w-xl card rounded-lg bg-primary-900 p-3 text-white">
+					<Steps
+						class="w-full"
+						count={tutorialStepCount}
+						linear
+						isStepValid={isTutorialStepValid}
+						onStepChange={onTutorialStepChange}
+						onStepComplete={onTutorialComplete}
+					>
+						<Steps.List class="mb-4">
+							{#each tutorialStepTitles as title, index (index)}
+								<Steps.Item {index}>
+									<Steps.Trigger>
+										<Steps.Indicator>{index + 1}</Steps.Indicator>
+										<span class="hidden sm:inline">{title}</span>
+									</Steps.Trigger>
+									{#if index < tutorialStepTitles.length - 1}
+										<Steps.Separator />
+									{/if}
+								</Steps.Item>
+							{/each}
+						</Steps.List>
+
+						<Steps.Content index={0}>
+							<h3 class="mb-2 h3">{tutorialStepTitles[0]}</h3>
 							Welcome to RT Trainer. This tutorial will explain how to use the simulator.
 							<br />Click
 							<span class="underline">next</span>
 							to continue.
-							<svelte:fragment slot="navigation">
-								<button class="btn variant-ghost-warning" on:click={cancelTutorial}
-									>Skip Tutorial</button
-								>
-							</svelte:fragment>
-						</Step>
-						<Step locked={!tutorialStep2}>
-							<svelte:fragment slot="header">Turning on your Radio Stack</svelte:fragment>
-							<ul class="list-disc ml-5">
+						</Steps.Content>
+						<Steps.Content index={1}>
+							<h3 class="mb-2 h3">{tutorialStepTitles[1]}</h3>
+							<ul class="ml-5 list-disc">
 								<li>Turn on your radio by clicking on the dial or standby (SBY) label.</li>
 								<li>Set your transponder to standby in the same way.</li>
 							</ul>
-						</Step>
-						<Step locked={!tutorialStep3}>
-							<svelte:fragment slot="header">Setting Your Radio Frequency</svelte:fragment>
+						</Steps.Content>
+						<Steps.Content index={2}>
+							<h3 class="mb-2 h3">{tutorialStepTitles[2]}</h3>
 							Set your radio frequency to the current target frequency shown in the message output box.
-						</Step>
-						<Step locked={!tutorialStep4}>
-							<svelte:fragment slot="header">Make your first Radio Call</svelte:fragment>
+						</Steps.Content>
+						<Steps.Content index={3}>
+							<h3 class="mb-2 h3">{tutorialStepTitles[3]}</h3>
 							Now you are ready to make your first radio call.
-							<ul class="list-disc ml-5">
+							<ul class="ml-5 list-disc">
 								<li>Type your message in the input box.</li>
 								<li>Or enable speech input and say your message out loud.</li>
 								<li>
-									Your callsign is `{aircraftDetails.prefix}
-									{aircraftDetails.callsign}`. You can change this in your
-									<a href="/profile">profile settings</a>.
+									Your callsign is `{$AircraftDetailsStore.prefix}
+									{$AircraftDetailsStore.callsign}`.
 								</li>
 							</ul>
-						</Step>
-						<Step>
-							<svelte:fragment slot="header">Well Done!</svelte:fragment>
-							You have completed the basic tutorial. Familiarise yourself with the rest of the simulator
-							and complete the route.
-						</Step>
-					</Stepper>
+						</Steps.Content>
+
+						<div class="mt-4 flex items-center justify-between gap-2">
+							<Steps.PrevTrigger class="btn preset-tonal">Back</Steps.PrevTrigger>
+							<div class="flex gap-2">
+								{#if tutorialCurrentStep === 0}
+									<button
+										class="btn border border-warning-500 preset-tonal-warning"
+										onclick={cancelTutorial}
+									>
+										Skip Tutorial
+									</button>
+								{/if}
+								<Steps.NextTrigger class="btn preset-tonal">
+									{tutorialCurrentStep === tutorialStepCount - 1 ? 'Complete' : 'Next'}
+								</Steps.NextTrigger>
+							</div>
+						</div>
+					</Steps>
 				</div>
 			{/if}
 
-			<div class="flex flex-col place-content-evenly sm:grid sm:grid-cols-2 gap-5">
+			<div class="flex flex-col place-content-evenly gap-5 sm:grid sm:grid-cols-2">
 				<MessageOutput />
 
-				<MessageInput {speechRecognitionSupported} on:submit={handleSubmit} />
+				<MessageInput {speechRecognitionSupported} submit={handleSubmit} />
 			</div>
 
 			<Radio />
 
 			<Transponder />
 
-			<div class="card p-2 rounded-md w-[420px] h-[452px] bg-neutral-600 flex flex-row grow">
-				<div class="w-full h-full">
-					<Map view={scenario?.getCurrentPoint().pose.position} zoom={9}>
-						{#if waypointPoints.length > 0}
-							{#each waypoints as waypoint (waypoint.index)}
-								{#if waypoint.index == waypoints.length - 1 || waypoint.type == WaypointType.Airport}
-									<Marker
-										latLng={[waypoint.location[1], waypoint.location[0]]}
-										width={50}
-										height={50}
+			<div class="flex h-[452px] w-[420px] grow flex-row card rounded-md bg-neutral-600 p-2">
+				<div class="h-full w-full">
+					<Map view={mapView} zoom={9}>
+						{#if $WaypointPointsMapStore.length > 0}
+							{#each $WaypointsStore as waypoint, index (waypoint.index)}
+								{#if waypoint.type == WaypointType.Airport}
+									<AirportMarker
+										latLng={toLeafletLatLng(waypoint.location)}
 										aeroObject={waypoint}
-										on:click={(e) => {
-											e.preventDefault();
+										baseSize={36}
+										runways={runwaysToSymbolInput(getAirportForWaypoint(waypoint)?.runways)}
+										showRouteEndpoint={isRouteEndpoint(index, $WaypointsStore.length)}
+										mouseover={(detail: MarkerLayerDetail) => {
+											detail.marker.openPopup();
 										}}
-										on:mouseover={(e) => {
-											e.detail.marker.openPopup();
-										}}
-										on:mouseout={(e) => {
-											e.detail.marker.closePopup();
+										mouseout={(detail: MarkerLayerDetail) => {
+											detail.marker.closePopup();
 										}}
 									>
-										{#if waypoint.index == waypoints.length - 1}
-											<div class="text-2xl">🏁</div>
-										{:else if waypoint.type == WaypointType.Airport}
-											<div class="text-2xl">🛫</div>
-										{/if}
-
 										<Popup
 											><div class="flex flex-col gap-2">
 												<div>{waypoint.name}</div>
 											</div></Popup
-										></Marker
+										></AirportMarker
 									>
 								{:else}
 									<Marker
-										latLng={[waypoint.location[1], waypoint.location[0]]}
-										width={50}
-										height={50}
+										latLng={toLeafletLatLng(waypoint.location)}
+										width={FIX_WAYPOINT_MARKER_DEFAULTS.size}
+										height={FIX_WAYPOINT_MARKER_DEFAULTS.size}
 										aeroObject={waypoint}
-										iconAnchor={L.point(8, 26)}
-										on:click={(e) => {
-											e.preventDefault();
+										iconAnchor={fixWaypointMarkerAnchor()}
+										zIndexOffset={WAYPOINT_MARKER_Z_INDEX_OFFSET}
+										mouseover={(detail: MarkerLayerDetail) => {
+											detail.marker.openPopup();
 										}}
-										on:mouseover={(e) => {
-											e.detail.marker.openPopup();
-										}}
-										on:mouseout={(e) => {
-											e.detail.marker.closePopup();
+										mouseout={(detail: MarkerLayerDetail) => {
+											detail.marker.closePopup();
 										}}
 									>
-										<div class="text-2xl">🚩</div>
+										<FixWaypointMarkerIcon
+											showRouteEndpoint={isRouteEndpoint(index, $WaypointsStore.length)}
+										/>
 
 										<Popup
 											><div class="flex flex-col gap-2">
@@ -848,84 +857,65 @@
 							{/each}
 						{/if}
 
-						{#each waypointPoints as waypointPoint, index}
+						{#each Array.from($WaypointPointsMapStore.keys()) as index (index)}
 							{#if index > 0}
-								<!-- Force redraw if either waypoint of the line changes location -->
-								{#key [waypointPoints[index - 1], waypointPoints[index]]}
-									<Polyline
-										latLngArray={[waypointPoints[index - 1], waypointPoints[index]]}
-										colour="#FF69B4"
-										fillOpacity={1}
-										weight={7}
+								{#key [$WaypointPointsMapStore[index - 1], $WaypointPointsMapStore[index]]}
+									<RouteSegment
+										latLngArray={[
+											$WaypointPointsMapStore[index - 1] as [number, number],
+											$WaypointPointsMapStore[index] as [number, number]
+										]}
+										highlighted={index - 1 === currentRouteSegmentIndex}
 									/>
 								{/key}
 							{/if}
 						{/each}
 
-						{#each onRouteAirspaces as airspace}
-							{#if airspace.type == 14}
-								<Polygon
-									latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
-									color={'red'}
-									fillOpacity={0.2}
-									weight={1}
-									on:click={(e) => {
-										e.preventDefault();
-									}}
-									on:mouseover={(e) => {
-										e.detail.polygon.openPopup();
-									}}
-									on:mouseout={(e) => {
-										e.detail.polygon.closePopup();
-									}}
-								/>
-							{:else}
-								<Polygon
-									latLngArray={airspace.coordinates[0].map((point) => [point[1], point[0]])}
-									color={'blue'}
-									fillOpacity={0.2}
-									weight={1}
-									on:click={(e) => {
-										e.preventDefault();
-									}}
-									on:mouseover={(e) => {
-										e.detail.polygon.openPopup();
-									}}
-									on:mouseout={(e) => {
-										e.detail.polygon.closePopup();
-									}}
-								/>
-							{/if}
+						{#each $OnRouteAirspacesStore as airspace (airspace.id)}
+							<AirspacePolygon
+								coordinates={airspace.coordinates[0]}
+								airspaceType={airspace.type}
+								mouseover={(detail: PolygonLayerDetail) => {
+									detail.polygon.openPopup();
+								}}
+								mouseout={(detail: PolygonLayerDetail) => {
+									detail.polygon.closePopup();
+								}}
+							/>
 						{/each}
 
-						{#key position}
-							<Marker latLng={position} width={50} height={50} rotation={displayHeading}>
-								<div class="text-2xl">🛩️</div>
+						<Marker
+							latLng={aircraftPosition}
+							width={AIRCRAFT_MARKER_DEFAULTS.size}
+							height={AIRCRAFT_MARKER_DEFAULTS.size}
+							iconAnchor={aircraftMarkerAnchor()}
+							rotation={displayHeading}
+							zIndexOffset={AIRCRAFT_MARKER_Z_INDEX_OFFSET}
+						>
+							<AircraftMarkerIcon />
 
-								<Popup
-									><div class="flex flex-col gap-2">
-										<div>
-											<!-- Lat, Long format -->
-											<div>{position[1].toFixed(6)}</div>
-											<div>{position[0].toFixed(6)}</div>
-										</div>
-									</div></Popup
-								>
-							</Marker>
-						{/key}
+							<Popup
+								><div class="flex flex-col gap-2">
+									<div>
+										<div>{$CurrentScenarioPointStore?.pose.position[1].toFixed(6)}</div>
+										<div>{$CurrentScenarioPointStore?.pose.position[0].toFixed(6)}</div>
+									</div>
+								</div></Popup
+							>
+						</Marker>
 					</Map>
 				</div>
 			</div>
 
 			<Altimeter />
 
-			<div class="w-full flex flex-row flex-wrap gap-5 p-2 text-neutral-600/50">
+			<div class="flex w-full flex-row flex-wrap gap-5 p-2 text-neutral-300">
 				<div>
-					Your callsign: {aircraftDetails.prefix}
-					{aircraftDetails.callsign}
+					Your callsign: {$AircraftDetailsStore.prefix}
+					{$AircraftDetailsStore.callsign}
 				</div>
 				<div>
-					Your aircraft type: {aircraftDetails.aircraftType}
+					Your aircraft type: {$AircraftDetailsStore.aircraftType}
 				</div>
 			</div>
 		</div>

@@ -1,4 +1,4 @@
-import { getAllValidAirportData } from '$lib/ts/OpenAIPHandler';
+import { getAllValidAirportData } from '$lib/logic/OpenAIPHandler';
 import { error, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async () => {
@@ -8,5 +8,9 @@ export const GET: RequestHandler = async () => {
 		error(404, 'Airports not found');
 	}
 
-	return new Response(JSON.stringify(airports));
+	return new Response(JSON.stringify(airports), {
+		headers: {
+			'Cache-Control': 'public, max-age=86400'
+		}
+	});
 };

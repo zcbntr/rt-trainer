@@ -1,0 +1,74 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "SvelteKit: debug dev server",
+			"type": "node",
+			"request": "launch",
+			"cwd": "${workspaceFolder}",
+			"runtimeExecutable": "${env:HOME}/.nvm/versions/node/v24.15.0/bin/npm",
+			"runtimeArgs": ["run", "dev"],
+			"console": "integratedTerminal",
+			"skipFiles": ["<node_internals>/**"]
+		},
+		{
+			"name": "SvelteKit: debug client (Chrome)",
+			"type": "chrome",
+			"request": "launch",
+			"url": "http://localhost:5173",
+			"webRoot": "${workspaceFolder}",
+			"sourceMapPathOverrides": {
+				"webpack:///./~/*": "${webRoot}/node_modules/*",
+				"webpack:///./*": "${webRoot}/*",
+				"webpack:///*": "*"
+			}
+		},
+		{
+			"name": "SvelteKit: debug client (attach)",
+			"type": "chrome",
+			"request": "attach",
+			"port": 9222,
+			"webRoot": "${workspaceFolder}",
+			"sourceMapPathOverrides": {
+				"webpack:///./~/*": "${webRoot}/node_modules/*",
+				"webpack:///./*": "${webRoot}/*",
+				"webpack:///*": "*"
+			}
+		},
+		{
+			"name": "Vitest: debug current file",
+			"type": "node",
+			"request": "launch",
+			"cwd": "${workspaceFolder}",
+			"runtimeExecutable": "${env:HOME}/.nvm/versions/node/v24.15.0/bin/node",
+			"program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+			"args": ["run", "${relativeFile}"],
+			"autoAttachChildProcesses": true,
+			"console": "integratedTerminal",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+		},
+		{
+			"name": "Vitest: debug all unit tests",
+			"type": "node",
+			"request": "launch",
+			"cwd": "${workspaceFolder}",
+			"runtimeExecutable": "${env:HOME}/.nvm/versions/node/v24.15.0/bin/node",
+			"program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+			"args": ["run"],
+			"autoAttachChildProcesses": true,
+			"console": "integratedTerminal",
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+		},
+		{
+			"name": "Playwright: debug e2e",
+			"type": "node",
+			"request": "launch",
+			"cwd": "${workspaceFolder}",
+			"runtimeExecutable": "${env:HOME}/.nvm/versions/node/v24.15.0/bin/node",
+			"program": "${workspaceFolder}/node_modules/@playwright/test/cli.js",
+			"args": ["test", "--debug", "${relativeFile}"],
+			"console": "integratedTerminal",
+			"skipFiles": ["<node_internals>/**"]
+		}
+	]
+}
