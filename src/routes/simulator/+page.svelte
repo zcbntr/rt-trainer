@@ -55,6 +55,9 @@
 		FIX_WAYPOINT_MARKER_DEFAULTS,
 		fixWaypointMarkerAnchor
 	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
+	import AirportMarker from '$lib/components/leaflet/AirportMarker.svelte';
+	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
+	import type Airport from '$lib/logic/aeronautics/Airport';
 	import AirspacePolygon from '$lib/components/leaflet/AirspacePolygon.svelte';
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import Marker from '$lib/components/leaflet/Marker.svelte';
@@ -200,6 +203,11 @@
 
 		return () => clearTimeout(timeout);
 	});
+
+	function getAirportForWaypoint(waypoint: Waypoint): Airport | undefined {
+		if (!waypoint.referenceObjectId) return undefined;
+		return get(AllAirportsStore).find((airport) => airport.id === waypoint.referenceObjectId);
+	}
 
 	async function loadScenarioFromSeeds(data: QuickLoadScenarioData): Promise<void> {
 		try {
@@ -797,11 +805,11 @@
 						{#if $WaypointPointsMapStore.length > 0}
 							{#each $WaypointsStore as waypoint (waypoint.index)}
 								{#if waypoint.type == WaypointType.Airport}
-									<Marker
+									<AirportMarker
 										latLng={toLeafletLatLng(waypoint.location)}
-										width={50}
-										height={50}
 										aeroObject={waypoint}
+										baseSize={36}
+										runways={runwaysToSymbolInput(getAirportForWaypoint(waypoint)?.runways)}
 										mouseover={(detail: MarkerLayerDetail) => {
 											detail.marker.openPopup();
 										}}
@@ -809,17 +817,11 @@
 											detail.marker.closePopup();
 										}}
 									>
-										{#if waypoint.index == $WaypointsStore.length - 1}
-											<div class="text-2xl">🏁</div>
-										{:else}
-											<div class="text-2xl">🛫</div>
-										{/if}
-
 										<Popup
 											><div class="flex flex-col gap-2">
 												<div>{waypoint.name}</div>
 											</div></Popup
-										></Marker
+										></AirportMarker
 									>
 								{:else}
 									<Marker

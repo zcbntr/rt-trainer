@@ -3,6 +3,15 @@ import type Waypoint from '$lib/logic/aeronautics/Waypoint';
 import type Airport from '$lib/logic/aeronautics/Airport';
 import type Airspace from '$lib/logic/aeronautics/Airspace';
 
+export type MapUiState = {
+	zoom: number;
+};
+
+export type MapContext = {
+	getMap: () => Leaflet.Map | undefined;
+	mapUi: MapUiState;
+};
+
 export type MarkerAeroObject = Waypoint | Airport | undefined;
 
 export type MarkerLayerDetail = {

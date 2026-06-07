@@ -6,7 +6,7 @@
 	import { getLeaflet } from './leaflet';
 	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
 	import type Airport from '$lib/logic/aeronautics/Airport';
-	import type { MarkerLayerDetail } from '$lib/components/leaflet/types';
+	import type { MapContext, MarkerLayerDetail } from '$lib/components/leaflet/types';
 
 	interface Props {
 		width: number;
@@ -44,36 +44,46 @@
 
 	let marker: Leaflet.Marker | undefined = $state();
 	let markerElement: HTMLElement;
+	let leafletApi: typeof Leaflet | undefined;
 
-	const { getMap }: { getMap: () => Leaflet.Map | undefined } = getContext('map');
+	const { getMap }: MapContext = getContext('map');
 
 	setContext('layer', {
 		getLayer: () => marker
 	});
+
+	function getIconAnchor(): Leaflet.PointExpression {
+		return iconAnchor ?? [width / 2 - 8, height / 2 - 8];
+	}
+
+	function createDivIcon(L: typeof Leaflet): Leaflet.DivIcon {
+		return L.divIcon({
+			html: markerElement,
+			className: 'map-marker',
+			iconSize: [width, height],
+			iconAnchor: getIconAnchor()
+		});
+	}
 
 	$effect(() => {
 		if (!marker) return;
 		marker.setLatLng(latLng);
 	});
 
+	$effect(() => {
+		if (!marker || !leafletApi) return;
+		marker.setIcon(createDivIcon(leafletApi));
+	});
+
 	onMount(async () => {
 		const map = getMap();
 		if (!map) return;
 
-		const L = await getLeaflet();
+		leafletApi = await getLeaflet();
 		await import('leaflet-rotatedmarker');
 
-		const anchor = iconAnchor ?? [width / 2 - 8, height / 2 - 8];
-
-		const icon = L.divIcon({
-			html: markerElement,
-			className: 'map-marker',
-			iconSize: [width, height],
-			iconAnchor: anchor
-		});
-
-		marker = L.marker(latLng, {
-			icon,
+		marker = leafletApi.marker(latLng, {
+			icon: createDivIcon(leafletApi),
 			rotationAngle: rotation,
 			rotationOrigin: 'center center',
 			title: aeroObject?.name

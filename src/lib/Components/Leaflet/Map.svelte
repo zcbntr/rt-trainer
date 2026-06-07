@@ -6,6 +6,7 @@
 	import { onDestroy, onMount, setContext, tick } from 'svelte';
 	import type * as Leaflet from 'leaflet';
 	import { getLeaflet } from './leaflet';
+	import type { MapContext } from '$lib/components/leaflet/types';
 
 	let map: Leaflet.Map | undefined = $state();
 	let mapElement: HTMLDivElement;
@@ -32,6 +33,13 @@
 		children,
 		click = () => {}
 	}: Props = $props();
+
+	const mapUi = $state({ zoom: 8 });
+
+	function syncMapZoom() {
+		if (!map) return;
+		mapUi.zoom = map.getZoom();
+	}
 
 	function fitPaddingOption(): [number, number] {
 		return typeof fitPadding === 'number' ? [fitPadding, fitPadding] : fitPadding;
@@ -101,10 +109,13 @@
 				maxBoundsViscosity: maxBounds ? 1 : undefined
 			})
 				.on('click', (e: Leaflet.LeafletMouseEvent) => click(e))
+				.on('zoom zoomend', syncMapZoom)
 				.on('popupopen', async (e: Leaflet.PopupEvent) => {
 					await tick();
 					e.popup?.update();
 				});
+
+			syncMapZoom();
 
 			L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 				maxZoom: 17,
@@ -125,8 +136,9 @@
 		map = undefined;
 	});
 
-	setContext('map', {
-		getMap: () => map
+	setContext<MapContext>('map', {
+		getMap: () => map,
+		mapUi
 	});
 </script>
 

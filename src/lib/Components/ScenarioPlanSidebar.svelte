@@ -26,6 +26,17 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { get } from 'svelte/store';
 	import FixWaypointMarkerIcon from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
+	import AirportMarkerIcon, {
+		runwaysToSymbolInput
+	} from '$lib/components/leaflet/AirportMarkerIcon.svelte';
+	import type Airport from '$lib/logic/aeronautics/Airport';
+
+	const SIDEBAR_WAYPOINT_ICON_SIZE = 20;
+
+	function getAirportForWaypoint(waypoint: Waypoint): Airport | undefined {
+		if (!waypoint.referenceObjectId) return undefined;
+		return get(AllAirportsStore).find((airport) => airport.id === waypoint.referenceObjectId);
+	}
 
 	const shortCUID = init({ length: 8 });
 
@@ -150,14 +161,13 @@
 					}}
 				>
 					<div class="flex flex-col place-content-center">
-						{#if waypoint.index == 0}
-							🛩️
-						{:else if waypoint.index == $WaypointsStore.length - 1 && waypoint.type == WaypointType.Airport}
-							🏁
-						{:else if waypoint.type == WaypointType.Airport}
-							🛫
+						{#if waypoint.type == WaypointType.Airport}
+							<AirportMarkerIcon
+								size={SIDEBAR_WAYPOINT_ICON_SIZE}
+								runways={runwaysToSymbolInput(getAirportForWaypoint(waypoint)?.runways)}
+							/>
 						{:else}
-							<FixWaypointMarkerIcon />
+							<FixWaypointMarkerIcon size={SIDEBAR_WAYPOINT_ICON_SIZE} />
 						{/if}
 					</div>
 					<div class="flex flex-col place-content-center">

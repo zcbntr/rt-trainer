@@ -41,8 +41,8 @@
 		FIX_WAYPOINT_MARKER_DEFAULTS,
 		fixWaypointMarkerAnchor
 	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
-	import { Icon } from 'svelte-icons-pack';
-	import { BsAirplaneFill } from 'svelte-icons-pack/bs';
+	import AirportMarker from '$lib/components/leaflet/AirportMarker.svelte';
+	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
 	import WarningBannerStack from '$lib/components/WarningBannerStack.svelte';
@@ -142,6 +142,11 @@
 			waypoints.length
 		);
 		WaypointsStore.set([...waypoints, waypoint]);
+	}
+
+	function getAirportForWaypoint(waypoint: Waypoint): Airport | undefined {
+		if (!waypoint.referenceObjectId) return undefined;
+		return get(AllAirportsStore).find((airport) => airport.id === waypoint.referenceObjectId);
 	}
 
 	function addAirportWaypoint(airport: Airport) {
@@ -281,12 +286,13 @@
 			>
 				{#each $AllAirportsStore as airport (airport.id)}
 					{#if showAllAirports || $WaypointsStore.some((waypoint) => waypoint.referenceObjectId === airport.id)}
-						<Marker
+						<AirportMarker
 							latLng={toLeafletLatLng(airport.coordinates)}
-							width={30}
-							height={30}
 							aeroObject={airport}
-							draggable={false}
+							runways={runwaysToSymbolInput(airport.runways)}
+							showIcon={!$WaypointsStore.some(
+								(waypoint) => waypoint.referenceObjectId === airport.id
+							)}
 							click={(detail: MarkerLayerDetail) => {
 								if (detail.aeroObject) addAirportWaypoint(detail.aeroObject as Airport);
 							}}
@@ -297,12 +303,8 @@
 								detail.marker.closePopup();
 							}}
 						>
-							{#if !$WaypointsStore.some((waypoint) => waypoint.referenceObjectId === airport.id)}
-								<Icon src={BsAirplaneFill} color="black" size="16" />
-							{/if}
-
 							<Popup><div>{airport.name}</div></Popup>
-						</Marker>
+						</AirportMarker>
 					{/if}
 				{/each}
 
@@ -334,18 +336,12 @@
 
 				{#each $WaypointsStore as waypoint (waypoint.id)}
 					{#key waypoint.location}
-						{#if waypoint.type == WaypointType.Airport}<Marker
+						{#if waypoint.type == WaypointType.Airport}<AirportMarker
 								latLng={toLeafletLatLng(waypoint.location)}
-								width={50}
-								height={50}
 								aeroObject={waypoint}
+								baseSize={36}
+								runways={runwaysToSymbolInput(getAirportForWaypoint(waypoint)?.runways)}
 							>
-								{#if waypoint.index == $WaypointsStore.length - 1}
-									<div class="text-2xl">🏁</div>
-								{:else}
-									<div class="text-2xl">🛫</div>
-								{/if}
-
 								<Popup
 									><div class="flex flex-col gap-2">
 										<div class="flex flex-col gap-2">
@@ -362,7 +358,7 @@
 										>
 									</div></Popup
 								>
-							</Marker>{:else}<Marker
+							</AirportMarker>{:else}<Marker
 								latLng={toLeafletLatLng(waypoint.location)}
 								width={FIX_WAYPOINT_MARKER_DEFAULTS.size}
 								height={FIX_WAYPOINT_MARKER_DEFAULTS.size}
