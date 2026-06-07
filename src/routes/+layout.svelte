@@ -1,6 +1,8 @@
 <script lang="ts">
 	import '../app.css';
 
+	import { dev } from '$app/environment';
+	import { injectAnalytics } from '@vercel/analytics/sveltekit';
 	import TopAppBar from '$lib/components/TopAppBar.svelte';
 	import NavigationDrawer from '$lib/components/NavigationDrawer.svelte';
 	import { Toast } from '@skeletonlabs/skeleton-svelte';
@@ -18,6 +20,8 @@
 	}
 
 	let { children }: Props = $props();
+
+	injectAnalytics({ mode: dev ? 'development' : 'production' });
 
 	const layoutShell = $derived.by(() => {
 		const path = page.url.pathname;
