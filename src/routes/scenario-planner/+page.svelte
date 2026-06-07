@@ -21,7 +21,7 @@
 	import type Airport from '$lib/logic/aeronautics/Airport';
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import Popup from '$lib/components/leaflet/Popup.svelte';
-	import Polygon from '$lib/components/leaflet/Polygon.svelte';
+	import AirspacePolygon from '$lib/components/leaflet/AirspacePolygon.svelte';
 	import {
 		getNthPhoneticAlphabetLetter,
 		lngLatBoundsToLeaflet,
@@ -235,55 +235,27 @@
 
 				{#each $FilteredAirspacesStore as airspace (airspace.id)}
 					{#if showAllAirspaces}
-						{#if airspace.type == 14}
-							<Polygon
-								latLngArray={airspace.coordinates[0].map(toLeafletLatLng)}
-								color="red"
-								fillOpacity={0.2}
-								weight={1}
-								aeroObject={airspace}
-								click={(detail: PolygonLayerDetail) => {
-									addWaypoint(
-										+parseFloat(detail.event.latlng.lat.toFixed(6)),
-										+parseFloat(detail.event.latlng.lng.toFixed(6))
-									);
-								}}
-								mouseover={(detail: PolygonLayerDetail) => {
-									detail.polygon.openPopup();
-								}}
-								mouseout={(detail: PolygonLayerDetail) => {
-									detail.polygon.closePopup();
-								}}
-							>
-								<Popup>
-									<div>{airspace.name} MATZ</div>
-								</Popup>
-							</Polygon>
-						{:else}
-							<Polygon
-								latLngArray={airspace.coordinates[0].map(toLeafletLatLng)}
-								color="blue"
-								fillOpacity={0.2}
-								weight={1}
-								aeroObject={airspace}
-								click={(detail: PolygonLayerDetail) => {
-									addWaypoint(
-										+parseFloat(detail.event.latlng.lat.toFixed(6)),
-										+parseFloat(detail.event.latlng.lng.toFixed(6))
-									);
-								}}
-								mouseover={(detail: PolygonLayerDetail) => {
-									detail.polygon.openPopup();
-								}}
-								mouseout={(detail: PolygonLayerDetail) => {
-									detail.polygon.closePopup();
-								}}
-							>
-								<Popup>
-									<div>{airspace.name}</div>
-								</Popup></Polygon
-							>
-						{/if}
+						<AirspacePolygon
+							coordinates={airspace.coordinates[0]}
+							airspaceType={airspace.type}
+							aeroObject={airspace}
+							click={(detail: PolygonLayerDetail) => {
+								addWaypoint(
+									+parseFloat(detail.event.latlng.lat.toFixed(6)),
+									+parseFloat(detail.event.latlng.lng.toFixed(6))
+								);
+							}}
+							mouseover={(detail: PolygonLayerDetail) => {
+								detail.polygon.openPopup();
+							}}
+							mouseout={(detail: PolygonLayerDetail) => {
+								detail.polygon.closePopup();
+							}}
+						>
+							<Popup>
+								<div>{airspace.getDisplayName()}</div>
+							</Popup>
+						</AirspacePolygon>
 					{/if}
 				{/each}
 

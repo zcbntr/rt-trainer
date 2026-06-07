@@ -50,7 +50,7 @@
 	import { get } from 'svelte/store';
 	import RadioCall from '$lib/logic/RadioCall';
 	import Polyline from '$lib/components/leaflet/Polyline.svelte';
-	import Polygon from '$lib/components/leaflet/Polygon.svelte';
+	import AirspacePolygon from '$lib/components/leaflet/AirspacePolygon.svelte';
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import { WaypointType } from '$lib/logic/aeronautics/Waypoint';
@@ -849,33 +849,16 @@
 						{/each}
 
 						{#each $OnRouteAirspacesStore as airspace (airspace.id)}
-							{#if airspace.type == 14}
-								<Polygon
-									latLngArray={airspace.coordinates[0].map(toLeafletLatLng)}
-									color="red"
-									fillOpacity={0.2}
-									weight={1}
-									mouseover={(detail: PolygonLayerDetail) => {
-										detail.polygon.openPopup();
-									}}
-									mouseout={(detail: PolygonLayerDetail) => {
-										detail.polygon.closePopup();
-									}}
-								/>
-							{:else}
-								<Polygon
-									latLngArray={airspace.coordinates[0].map(toLeafletLatLng)}
-									color="blue"
-									fillOpacity={0.2}
-									weight={1}
-									mouseover={(detail: PolygonLayerDetail) => {
-										detail.polygon.openPopup();
-									}}
-									mouseout={(detail: PolygonLayerDetail) => {
-										detail.polygon.closePopup();
-									}}
-								/>
-							{/if}
+							<AirspacePolygon
+								coordinates={airspace.coordinates[0]}
+								airspaceType={airspace.type}
+								mouseover={(detail: PolygonLayerDetail) => {
+									detail.polygon.openPopup();
+								}}
+								mouseout={(detail: PolygonLayerDetail) => {
+									detail.polygon.closePopup();
+								}}
+							/>
 						{/each}
 
 						{#key aircraftPosition}
