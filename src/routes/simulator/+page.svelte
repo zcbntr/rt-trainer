@@ -37,8 +37,6 @@
 		OnRouteAirportsStore,
 		StartPointIndexStore,
 		ensureAeronauticalData,
-		fetchAirports,
-		fetchAirspaces,
 		getAirspacesAlongRoute,
 		maxFlightLevelStore
 	} from '$lib/stores';
@@ -173,11 +171,6 @@
 	if (tutorialString != null) {
 		tutorial = tutorialString === 'true';
 	}
-
-	$effect(() => {
-		if ($AllAirspacesStore.length === 0) fetchAirspaces();
-		if ($AllAirportsStore.length === 0) fetchAirports();
-	});
 
 	type QuickLoadScenarioData = {
 		routeSeed: string;
@@ -640,15 +633,17 @@
 		} else {
 			speechRecognitionSupported = false;
 		}
+
+		await ensureAeronauticalData();
 	});
 	$effect(() => {
 		if (
 			criticalDataMissing ||
-			get(ScenarioStore) !== undefined ||
+			$ScenarioStore !== undefined ||
 			$AllAirportsStore.length === 0 ||
 			$AllAirspacesStore.length === 0 ||
 			$WaypointsStore.length === 0 ||
-			getAirspacesAlongRoute().length === 0
+			$OnRouteAirspacesStore.length === 0
 		) {
 			return;
 		}

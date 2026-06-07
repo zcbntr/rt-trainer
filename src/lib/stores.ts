@@ -298,24 +298,46 @@ export function getAirspacesAlongRoute(): Airspace[] {
 }
 
 export async function ensureAeronauticalData(): Promise<void> {
-	await Promise.all([
-		get(AllAirportsStore).length === 0 ? fetchAirports() : Promise.resolve(),
-		get(AllAirspacesStore).length === 0 ? fetchAirspaces() : Promise.resolve()
-	]);
+	await Promise.all([fetchAirports(), fetchAirspaces()]);
 }
 
-export async function fetchAirspaces() {
-	const response = await axios.get('/api/airspaces');
+let airspacesFetchPromise: Promise<void> | null = null;
+let airportsFetchPromise: Promise<void> | null = null;
 
-	AllAirspacesStore.set(
-		response.data.map((airspace: AirspaceData) => airspaceFromPlain(airspace))
-	);
+export async function fetchAirspaces(): Promise<void> {
+	if (get(AllAirspacesStore).length > 0) return;
+
+	if (!airspacesFetchPromise) {
+		airspacesFetchPromise = axios
+			.get('/api/airspaces')
+			.then((response) => {
+				AllAirspacesStore.set(
+					response.data.map((airspace: AirspaceData) => airspaceFromPlain(airspace))
+				);
+			})
+			.finally(() => {
+				airspacesFetchPromise = null;
+			});
+	}
+
+	await airspacesFetchPromise;
 }
 
-export async function fetchAirports() {
-	const response = await axios.get('/api/airports');
+export async function fetchAirports(): Promise<void> {
+	if (get(AllAirportsStore).length > 0) return;
 
-	AllAirportsStore.set(
-		response.data.map((airport: AirportData) => airportFromPlain(airport))
-	);
+	if (!airportsFetchPromise) {
+		airportsFetchPromise = axios
+			.get('/api/airports')
+			.then((response) => {
+				AllAirportsStore.set(
+					response.data.map((airport: AirportData) => airportFromPlain(airport))
+				);
+			})
+			.finally(() => {
+				airportsFetchPromise = null;
+			});
+	}
+
+	await airportsFetchPromise;
 }
