@@ -19,7 +19,7 @@
 <!-- Hide app bar if not enabled -->
 {#if enabled}
 	<AppBar>
-		<AppBar.Toolbar class="px-4 py-2 sm:p-4">
+		<AppBar.Toolbar class="grid w-full grid-cols-[1fr_auto] items-center px-4 py-2 sm:p-4">
 			<AppBar.Lead>
 				<div class="flex items-center">
 					<button
@@ -49,12 +49,12 @@
 			</AppBar.Lead>
 			<AppBar.Trail>
 				<a
-					class="btn-icon btn"
+					class="btn-icon-lg btn"
 					href="https://github.com/zcbntr/rt-trainer"
 					target="_blank"
 					rel="noreferrer"
 				>
-					<GithubSolid size="xl" />
+					<GithubSolid class="size-9" />
 				</a>
 			</AppBar.Trail>
 		</AppBar.Toolbar>
