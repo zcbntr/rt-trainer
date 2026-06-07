@@ -1,20 +1,20 @@
 <script lang="ts" module>
-/** Top-down aircraft symbol for the simulator position marker (from lib/assets/airplane.svg). */
-export const AIRCRAFT_MARKER_DEFAULTS = {
-	size: 36,
-	fill: '#facc15',
-	stroke: '#000000',
-	strokeWidth: 8
-} as const;
+	/** Top-down aircraft symbol for the simulator position marker (from lib/assets/airplane.svg). */
+	export const AIRCRAFT_MARKER_DEFAULTS = {
+		size: 36,
+		fill: '#facc15',
+		stroke: '#000000',
+		strokeWidth: 8
+	} as const;
 
-/** Leaflet stacking order — above route and waypoint markers. */
-export const AIRCRAFT_MARKER_Z_INDEX_OFFSET = 500;
+	/** Leaflet stacking order — above route and waypoint markers. */
+	export const AIRCRAFT_MARKER_Z_INDEX_OFFSET = 500;
 
-export function aircraftMarkerAnchor(
-	size: number = AIRCRAFT_MARKER_DEFAULTS.size
-): [number, number] {
-	return [size / 2, size / 2];
-}
+	export function aircraftMarkerAnchor(
+		size: number = AIRCRAFT_MARKER_DEFAULTS.size
+	): [number, number] {
+		return [size / 2, size / 2];
+	}
 </script>
 
 <script lang="ts">

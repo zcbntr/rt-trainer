@@ -3,7 +3,7 @@
 		DisplayOn?: boolean;
 		mode?: string;
 		DigitSelected?: number;
-		digitArr?: any;
+		digitArr?: number[];
 	}
 
 	let {
@@ -25,12 +25,12 @@
 </script>
 
 <div
-	class="transponder-segdisplay {showDisplayText} card flex flex-row nowrap items-center place-content-between"
+	class="transponder-segdisplay {showDisplayText} nowrap flex flex-row place-content-between items-center card"
 >
 	<div class="mode-column">
 		<div class="mode-icon" class:mode-hidden={!DisplayOn}>{mode}</div>
 	</div>
-	<div class="sevenSEG flex flex-row mr-5">
+	<div class="sevenSEG mr-5 flex flex-row">
 		{#each displayDigits as digit, i (i)}
 			<div id="tdigit-{i}" class={['tdigit', DisplayOn && DigitSelected === i && 'tselected']}>
 				{digit}

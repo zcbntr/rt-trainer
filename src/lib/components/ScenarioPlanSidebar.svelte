@@ -25,7 +25,9 @@
 	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { get } from 'svelte/store';
-	import FixWaypointMarkerIcon, { isRouteEndpoint } from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
+	import FixWaypointMarkerIcon, {
+		isRouteEndpoint
+	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
 	import AirportMarkerIcon, {
 		runwaysToSymbolInput
 	} from '$lib/components/leaflet/AirportMarkerIcon.svelte';

@@ -35,7 +35,11 @@
 		ukPracticeAreaRejectionMessage
 	} from '$lib/logic/aeronautics/ukPracticeArea';
 	import type * as Leaflet from 'leaflet';
-	import type { MarkerLayerDetail, PolygonLayerDetail, PolylineLayerDetail } from '$lib/components/leaflet/types';
+	import type {
+		MarkerLayerDetail,
+		PolygonLayerDetail,
+		PolylineLayerDetail
+	} from '$lib/components/leaflet/types';
 	import RouteSegment from '$lib/components/leaflet/RouteSegment.svelte';
 	import FixWaypointMarkerIcon, {
 		FIX_WAYPOINT_MARKER_DEFAULTS,

@@ -23,8 +23,9 @@
 
 		const L = await getLeaflet();
 
-		popup = L.popup().setContent(popupElement);
-		layer.bindPopup(popup);
+		const createdPopup = L.popup().setContent(popupElement);
+		popup = createdPopup;
+		layer.bindPopup(createdPopup);
 		layer.on('popupopen', () => (open = true));
 		layer.on('popupclose', () => (open = false));
 	});

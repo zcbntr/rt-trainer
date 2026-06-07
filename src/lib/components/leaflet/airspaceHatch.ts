@@ -273,10 +273,7 @@ export function getSharedSvgRenderer(
 	return renderer as LeafletSvgRenderer;
 }
 
-export function applyAirspaceFillStyle(
-	polygon: Leaflet.Polygon,
-	style: AirspaceFillStyle
-): void {
+export function applyAirspaceFillStyle(polygon: Leaflet.Polygon, style: AirspaceFillStyle): void {
 	polygon.setLatLngs(style.latLngs);
 	polygon.setStyle({
 		stroke: false,

@@ -25,23 +25,21 @@
 </script>
 
 <div
-	class="p-1.5 card rounded-md max-w-lg min-h-72 flex flex-col grid-cols-1 gap-1 bg-neutral-600 text-white grow {className}"
+	class="flex min-h-72 max-w-lg grow grid-cols-1 flex-col gap-1 card rounded-md bg-neutral-600 p-1.5 text-white {className}"
 >
 	<div
-		class="border-0 card bg-neutral-700 grow flex flex-col justify-self-stretch px-2 py-1.5 gap-2"
+		class="flex grow flex-col gap-2 justify-self-stretch card border-0 bg-neutral-700 px-2 py-1.5"
 	>
 		<div>{currentContextDisplay}</div>
 		<div>{$MostRecentlyReceivedMessageStore}</div>
 	</div>
 
-	<div class="flex flex-row gap-x-1 flex-wrap">
-		<div class="toggle px-2 shrink-0">
+	<div class="flex flex-row flex-wrap gap-x-1">
+		<div class="toggle shrink-0 px-2">
 			<div class="flex flex-col py-2">
 				<div class="flex flex-row place-content-start gap-2">
 					<div class="flex flex-row place-content-start gap-2">
 						<Switch
-							id="enabled-audio-messages"
-							name="enabled-audio-messages"
 							checked={$SpeechOutputEnabledStore}
 							aria-label="Toggle text-to-speech audio messages"
 							onCheckedChange={(e) => SpeechOutputEnabledStore.set(e.checked)}
@@ -49,7 +47,7 @@
 							<Switch.Control class={switchControlClass}>
 								<Switch.Thumb />
 							</Switch.Control>
-							<Switch.HiddenInput />
+							<Switch.HiddenInput id="enabled-audio-messages" name="enabled-audio-messages" />
 						</Switch>
 						<HoverTooltip label="Read Aloud Received Calls">
 							<p>Audio messages read aloud when you receive a call from ATC or another aircraft.</p>
@@ -57,8 +55,6 @@
 					</div>
 					<div class="flex flex-row place-content-start gap-2">
 						<Switch
-							id="enabled-audio-messages-noise"
-							name="enabled-audio-messages-noise"
 							checked={$SpeechNoiseStore > 0}
 							disabled={!$SpeechOutputEnabledStore}
 							aria-label="Toggle interference noise"
@@ -67,7 +63,10 @@
 							<Switch.Control class={switchControlClass}>
 								<Switch.Thumb />
 							</Switch.Control>
-							<Switch.HiddenInput />
+							<Switch.HiddenInput
+								id="enabled-audio-messages-noise"
+								name="enabled-audio-messages-noise"
+							/>
 						</Switch>
 						<HoverTooltip label="Interference Noise">
 							<p>

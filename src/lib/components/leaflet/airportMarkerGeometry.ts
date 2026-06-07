@@ -17,9 +17,7 @@ export function getZoomScaledAirportSize(
 	baseSize: number,
 	scale = AIRPORT_MARKER_ZOOM_SCALE
 ): number {
-	const scaled =
-		baseSize *
-		Math.pow(2, (zoom - scale.referenceZoom) / scale.zoomStepsPerDouble);
+	const scaled = baseSize * Math.pow(2, (zoom - scale.referenceZoom) / scale.zoomStepsPerDouble);
 	return Math.min(scale.maxSize, Math.max(scale.minSize, scaled));
 }
 
@@ -96,7 +94,9 @@ function groupParallelStrips(strips: RunwaySymbolInput[]): RunwaySymbolInput[][]
 	const groups: RunwaySymbolInput[][] = [];
 
 	for (const strip of strips) {
-		const group = groups.find((candidate) => headingsAlign(candidate[0].trueHeading, strip.trueHeading));
+		const group = groups.find((candidate) =>
+			headingsAlign(candidate[0].trueHeading, strip.trueHeading)
+		);
 		if (group) {
 			group.push(strip);
 		} else {

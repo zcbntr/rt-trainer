@@ -1,8 +1,4 @@
-import {
-	instanceToPlain,
-	plainToInstance,
-	type ClassConstructor
-} from 'class-transformer';
+import { instanceToPlain, plainToInstance, type ClassConstructor } from 'class-transformer';
 import Runway from './aeronautics/Runway';
 import { Frequency } from './Frequency';
 import { METORData } from './aeronautics/METORData';

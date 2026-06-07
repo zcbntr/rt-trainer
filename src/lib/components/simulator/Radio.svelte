@@ -141,7 +141,7 @@
 </script>
 
 <div
-	class="flex flex-row card gap-2 bg-neutral-600 text-white grow place-content-evenly p-3 max-w-screen-lg flex-wrap"
+	class="flex max-w-screen-lg grow flex-row flex-wrap place-content-evenly gap-2 card bg-neutral-600 p-3 text-white"
 >
 	<Dial
 		Modes={RadioDialModes}
@@ -157,8 +157,8 @@
 		<div class="flex flex-row place-content-center">Transmit</div>
 	</div>
 
-	<div class="display-panel flex flex-col w-full grow order-first sm:order-2">
-		<div class="flex flex-row place-content-evenly grow">
+	<div class="display-panel order-first flex w-full grow flex-col sm:order-2">
+		<div class="flex grow flex-row place-content-evenly">
 			<div>ACTIVE</div>
 			<div>STANDBY</div>
 		</div>
@@ -169,13 +169,13 @@
 			bind:standbyFrequency
 			bind:tertiaryFrequency
 		/>
-		<div class="display-buttons-container flex flex-row grow place-content-center">
+		<div class="display-buttons-container flex grow flex-row place-content-center">
 			<button class="button" id="button-com" onclick={handleCOMButtonClick}>COM</button>
 			<button class="button" id="button-swap" onclick={handleSWAPButtonClick}>⇆</button>
 			<button class="button" id="button-nav" onclick={handleNAVButtonClick}>NAV</button>
 		</div>
 	</div>
-	<div class="flex flex-row mx-2 order-5">
+	<div class="order-5 mx-2 flex flex-row">
 		<DoubleFrequencyDial
 			DialEnabled={frequencyDialEnabled}
 			id="radio-frequency-dial"

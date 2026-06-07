@@ -39,19 +39,39 @@ describe('isValidUkPracticeWaypoint', () => {
 
 describe('getRouteUnsupportedRegions', () => {
 	it('returns no regions for a short UK route', () => {
-		expect(getRouteUnsupportedRegions([[-0.127, 51.507], [-3.188, 55.953]])).toEqual([]);
+		expect(
+			getRouteUnsupportedRegions([
+				[-0.127, 51.507],
+				[-3.188, 55.953]
+			])
+		).toEqual([]);
 	});
 
 	it('does not flag a direct route from Northern Ireland to England', () => {
-		expect(getRouteUnsupportedRegions([[-5.93, 54.597], [-0.127, 51.507]])).toEqual([]);
+		expect(
+			getRouteUnsupportedRegions([
+				[-5.93, 54.597],
+				[-0.127, 51.507]
+			])
+		).toEqual([]);
 	});
 
 	it('detects routes crossing the Republic of Ireland', () => {
-		expect(getRouteUnsupportedRegions([[-3, 52], [-8, 54]])).toContain('republic-of-ireland');
+		expect(
+			getRouteUnsupportedRegions([
+				[-3, 52],
+				[-8, 54]
+			])
+		).toContain('republic-of-ireland');
 	});
 
 	it('detects routes crossing continental Europe', () => {
-		expect(getRouteUnsupportedRegions([[-0.5, 50.8], [2, 50.8]])).toContain('continental-europe');
+		expect(
+			getRouteUnsupportedRegions([
+				[-0.5, 50.8],
+				[2, 50.8]
+			])
+		).toContain('continental-europe');
 	});
 });
 

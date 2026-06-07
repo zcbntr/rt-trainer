@@ -25,13 +25,13 @@
 			{#if componentOptions}
 				{@const Component = componentOptions.component}
 				<Dialog.Content
-					class="card max-h-[90svh] w-full max-w-xl overflow-auto bg-surface-100-900 p-0 shadow-xl {animation}"
+					class="max-h-[90svh] w-full max-w-xl overflow-auto card bg-surface-100-900 p-0 shadow-xl {animation}"
 				>
 					<Component {...componentOptions.props ?? {}} />
 				</Dialog.Content>
 			{:else if textOptions}
 				<Dialog.Content
-					class="card w-full max-w-md space-y-4 bg-surface-100-900 p-4 shadow-xl {animation}"
+					class="w-full max-w-md space-y-4 card bg-surface-100-900 p-4 shadow-xl {animation}"
 				>
 					<header>
 						<Dialog.Title class="text-lg font-bold">{textOptions.title}</Dialog.Title>

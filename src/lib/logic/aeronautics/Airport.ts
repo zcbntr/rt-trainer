@@ -3,7 +3,13 @@ import Runway from './Runway';
 import { METORData, METORDataSample } from './METORData';
 import type { AirportReportingPointDBData } from '../OpenAIPHandler';
 import * as turf from '@turf/turf';
-import { getRandomFrequency, getSeededTimeInMinutes, simpleHash, toCoordinatePair, type LngLat } from '../utils';
+import {
+	getRandomFrequency,
+	getSeededTimeInMinutes,
+	simpleHash,
+	toCoordinatePair,
+	type LngLat
+} from '../utils';
 
 /* Airport data. */
 export default class Airport {

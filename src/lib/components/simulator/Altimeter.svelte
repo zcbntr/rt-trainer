@@ -48,7 +48,7 @@
 </script>
 
 <div
-	class="card flex flex-row place-content-center p-1.5 rounded-md grow h-full sm:max-w-lg sm:max-h-lg bg-neutral-600 text-white"
+	class="sm:max-h-lg flex h-full grow flex-row place-content-center card rounded-md bg-neutral-600 p-1.5 text-white sm:max-w-lg"
 >
 	<div class="dial-container sm:mb-10">
 		<img

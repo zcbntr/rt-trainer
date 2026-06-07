@@ -211,7 +211,7 @@ export function replacePhoneticAlphabetDecimalWithNumber(str: string): string {
 }
 
 export function numberToPhoneticString(number: number, precision: number): string {
-	const phoneticNumbers = {
+	const phoneticNumbers: Record<string, string> = {
 		'0': 'Zero',
 		'1': 'One',
 		'2': 'Two',
@@ -246,7 +246,7 @@ export function numberToPhoneticString(number: number, precision: number): strin
 }
 
 export function replacePhoneticAlphabetWithChars(str: string): string {
-	const phoneticAlphabetMapping = {
+	const phoneticAlphabetMapping: Record<string, string> = {
 		alpha: 'A',
 		bravo: 'B',
 		charlie: 'C',
@@ -303,7 +303,7 @@ export function getNthPhoneticAlphabetLetter(n: number): string {
 }
 
 export function replaceWithPhoneticAlphabet(text: string) {
-	const phoneticAlphabet = {
+	const phoneticAlphabet: Record<string, string> = {
 		A: 'Alpha',
 		B: 'Bravo',
 		C: 'Charlie',
@@ -332,7 +332,7 @@ export function replaceWithPhoneticAlphabet(text: string) {
 		Z: 'Zulu'
 	};
 
-	const phoneticNumbers = {
+	const phoneticNumbers: Record<string, string> = {
 		'0': 'Zero',
 		'1': 'One',
 		'2': 'Two',

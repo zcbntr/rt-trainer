@@ -26,8 +26,8 @@ import type Airport from './aeronautics/Airport';
 import type Waypoint from './aeronautics/Waypoint';
 import type Airspace from './aeronautics/Airspace';
 
+/* eslint-disable no-useless-assignment -- pointIndex++ passes the current index then advances for the next point */
 const AIRCRAFT_AVERAGE_SPEED = 3.75; // km per minute. 225 km/h, 120 knots, 140 mph (Cessna 172 max cruise speed)
-const NAUTICAL_MILE = 1852;
 const FLIGHT_TIME_MULTIPLIER = 1.3;
 
 /* Data used to update the simulator */
@@ -359,16 +359,13 @@ export function getStartAirportScenarioPoints(
 		stages.push(reportLeavingZone);
 	} else {
 		const firstRouteSegment = [waypoints[0].location, waypoints[1].location];
-		let leavingZonePosition: [number, number] = [0, 0];
-		if (takeoffAirspace)
-			leavingZonePosition = findIntersections(firstRouteSegment, [takeoffAirspace])[0].position;
-		// 3.3 should be 4 but this avoids a bug for the demo
-		else
-			leavingZonePosition = toCoordinatePair(
-				turf.destination(waypoints[0].location, 3.3, initialRouteHeading, {
-					units: 'kilometers'
-				}).geometry.coordinates
-			);
+		const leavingZonePosition: [number, number] = takeoffAirspace
+			? findIntersections(firstRouteSegment, [takeoffAirspace])[0].position
+			: toCoordinatePair(
+					turf.destination(waypoints[0].location, 3.3, initialRouteHeading, {
+						units: 'kilometers'
+					}).geometry.coordinates
+				);
 
 		const leavingZonePose: Pose = {
 			position: leavingZonePosition,
@@ -861,7 +858,7 @@ export function getAirborneScenarioPoints(
 	const scenarioPoints: ScenarioPoint[] = [];
 	const endStageIndexes: number[] = [];
 	let timeAtPreviousPoint: number;
-	let previousPosition: [number, number] = [0, 0];
+	let previousPosition: [number, number];
 	if (previousScenarioPoint) {
 		timeAtPreviousPoint = previousScenarioPoint.timeAtPoint;
 		previousPosition = previousScenarioPoint.pose.position;
@@ -871,10 +868,6 @@ export function getAirborneScenarioPoints(
 	}
 
 	const waypointCoords = waypoints.map((waypoint) => waypoint.location);
-	const waypointDistancesAlongRoute = waypoints.map((waypoint, index) => {
-		if (index == 0) return 0;
-		return calculateDistanceAlongRoute(waypointCoords, waypoint.location);
-	});
 
 	let startIntersection = 0;
 	if (previousScenarioPoint && previousScenarioPoint.stage == 'Announce Leaving Zone')

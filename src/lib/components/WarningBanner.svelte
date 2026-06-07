@@ -64,9 +64,11 @@
 
 {#if visible}
 	<div
-		class="relative z-10 flex gap-3 border border-solid px-4 {variantClasses[variant]} {radiusClasses} {collapseTopBorder
-			? '-mt-px'
-			: ''} {isCompact ? 'items-center py-2' : 'items-start py-3'}"
+		class="relative z-10 flex gap-3 border border-solid px-4 {variantClasses[
+			variant
+		]} {radiusClasses} {collapseTopBorder ? '-mt-px' : ''} {isCompact
+			? 'items-center py-2'
+			: 'items-start py-3'}"
 		role={variant === 'error' ? 'alert' : 'status'}
 	>
 		{#if variant === 'info'}

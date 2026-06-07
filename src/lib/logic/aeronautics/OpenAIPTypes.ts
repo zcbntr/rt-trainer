@@ -11,6 +11,35 @@ export type OperatingHours = {
 	remarks: string;
 };
 
+export type RunwayData = {
+	designator: string;
+	trueHeading: number;
+	alignedTrueNorth: boolean;
+	operations: number;
+	mainRunway: boolean;
+	turnDirection: number;
+	landingOnly: boolean;
+	takeOffOnly: boolean;
+	dimension: {
+		length: { value: number; unit: number };
+		width: { value: number; unit: number };
+	};
+	declaredDistance: {
+		tora?: { value: number; unit: number };
+		toda?: { value: number; unit: number };
+		asda?: { value: number; unit: number };
+		lda?: { value: number; unit: number };
+	};
+	thresholdLocation?: {
+		geometry: { coordinates: [number, number] };
+		elevation: { value: number; unit: number };
+	};
+	exclusiveAircraftType: number[];
+	pilotCtrlLighting: boolean;
+	lightingSystem: number[];
+	visualApproachAids: number[];
+};
+
 export type AirportData = {
 	_id: string;
 	name: string;

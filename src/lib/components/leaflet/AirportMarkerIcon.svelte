@@ -1,36 +1,36 @@
 <script lang="ts" module>
-import type Runway from '$lib/logic/aeronautics/Runway';
-import {
-	getAirportCircleRadius,
-	getRunwaySymbolRects,
-	isActiveRunway,
-	type RunwaySymbolInput
-} from '$lib/components/leaflet/airportMarkerGeometry';
+	import type Runway from '$lib/logic/aeronautics/Runway';
+	import {
+		getAirportCircleRadius,
+		getRunwaySymbolRects,
+		isActiveRunway,
+		type RunwaySymbolInput
+	} from '$lib/components/leaflet/airportMarkerGeometry';
 
-/** Adjust these values to change airport symbol appearance on the map. */
-export const AIRPORT_MARKER_DEFAULTS = {
-	size: 28,
-	strokeWidth: 1.5,
-	fill: 'white',
-	stroke: 'black'
-} as const;
+	/** Adjust these values to change airport symbol appearance on the map. */
+	export const AIRPORT_MARKER_DEFAULTS = {
+		size: 28,
+		strokeWidth: 1.5,
+		fill: 'white',
+		stroke: 'black'
+	} as const;
 
-export function airportMarkerAnchor(
-	size: number = AIRPORT_MARKER_DEFAULTS.size
-): [number, number] {
-	return [size / 2, size / 2];
-}
+	export function airportMarkerAnchor(
+		size: number = AIRPORT_MARKER_DEFAULTS.size
+	): [number, number] {
+		return [size / 2, size / 2];
+	}
 
-export function runwaysToSymbolInput(runways: Runway[] | undefined): RunwaySymbolInput[] {
-	return (
-		runways
-			?.filter((runway) => isActiveRunway(runway.operations))
-			.map((runway) => ({
-				trueHeading: runway.trueHeading,
-				lengthValue: runway.lengthValue
-			})) ?? []
-	);
-}
+	export function runwaysToSymbolInput(runways: Runway[] | undefined): RunwaySymbolInput[] {
+		return (
+			runways
+				?.filter((runway) => isActiveRunway(runway.operations))
+				.map((runway) => ({
+					trueHeading: runway.trueHeading,
+					lengthValue: runway.lengthValue
+				})) ?? []
+		);
+	}
 </script>
 
 <script lang="ts">
@@ -81,20 +81,10 @@ export function runwaysToSymbolInput(runways: Runway[] | undefined): RunwaySymbo
 			height="180%"
 			color-interpolation-filters="sRGB"
 		>
-			<feMorphology
-				in="SourceAlpha"
-				operator="dilate"
-				radius={outlineRadius}
-				result="expanded"
-			/>
+			<feMorphology in="SourceAlpha" operator="dilate" radius={outlineRadius} result="expanded" />
 			<feFlood flood-color={stroke} result="outline-color" />
 			<feComposite in="outline-color" in2="expanded" operator="in" result="outline-shape" />
-			<feComposite
-				in="outline-shape"
-				in2="SourceAlpha"
-				operator="out"
-				result="outer-outline"
-			/>
+			<feComposite in="outline-shape" in2="SourceAlpha" operator="out" result="outer-outline" />
 			<feMerge>
 				<feMergeNode in="outer-outline" />
 				<feMergeNode in="SourceGraphic" />
@@ -106,7 +96,9 @@ export function runwaysToSymbolInput(runways: Runway[] | undefined): RunwaySymbo
 		<circle cx={center} cy={center} r={circleRadius} {fill} />
 
 		{#each runwayRects as runway (runway.heading + '-' + runway.parallelOffset + '-' + runway.halfLength)}
-			<g transform="translate({center}, {center}) rotate({runway.heading}) translate({runway.parallelOffset}, 0)">
+			<g
+				transform="translate({center}, {center}) rotate({runway.heading}) translate({runway.parallelOffset}, 0)"
+			>
 				<rect
 					x={-runway.width / 2}
 					y={-runway.halfLength}

@@ -39,23 +39,26 @@
 
 	type IconName = keyof typeof icons;
 
+	interface Props {
+		name: IconName;
+		width?: string;
+		height?: string;
+		focusable?: string | number | null | undefined;
+		class?: string;
+	}
+
 	let {
 		name,
 		width = '1rem',
 		height = '1rem',
 		focusable = undefined,
 		class: className
-	} = $props<{
-		name: IconName;
-		width?: string;
-		height?: string;
-		focusable?: string | number | null | undefined;
-		class?: string;
-	}>();
+	}: Props = $props();
 
-	const displayIcon = $derived(() => icons[name]);
+	const displayIcon = $derived(icons[name]);
 </script>
 
 <svg class={className} {focusable} {width} {height} viewBox={displayIcon.box}>
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -- Static SVG markup from a local icon map -->
 	{@html displayIcon.svg}
 </svg>

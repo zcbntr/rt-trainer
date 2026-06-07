@@ -97,40 +97,43 @@
 		const map = getMap();
 		if (!map) return;
 
-		leafletApi = await getLeaflet();
+		const L = await getLeaflet();
+		leafletApi = L;
 		await import('leaflet-rotatedmarker');
 
-		marker = leafletApi.marker(latLng, {
-			icon: createDivIcon(leafletApi),
+		const createdMarker = L.marker(latLng, {
+			icon: createDivIcon(L),
 			rotationAngle: rotation,
 			rotationOrigin: 'center center',
 			title: aeroObject?.name,
 			zIndexOffset
-		}).addTo(map);
+		} as Leaflet.MarkerOptions & { rotationAngle?: number; rotationOrigin?: string }).addTo(map);
 
-		if (draggable) marker.dragging?.enable();
-		marker.on('drag', (e) => {
+		marker = createdMarker;
+
+		if (draggable) createdMarker.dragging?.enable();
+		createdMarker.on('drag', (e) => {
 			if (!marker) return;
 			drag({ event: e, aeroObject, marker });
-			map?.invalidateSize();
+			map.invalidateSize();
 		});
-		marker.on('click', (e) => {
+		createdMarker.on('click', (e) => {
 			if (!marker) return;
 			click({ event: e, aeroObject, marker });
 		});
-		marker.on('mouseover', (e) => {
+		createdMarker.on('mouseover', (e) => {
 			if (!marker) return;
 			mouseover({ event: e, aeroObject, marker });
 		});
-		marker.on('mouseout', (e) => {
+		createdMarker.on('mouseout', (e) => {
 			if (!marker) return;
 			mouseout({ event: e, aeroObject, marker });
 		});
-		marker.on('mouseup', (e) => {
+		createdMarker.on('mouseup', (e) => {
 			if (!marker) return;
 			mouseup({ event: e, aeroObject, marker });
 		});
-		marker.on('dragend', (e) => {
+		createdMarker.on('dragend', (e) => {
 			if (!marker) return;
 			dragend({ event: e, aeroObject, marker });
 		});

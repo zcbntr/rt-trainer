@@ -2,7 +2,6 @@ import { get } from 'svelte/store';
 import {
 	ClearSimulationStores,
 	CurrentScenarioPointIndexStore,
-	EndPointIndexStore,
 	NullRouteStore,
 	StartPointIndexStore,
 	WaypointsStore

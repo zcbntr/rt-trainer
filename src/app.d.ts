@@ -8,6 +8,19 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	interface Window {
+		SpeechRecognition?: new () => SpeechRecognition;
+		webkitSpeechRecognition?: new () => SpeechRecognition;
+	}
+
+	// Web Speech API (not included in all TypeScript lib targets)
+	interface SpeechRecognition extends EventTarget {
+		lang: string;
+		onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void) | null;
+		start(): void;
+		stop(): void;
+	}
 }
 
 export {};

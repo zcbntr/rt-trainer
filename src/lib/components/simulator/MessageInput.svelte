@@ -86,9 +86,9 @@
 </script>
 
 <div
-	class="p-1.5 card rounded-md max-w-lg min-h-72 flex flex-col grid-cols-1 gap-2 bg-neutral-600 text-white grow {className}"
+	class="flex min-h-72 max-w-lg grow grid-cols-1 flex-col gap-2 card rounded-md bg-neutral-600 p-1.5 text-white {className}"
 >
-	<div class="grow flex justify-self-stretch">
+	<div class="flex grow justify-self-stretch">
 		<textarea
 			class="textarea bg-neutral-700"
 			id="call-input"
@@ -101,12 +101,10 @@
 		</textarea>
 	</div>
 
-	<div class="flex flex-row flex-wrap gap-x-1 pb-1 place-content-evenly lg:flex-nowrap">
+	<div class="flex flex-row flex-wrap place-content-evenly gap-x-1 pb-1 lg:flex-nowrap">
 		<div class="flex flex-col py-2">
 			<div class="flex flex-row place-content-start gap-2">
 				<Switch
-					id="enable-live-feedback"
-					name="enable-live-feedback"
 					checked={$LiveFeedbackStore}
 					aria-label="Toggle live feedback"
 					onCheckedChange={(e) => LiveFeedbackStore.set(e.checked)}
@@ -114,7 +112,7 @@
 					<Switch.Control class={switchControlClass}>
 						<Switch.Thumb />
 					</Switch.Control>
-					<Switch.HiddenInput />
+					<Switch.HiddenInput id="enable-live-feedback" name="enable-live-feedback" />
 				</Switch>
 				<HoverTooltip label="Feedback">
 					<p>Shows feedback immediately, instead of just at the end of the scenario.</p>
@@ -126,8 +124,6 @@
 			<div class="flex flex-col py-2">
 				<div class="flex flex-row place-content-start gap-2">
 					<Switch
-						id="enable-voice-input"
-						name="enable-voice-input"
 						checked={$SpeechInputEnabledStore}
 						aria-label="Toggle speech input"
 						onCheckedChange={(e) => {
@@ -144,7 +140,7 @@
 						<Switch.Control class={switchControlClass}>
 							<Switch.Thumb />
 						</Switch.Control>
-						<Switch.HiddenInput />
+						<Switch.HiddenInput id="enable-voice-input" name="enable-voice-input" />
 					</Switch>
 					<HoverTooltip label="Voice Input">
 						<p>Speech recognition is experimental, you may need to correct the recorded text.</p>
@@ -154,17 +150,11 @@
 		{:else}
 			<div class="flex flex-col py-2">
 				<div class="flex flex-row place-content-start gap-2">
-					<Switch
-						id="enable-voice-input"
-						name="enable-voice-input"
-						checked={$SpeechInputEnabledStore}
-						disabled
-						aria-label="Toggle speech input"
-					>
+					<Switch checked={$SpeechInputEnabledStore} disabled aria-label="Toggle speech input">
 						<Switch.Control class={switchControlClass}>
 							<Switch.Thumb />
 						</Switch.Control>
-						<Switch.HiddenInput />
+						<Switch.HiddenInput id="enable-voice-input" name="enable-voice-input" />
 					</Switch>
 					<HoverTooltip label="Voice Input">
 						<p>
@@ -177,7 +167,7 @@
 			</div>
 		{/if}
 
-		<button class="submit-button btn px-3 bg-surface-400" onclick={submit}>Submit</button>
+		<button class="submit-button btn bg-surface-400 px-3" onclick={submit}>Submit</button>
 
 		<button class="clear-button btn bg-surface-400" onclick={handleDelete}>Clear</button>
 	</div>

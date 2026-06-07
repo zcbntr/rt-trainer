@@ -6,11 +6,11 @@
 </script>
 
 <div class="container mx-auto max-w-5xl p-5 tracking-wide">
-	<div class="grid grid-cols-1 md:grid-cols-12 gap-5">
-		<div class="space-y-4 md:col-span-6 p-4">
-			<h1 class="text-3xl md:text-5xl font-bold leading-10">
+	<div class="grid grid-cols-1 gap-5 md:grid-cols-12">
+		<div class="space-y-4 p-4 md:col-span-6">
+			<h1 class="text-3xl leading-10 font-bold md:text-5xl">
 				RT Trainer - A <span
-					class="relative px-1 md:px-3 x-1 inset-y-1 bg-surface-300-700 hover:rotate-3 hover:scale-110 transition-transform duration-300 ease-in-out"
+					class="x-1 relative inset-y-1 bg-surface-300-700 px-1 transition-transform duration-300 ease-in-out hover:scale-110 hover:rotate-3 md:px-3"
 					>responsive</span
 				> FRTOL practice tool
 			</h1>
@@ -20,19 +20,19 @@
 			</p>
 			<ul class="list-items">
 				<li>
-					<span class="shrink-0 btn-icon bg-surface-300-700 py-0">✔️</span>
+					<span class="btn-icon shrink-0 bg-surface-300-700 py-0">✔️</span>
 					<span>
 						<b>Supports voice input</b> – speak your radio calls out loud, just like in real life
 					</span>
 				</li>
 				<li>
-					<span class="shrink-0 btn-icon bg-surface-300-700">✔️</span>
+					<span class="btn-icon shrink-0 bg-surface-300-700">✔️</span>
 					<span>
 						<b>Generate practice scenarios</b> – routes are generated randomly, no more repetition
 					</span>
 				</li>
 				<li>
-					<span class="shrink-0 btn-icon bg-surface-300-700">✔️</span>
+					<span class="btn-icon shrink-0 bg-surface-300-700">✔️</span>
 					<span>
 						<b>Get instant feedback</b> – see how well you did and where you can improve
 					</span>
@@ -44,7 +44,7 @@
 						ClearSimulationStores();
 						goto(resolve('/simulator?tutorial=true'));
 					}}
-					class="btn md:btn-lg w-full md:w-fit preset-filled-primary-500"
+					class="btn w-full preset-filled-primary-500 md:w-fit md:btn-lg"
 					data-sveltekit-preload-data="hover">Quick route</button
 				>
 				<button
@@ -52,7 +52,7 @@
 						ClearSimulationStores();
 						goto(resolve('/scenario-planner'));
 					}}
-					class="btn md:btn-lg w-full md:w-fit preset-filled-surface-500"
+					class="btn w-full preset-filled-surface-500 md:w-fit md:btn-lg"
 					data-sveltekit-preload-data="hover">Create a scenario</button
 				>
 			</div>

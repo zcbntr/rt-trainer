@@ -10,9 +10,9 @@
 	let {
 		DisplayOn = false,
 		mode = $bindable('COM'),
-		activeFrequency = 123.17,
-		standbyFrequency = 126.41,
-		tertiaryFrequency = 177.2
+		activeFrequency = $bindable(123.17),
+		standbyFrequency = $bindable(126.41),
+		tertiaryFrequency = $bindable(177.2)
 	}: Props = $props();
 
 	let showDisplayText = $derived(DisplayOn ? 'displayon' : 'displayoff');
@@ -22,28 +22,28 @@
 </script>
 
 <div
-	class="radio-segdisplay {showDisplayText} card flex flex-row items-center place-content-evenly"
+	class="radio-segdisplay {showDisplayText} flex flex-row place-content-evenly items-center card"
 >
-	<div class="mode-column flex flex-col place-content-center ml-2 sm:ml-4">
+	<div class="mode-column ml-2 flex flex-col place-content-center sm:ml-4">
 		<div class="mode-icon" class:mode-hidden={!DisplayOn}>{mode}</div>
 	</div>
-	<div class="sevenSEG flex flex-row items-center sm:ml-8 sm:mr-10">
+	<div class="sevenSEG flex flex-row items-center sm:mr-10 sm:ml-8">
 		<div class="alternate-frequency flex flex-row">
-			<div id="alternate-rdigit-0" class="rdigit text-[23px] sm:text-md md:text-3xl/6">
+			<div id="alternate-rdigit-0" class="rdigit sm:text-md text-[23px] md:text-3xl/6">
 				{displayActiveFrequency}
 			</div>
 		</div>
 		<div>
-			<div class="divider-pipe text-[23px] sm:text-md md:text-3xl/6 mx-2 sm:mx-8">|</div>
+			<div class="divider-pipe sm:text-md mx-2 text-[23px] sm:mx-8 md:text-3xl/6">|</div>
 		</div>
 		<div class="standby-column flex flex-col">
 			<div class="primary-frequency flex flex-row">
-				<div id="primary-rdigit-0" class="rdigit text-[23px] sm:text-md md:text-3xl/6">
+				<div id="primary-rdigit-0" class="rdigit sm:text-md text-[23px] md:text-3xl/6">
 					{displayStandbyFrequency}
 				</div>
 			</div>
 			<div class="tertiary-frequency flex flex-row">
-				<div id="tertiary-rdigit-0" class="rdigit text-[23px] sm:text-md md:text-3xl/6">
+				<div id="tertiary-rdigit-0" class="rdigit sm:text-md text-[23px] md:text-3xl/6">
 					{displayTertiaryFrequency}
 				</div>
 			</div>

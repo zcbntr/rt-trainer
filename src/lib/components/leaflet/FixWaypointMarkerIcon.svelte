@@ -1,32 +1,32 @@
 <script lang="ts" module>
-/** Adjust these values to change fix waypoint appearance on the map and in the sidebar. */
-export const FIX_WAYPOINT_MARKER_DEFAULTS = {
-	size: 16,
-	strokeWidth: 1.5,
-	fill: 'white',
-	stroke: 'black'
-} as const;
+	/** Adjust these values to change fix waypoint appearance on the map and in the sidebar. */
+	export const FIX_WAYPOINT_MARKER_DEFAULTS = {
+		size: 16,
+		strokeWidth: 1.5,
+		fill: 'white',
+		stroke: 'black'
+	} as const;
 
-export const ROUTE_ENDPOINT_DOT_DEFAULTS = {
-	fill: '#22c55e'
-} as const;
+	export const ROUTE_ENDPOINT_DOT_DEFAULTS = {
+		fill: '#22c55e'
+	} as const;
 
-export function routeEndpointDotRadius(size: number): number {
-	return Math.max(2, size * 0.11);
-}
+	export function routeEndpointDotRadius(size: number): number {
+		return Math.max(2, size * 0.11);
+	}
 
-export function isRouteEndpoint(index: number, waypointCount: number): boolean {
-	return waypointCount > 0 && (index === 0 || index === waypointCount - 1);
-}
+	export function isRouteEndpoint(index: number, waypointCount: number): boolean {
+		return waypointCount > 0 && (index === 0 || index === waypointCount - 1);
+	}
 
-/** Leaflet stacking order within the marker pane; higher draws above. */
-export const WAYPOINT_MARKER_Z_INDEX_OFFSET = 100;
+	/** Leaflet stacking order within the marker pane; higher draws above. */
+	export const WAYPOINT_MARKER_Z_INDEX_OFFSET = 100;
 
-export function fixWaypointMarkerAnchor(
-	size: number = FIX_WAYPOINT_MARKER_DEFAULTS.size
-): [number, number] {
-	return [size / 2, size / 2];
-}
+	export function fixWaypointMarkerAnchor(
+		size: number = FIX_WAYPOINT_MARKER_DEFAULTS.size
+	): [number, number] {
+		return [size / 2, size / 2];
+	}
 </script>
 
 <script lang="ts">

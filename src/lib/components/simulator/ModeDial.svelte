@@ -26,7 +26,7 @@
 		id = '',
 		modeChange = () => {}
 	}: Props = $props();
-	let width: string = Modes.length > 2 ? 'w-40' : 'w-28';
+	const width = $derived(Modes.length > 2 ? 'w-40' : 'w-28');
 
 	const handleDialClick = () => {
 		const ModeDial = document.getElementById('mode-dial-' + id) as HTMLDivElement;
@@ -73,15 +73,15 @@
 		var radius = 60;
 		if (centerDiv != null) {
 			for (let i = 0; i < Modes.length; i++) {
-				if (Modes[i] != undefined) {
-					addMode(
-						Modes[i],
-						radius * Math.sin(angle),
-						(radius + Modes[i].length) * -Math.cos(angle),
-						centerDiv
-					);
-					angle -= step;
-				}
+				const mode = Modes[i];
+				if (mode === undefined) continue;
+				addMode(
+					mode,
+					radius * Math.sin(angle),
+					(radius + mode.length) * -Math.cos(angle),
+					centerDiv
+				);
+				angle -= step;
 			}
 		}
 	}
@@ -141,7 +141,7 @@
 		<div id={'mode-center-div-' + id} class="absolute m-auto" style="top: 50%; left: 50%;"></div>
 		<div
 			id={'mode-dial-' + id}
-			class={['mode-dial w-20 h-20 flex border-2 rounded-full', DialEnabled && 'enabled']}
+			class={['mode-dial flex h-20 w-20 rounded-full border-2', DialEnabled && 'enabled']}
 			onclick={handleDialClick}
 			onkeydown={handleDialClick}
 			aria-label="Mode Dial"
@@ -195,7 +195,7 @@
 					></div>
 				</div>
 			{/if}
-			<div class="absolute w-0.5 h-10 bg-white center"></div>
+			<div class="center absolute h-10 w-0.5 bg-white"></div>
 		</div>
 	</div>
 </div>

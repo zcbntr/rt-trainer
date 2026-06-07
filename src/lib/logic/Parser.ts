@@ -758,20 +758,15 @@ if (not in level flight. */
 		radioCall.assertCallStartsWithUserCallsign(false);
 		radioCall.assertCallContainsCriticalWord('final');
 
-		let atcResponse = '';
-		if (radioCall.getEndAirport().isControlled()) {
-			atcResponse = `${radioCall
-				.getTargetAllocatedCallsign()
-				.toUpperCase()}, continue approach, ${radioCall.getLandingTraffic()}`;
-		} else {
-			atcResponse = `${radioCall
-				.getTargetAllocatedCallsign()
-				.toUpperCase()}, surface wind ${radioCall
-				.getEndAirportMETORSample()
-				.getWindDirectionString()} ${radioCall
-				.getEndAirportMETORSample()
-				.getWindSpeedString()}. ${radioCall.getLandingTraffic()}`;
-		}
+		const atcResponse = radioCall.getEndAirport().isControlled()
+			? `${radioCall
+					.getTargetAllocatedCallsign()
+					.toUpperCase()}, continue approach, ${radioCall.getLandingTraffic()}`
+			: `${radioCall.getTargetAllocatedCallsign().toUpperCase()}, surface wind ${radioCall
+					.getEndAirportMETORSample()
+					.getWindDirectionString()} ${radioCall
+					.getEndAirportMETORSample()
+					.getWindSpeedString()}. ${radioCall.getLandingTraffic()}`;
 
 		return {
 			feedback: radioCall.getFeedback(),
@@ -835,14 +830,11 @@ if (not in level flight. */
 		radioCall.assertCallStartsWithUserCallsign(false);
 		radioCall.assertCallContainsCriticalWord('vacated');
 
-		let atcResponse = '';
-		if (radioCall.getEndAirport().isControlled()) {
-			atcResponse = `${radioCall
-				.getTargetAllocatedCallsign()
-				.toUpperCase()}, taxi to ${radioCall.getLandingParkingSpot()}`;
-		} else {
-			atcResponse = `${radioCall.getTargetAllocatedCallsign().toUpperCase()}, roger`;
-		}
+		const atcResponse = radioCall.getEndAirport().isControlled()
+			? `${radioCall
+					.getTargetAllocatedCallsign()
+					.toUpperCase()}, taxi to ${radioCall.getLandingParkingSpot()}`
+			: `${radioCall.getTargetAllocatedCallsign().toUpperCase()}, roger`;
 
 		return {
 			feedback: radioCall.getFeedback(),

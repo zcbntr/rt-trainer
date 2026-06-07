@@ -56,7 +56,7 @@
 
 		const L = await getLeaflet();
 
-		polyline = L.polyline(latLngArray, {
+		const createdPolyline = L.polyline(latLngArray, {
 			color: colour,
 			fillOpacity,
 			weight,
@@ -65,10 +65,12 @@
 			className
 		}).addTo(map);
 
-		polyline.on('mousedown', (event: Leaflet.LeafletMouseEvent) => {
-			if (!polyline || !mapInstance) return;
-			mousedown({ event, polyline, map: mapInstance });
+		createdPolyline.on('mousedown', (event: Leaflet.LeafletMouseEvent) => {
+			if (!mapInstance) return;
+			mousedown({ event, polyline: createdPolyline, map: mapInstance });
 		});
+
+		polyline = createdPolyline;
 	});
 
 	onDestroy(() => {

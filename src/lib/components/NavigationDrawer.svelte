@@ -20,14 +20,12 @@
 	}
 </script>
 
-<Dialog open={drawer.open} onOpenChange={onOpenChange}>
+<Dialog open={drawer.open} {onOpenChange}>
 	<Portal>
-		<Dialog.Backdrop
-			class="fixed inset-0 z-50 bg-surface-50-950/50 {animBackdrop}"
-		/>
+		<Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-50-950/50 {animBackdrop}" />
 		<Dialog.Positioner class="fixed inset-0 z-50 flex justify-start">
 			<Dialog.Content
-				class="card h-screen space-y-4 bg-surface-100-900 p-0 shadow-xl {width} {animPanel}"
+				class="h-screen space-y-4 card bg-surface-100-900 p-0 shadow-xl {width} {animPanel}"
 			>
 				{#if title}
 					<header class="flex items-center justify-between p-4 pb-0">

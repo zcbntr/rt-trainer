@@ -90,8 +90,6 @@
 	// Flag to check if critical data is missing and the user must be prompted to enter it
 	let criticalDataMissing: boolean = $state(false);
 
-	let airportIDs: string[] = [];
-
 	// Check whether the seed is specified - if not then warn user
 	const seedString: string | null = page.url.searchParams.get('seed');
 	if (seedString != null && seedString != '') {
@@ -127,9 +125,7 @@
 
 	// Get airports from the URL's JSON.stringify form
 	const airportsString: string | null = page.url.searchParams.get('airports');
-	if (airportsString != null) {
-		airportIDs = airportsString.split(',');
-	} else {
+	if (airportsString == null) {
 		criticalDataMissing = true;
 	}
 
@@ -435,7 +431,11 @@
 			transponderState.frequency !=
 			scenario?.getCurrentPoint().updateData.currentTransponderFrequency
 		) {
-			console.log('Transponder frequency incorrect', transponderState.frequency, scenario?.getCurrentPoint().updateData.currentTransponderFrequency);
+			console.log(
+				'Transponder frequency incorrect',
+				transponderState.frequency,
+				scenario?.getCurrentPoint().updateData.currentTransponderFrequency
+			);
 			dialog.trigger({
 				type: 'alert',
 				title: 'Error',
@@ -619,7 +619,7 @@
 				body: 'Do you want view your feedback?',
 				response: (r) => {
 					if (r) {
-						goto(resolve('/scenario/results/'));
+						goto(resolve('/simulator/results'));
 					}
 				}
 			});
@@ -856,7 +856,7 @@
 							{/each}
 						{/if}
 
-						{#each $WaypointPointsMapStore as waypointPoint, index (index)}
+						{#each Array.from($WaypointPointsMapStore.keys()) as index (index)}
 							{#if index > 0}
 								{#key [$WaypointPointsMapStore[index - 1], $WaypointPointsMapStore[index]]}
 									<RouteSegment

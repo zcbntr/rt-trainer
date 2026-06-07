@@ -51,25 +51,24 @@
 
 		const L = await getLeaflet();
 
-		polygon = L.polygon(latLngArray, {
+		const createdPolygon = L.polygon(latLngArray, {
 			color,
 			fillColor: fillColor !== undefined ? fillColor : color,
 			fillOpacity,
 			weight
 		}).addTo(map);
 
-		polygon.on('click', (e) => {
-			if (!polygon) return;
-			click({ event: e, waypoint: aeroObject, polygon });
+		createdPolygon.on('click', (e) => {
+			click({ event: e, waypoint: aeroObject, polygon: createdPolygon });
 		});
-		polygon.on('mouseover', (e) => {
-			if (!polygon) return;
-			mouseover({ event: e, waypoint: aeroObject, polygon });
+		createdPolygon.on('mouseover', (e) => {
+			mouseover({ event: e, waypoint: aeroObject, polygon: createdPolygon });
 		});
-		polygon.on('mouseout', (e) => {
-			if (!polygon) return;
-			mouseout({ event: e, waypoint: aeroObject, polygon });
+		createdPolygon.on('mouseout', (e) => {
+			mouseout({ event: e, waypoint: aeroObject, polygon: createdPolygon });
 		});
+
+		polygon = createdPolygon;
 	});
 
 	onDestroy(() => {

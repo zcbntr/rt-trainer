@@ -2,37 +2,33 @@
 	import { SpeechBufferStore, SpeechInputEnabledStore } from '$lib/stores';
 	import { swapDigitsWithWords } from '$lib/logic/utils';
 
+	type BrowserSpeechRecognition = SpeechRecognition;
+
 	interface Props {
 		class?: string;
 		enabled?: boolean;
 		transmitting?: boolean;
 	}
 
-	let {
-		class: className = '',
-		enabled = false,
-		transmitting = $bindable(false)
-	}: Props = $props();
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let recognition: any = $state(null);
+	let { class: className = '', enabled = false, transmitting = $bindable(false) }: Props = $props();
+	let recognition: BrowserSpeechRecognition | null = $state(null);
 	let isActive = $state(false);
 
 	const transmitButtonClasses = $derived(
-		isActive
-			? 'enabled active'
-			: $SpeechInputEnabledStore && enabled
-				? 'enabled'
-				: 'disabled'
+		isActive ? 'enabled active' : $SpeechInputEnabledStore && enabled ? 'enabled' : 'disabled'
 	);
 
 	$effect(() => {
 		if ($SpeechInputEnabledStore) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const SpeechRecognitionType: any =
-				(window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+			const SpeechRecognitionType = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+			if (!SpeechRecognitionType) {
+				recognition = null;
+				return;
+			}
+
 			const instance = new SpeechRecognitionType();
 			instance.lang = 'en';
-			instance.onresult = (event: any) => {
+			instance.onresult = (event: SpeechRecognitionEvent) => {
 				let speechInput = event.results[0][0].transcript;
 				console.log(`You said: ${speechInput}, Confidence: ${event.results[0][0].confidence}`);
 
@@ -85,12 +81,11 @@
 			stopTransmitting();
 		}
 	}
-
 </script>
 
 <div
 	id="transmit-button"
-	class="{className} {transmitButtonClasses} transmit-button rounded-full cursor-pointer"
+	class="{className} {transmitButtonClasses} transmit-button cursor-pointer rounded-full"
 	onmousedown={handleTransmitMouseDown}
 	onkeydown={handleTransmitMouseDown}
 	onmouseup={handleTransmitMouseUp}

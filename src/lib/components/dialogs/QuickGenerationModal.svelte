@@ -11,7 +11,7 @@
 	import { init } from '@paralleldrive/cuid2';
 	import { get } from 'svelte/store';
 	import { resolve } from '$app/paths';
-	
+
 	interface Props {
 		parent: {
 			regionFooter: string;

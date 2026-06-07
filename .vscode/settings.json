@@ -9,8 +9,5 @@
 	"debug.javascript.terminalOptions": {
 		"shellArgs": ["-l"]
 	},
-	"cSpell.words": [
-		"FRTOL",
-		"Licence"
-	]
+	"cSpell.words": ["FRTOL", "Licence"]
 }
