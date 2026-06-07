@@ -76,21 +76,26 @@
 
 	function onDialModeChange(newDialModeIndex: number) {
 		const radioState = get(RadioStateStore);
+		const COMModeButton = document.getElementById('button-com') as HTMLInputElement;
+		const NAVModeButton = document.getElementById('button-nav') as HTMLInputElement;
+
 		if (newDialModeIndex == 0) {
-			if (radioState.mode === 'COM') {
-				const COMModeButton = document.getElementById('button-com') as HTMLInputElement;
-				COMModeButton.classList.remove('active-button');
-			} else if (radioState.mode === 'NAV') {
-				const NAVModeButton = document.getElementById('button-nav') as HTMLInputElement;
-				NAVModeButton.classList.remove('active-button');
-				RadioStateStore.update((state) => ({ ...state, mode: 'COM' }));
-			}
+			COMModeButton?.classList.remove('active-button');
+			NAVModeButton?.classList.remove('active-button');
 			displayOn = false;
 			frequencyDialEnabled = false;
 			transmitButtonEnabled = false;
 		} else {
-			const COMModeButton = document.getElementById('button-com') as HTMLInputElement;
-			COMModeButton.classList.add('active-button');
+			if (radioState.mode === 'NAV') {
+				NAVModeButton?.classList.add('active-button');
+				COMModeButton?.classList.remove('active-button');
+			} else {
+				COMModeButton?.classList.add('active-button');
+				NAVModeButton?.classList.remove('active-button');
+				if (radioState.mode === 'OFF') {
+					RadioStateStore.update((state) => ({ ...state, mode: 'COM' }));
+				}
+			}
 			displayOn = true;
 			frequencyDialEnabled = true;
 			transmitButtonEnabled = true;

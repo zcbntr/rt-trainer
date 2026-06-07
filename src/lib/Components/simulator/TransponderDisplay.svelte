@@ -13,7 +13,9 @@
 		digitArr = [0, 0, 0, 0]
 	}: Props = $props();
 
+	const blankDigits = [0, 0, 0, 0] as const;
 	let showDisplayText = $derived(DisplayOn ? 'displayon' : 'displayoff');
+	let displayDigits = $derived(DisplayOn ? digitArr : blankDigits);
 
 	$effect(() => {
 		if (!DisplayOn) {
@@ -25,12 +27,14 @@
 <div
 	class="transponder-segdisplay {showDisplayText} card flex flex-row nowrap items-center place-content-between"
 >
-	<div>
-		<div class="mode-icon">{mode}</div>
+	<div class="mode-column">
+		<div class="mode-icon" class:mode-hidden={!DisplayOn}>{mode}</div>
 	</div>
 	<div class="sevenSEG flex flex-row mr-5">
-		{#each digitArr as digit, i (i)}
-			<div id="tdigit-{i}" class={['tdigit', DigitSelected === i && 'tselected']}>{digit}</div>
+		{#each displayDigits as digit, i (i)}
+			<div id="tdigit-{i}" class={['tdigit', DisplayOn && DigitSelected === i && 'tselected']}>
+				{digit}
+			</div>
 		{/each}
 	</div>
 </div>
@@ -55,8 +59,20 @@
 			0 0 32px #f74;
 	}
 
-	:global(.displayoff) {
-		color: rgba(var(--color-surface-900) / 1);
+	.transponder-segdisplay.displayoff {
+		background: color-mix(in srgb, rgb(var(--color-surface-900)) 88%, rgb(255 255 255) 12%);
+	}
+
+	.transponder-segdisplay.displayoff .mode-icon,
+	.transponder-segdisplay.displayoff .tdigit {
+		color: color-mix(in srgb, rgb(var(--color-surface-900)) 55%, rgb(255 255 255) 45%);
+		text-shadow: none;
+	}
+
+	.transponder-segdisplay .mode-column {
+		flex-shrink: 0;
+		min-width: 4ch;
+		margin-left: 16px;
 	}
 
 	.transponder-segdisplay .mode-icon {
@@ -64,18 +80,25 @@
 		font-size: 20px;
 		text-align: left;
 		padding: 2px;
-		margin-left: 16px;
+		min-width: 4ch;
+	}
+
+	.transponder-segdisplay .mode-icon.mode-hidden {
+		visibility: hidden;
 	}
 
 	.transponder-segdisplay .sevenSEG {
 		font-size: 50px;
 		opacity: 1;
+		flex-shrink: 0;
 	}
 
 	.transponder-segdisplay .tdigit {
 		font-family: DSEG7ClassicMini;
 		text-align: right;
 		padding: 8px 0px;
+		min-width: 1ch;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.transponder-segdisplay .tdigit.tselected {
