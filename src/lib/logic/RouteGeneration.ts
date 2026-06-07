@@ -50,8 +50,9 @@ export function generateFRTOLRouteFromSeed(
 		const nearbyMATZs: Airspace[] = airspaces.filter(
 			(x) =>
 				x.type == 14 &&
-				turf.distance(currentStartAirport.coordinates, x.coordinates[0][0], { units: 'kilometers' }) <
-					40 &&
+				turf.distance(currentStartAirport.coordinates, x.coordinates[0][0], {
+					units: 'kilometers'
+				}) < 40 &&
 				!x.pointInsideATZ(currentStartAirport.coordinates)
 		);
 		if (nearbyMATZs.length == 0) {
@@ -128,18 +129,14 @@ export function generateFRTOLRouteFromSeed(
 			continue;
 		}
 
-		const matzCoords = chosenMATZ.coordinates[0].map((point) =>
-			turf.point([point[0], point[1]])
-		);
+		const matzCoords = chosenMATZ.coordinates[0].map((point) => turf.point([point[0], point[1]]));
 
-		matzEntryPoint = turf.nearestPoint(
-			turf.point(startAirport.coordinates),
-			turf.featureCollection(matzCoords)
-		).geometry.coordinates.slice(0, 2) as [number, number];
-		matzExitPoint = turf.nearestPoint(
-			turf.point(destinationAirport.coordinates),
-			turf.featureCollection(matzCoords)
-		).geometry.coordinates.slice(0, 2) as [number, number];
+		matzEntryPoint = turf
+			.nearestPoint(turf.point(startAirport.coordinates), turf.featureCollection(matzCoords))
+			.geometry.coordinates.slice(0, 2) as [number, number];
+		matzExitPoint = turf
+			.nearestPoint(turf.point(destinationAirport.coordinates), turf.featureCollection(matzCoords))
+			.geometry.coordinates.slice(0, 2) as [number, number];
 
 		if (matzEntryPoint == matzExitPoint) {
 			validRoute = false;
@@ -177,7 +174,7 @@ export function generateFRTOLRouteFromSeed(
 		return;
 	}
 
-	console.log('Iterations: ', iterations);
+	console.log('Route generated in ' + iterations + ' iterations');
 
 	const startWaypoint: Waypoint = new Waypoint(
 		startAirport.name,

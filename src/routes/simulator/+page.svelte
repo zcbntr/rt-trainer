@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import type { WaypointURLObject } from '$lib/logic/ScenarioTypes';
 	import Waypoint from '$lib/logic/aeronautics/Waypoint';
 	import { dialog } from '$lib/components/singletons/dialog.svelte';
@@ -82,20 +80,20 @@
 	let airportIDs: string[] = [];
 
 	// Check whether the seed is specified - if not then warn user
-	const seedString: string | null = $page.url.searchParams.get('seed');
+	const seedString: string | null = page.url.searchParams.get('seed');
 	if (seedString != null && seedString != '') {
 		seed = seedString;
 	} else {
 		criticalDataMissing = true;
 	}
 
-	const hasEmergenciesString: string | null = $page.url.searchParams.get('hasEmergencies');
+	const hasEmergenciesString: string | null = page.url.searchParams.get('hasEmergencies');
 	if (hasEmergenciesString != null) {
 		hasEmergencies = hasEmergenciesString === 'true';
 	}
 
 	// Get waypoints from the URL's JSON.stringify form
-	const waypointsString: string | null = $page.url.searchParams.get('waypoints');
+	const waypointsString: string | null = page.url.searchParams.get('waypoints');
 	if (waypointsString != null) {
 		const waypointsDataArray: WaypointURLObject[] = JSON.parse(waypointsString);
 		WaypointsStore.set(
@@ -115,7 +113,7 @@
 	}
 
 	// Get airports from the URL's JSON.stringify form
-	const airportsString: string | null = $page.url.searchParams.get('airports');
+	const airportsString: string | null = page.url.searchParams.get('airports');
 	if (airportsString != null) {
 		airportIDs = airportsString.split(',');
 	} else {
@@ -123,13 +121,13 @@
 	}
 
 	// Check whether the callsign is specified
-	const callsignString: string | null = $page.url.searchParams.get('callsign');
+	const callsignString: string | null = page.url.searchParams.get('callsign');
 	if (callsignString != null && callsignString != '') {
 		callsign = callsignString;
 	}
 
 	// Check whether the prefix is specified
-	const prefixString: string | null = $page.url.searchParams.get('prefix');
+	const prefixString: string | null = page.url.searchParams.get('prefix');
 	if (prefixString != null) {
 		if (
 			prefixString == '' ||
@@ -145,14 +143,14 @@
 	}
 
 	// Check whether the aircraft type is specified
-	const aircraftTypeString: string | null = $page.url.searchParams.get('aircraftType');
+	const aircraftTypeString: string | null = page.url.searchParams.get('aircraftType');
 	if (aircraftTypeString != null && aircraftTypeString != '') {
 		aircraftType = aircraftTypeString;
 	}
 
 	// Check whether start point index has been set
 	let startPointIndex: number = 0;
-	const startPointIndexString: string | null = $page.url.searchParams.get('startPoint');
+	const startPointIndexString: string | null = page.url.searchParams.get('startPoint');
 	if (startPointIndexString != null) {
 		startPointIndex = parseInt(startPointIndexString);
 		if (startPointIndex < 0) {
@@ -162,7 +160,7 @@
 
 	// Check whether end point index has been set
 	let endPointIndex: number = -1;
-	const endPointIndexString: string | null = $page.url.searchParams.get('endPoint');
+	const endPointIndexString: string | null = page.url.searchParams.get('endPoint');
 	if (endPointIndexString != null) {
 		endPointIndex = parseInt(endPointIndexString);
 		if (endPointIndex < 0 || endPointIndex >= startPointIndex) {
@@ -171,7 +169,7 @@
 	}
 
 	let tutorial: boolean = false;
-	const tutorialString: string | null = $page.url.searchParams.get('tutorial');
+	const tutorialString: string | null = page.url.searchParams.get('tutorial');
 	if (tutorialString != null) {
 		tutorial = tutorialString === 'true';
 	}
@@ -300,8 +298,8 @@
 	];
 
 	// Server state
-	let serverNotResponding: boolean = false;
-	let nullRoute: boolean = false;
+	let serverNotResponding = $state(false);
+	let nullRoute = $state(false);
 
 	const aircraftPosition = $derived.by((): [number, number] => {
 		const pos = $CurrentScenarioPointStore?.pose.position;
@@ -648,7 +646,7 @@
 			speechRecognitionSupported = false;
 		}
 	});
-	run(() => {
+	$effect(() => {
 		if (
 			criticalDataMissing ||
 			get(ScenarioStore) !== undefined ||
@@ -661,7 +659,8 @@
 		}
 		loadScenario();
 	});
-	run(() => {
+
+	$effect(() => {
 		if (serverNotResponding) {
 			dialog.trigger({
 				type: 'alert',
@@ -670,7 +669,8 @@
 			});
 		}
 	});
-	run(() => {
+
+	$effect(() => {
 		if (nullRoute) {
 			dialog.trigger({
 				type: 'alert',
@@ -679,7 +679,8 @@
 			});
 		}
 	});
-	run(() => {
+
+	$effect(() => {
 		if ($SpeechOutputEnabledStore && $MostRecentlyReceivedMessageStore) {
 			TTSWithNoise($SpeechNoiseStore);
 		}

@@ -1,8 +1,4 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
-	import { onMount } from 'svelte';
-
 	interface Props {
 		DisplayOn?: boolean;
 		mode?: string;
@@ -17,29 +13,12 @@
 		digitArr = [0, 0, 0, 0]
 	}: Props = $props();
 
-	let mounted: boolean = $state(false);
-
 	let showDisplayText = $derived(DisplayOn ? 'displayon' : 'displayoff');
-	run(() => {
+
+	$effect(() => {
 		if (!DisplayOn) {
 			DigitSelected = 0;
 		}
-	});
-	run(() => {
-		if (mounted) {
-			let oldSelectedDigit = document.querySelector('.tselected');
-			if (oldSelectedDigit != null) {
-				oldSelectedDigit.classList.remove('tselected');
-			}
-			let NewSelectedDigit = document.getElementById('tdigit-' + DigitSelected) as HTMLDivElement;
-			if (NewSelectedDigit != null) {
-				NewSelectedDigit.classList.add('tselected');
-			}
-		}
-	});
-
-	onMount(() => {
-		mounted = true;
 	});
 </script>
 
@@ -50,10 +29,9 @@
 		<div class="mode-icon">{mode}</div>
 	</div>
 	<div class="sevenSEG flex flex-row mr-5">
-		<div id="tdigit-0" class="tdigit tselected">{digitArr[0]}</div>
-		<div id="tdigit-1" class="tdigit">{digitArr[1]}</div>
-		<div id="tdigit-2" class="tdigit">{digitArr[2]}</div>
-		<div id="tdigit-3" class="tdigit">{digitArr[3]}</div>
+		{#each digitArr as digit, i (i)}
+			<div id="tdigit-{i}" class={['tdigit', DigitSelected === i && 'tselected']}>{digit}</div>
+		{/each}
 	</div>
 </div>
 

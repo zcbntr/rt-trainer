@@ -1,11 +1,6 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import { AltimeterStateStore, CurrentScenarioPointStore } from '$lib/stores';
-	import { onMount } from 'svelte';
 	import FrequencyDial from './FrequencyDial.svelte';
-
-	let mounted: boolean = $state(false);
 
 	const currentAltitude = $derived($CurrentScenarioPointStore?.pose.altitude ?? 0);
 
@@ -45,16 +40,10 @@
 		}));
 	}
 
-	onMount(() => {
-		mounted = true;
-	});
-
 	// HTML, most CSS and SVGs by Peter Shmulevich on CodePen: https://codepen.io/pshmulevich/pen/YMxbNv
-	run(() => {
-		if (mounted) {
-			setAltitudeDial(currentAltitude);
-			setPressureDial($AltimeterStateStore.pressure);
-		}
+	$effect(() => {
+		setAltitudeDial(currentAltitude);
+		setPressureDial($AltimeterStateStore.pressure);
 	});
 </script>
 

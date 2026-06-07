@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import { onMount } from 'svelte';
 
 	// Used to limit number of modes so that the dial doesn't get too crowded
@@ -28,19 +26,7 @@
 		id = '',
 		modeChange = () => {}
 	}: Props = $props();
-	let mounted: boolean = $state(false);
 	let width: string = Modes.length > 2 ? 'w-40' : 'w-28';
-
-	run(() => {
-		if (mounted) {
-			const modeDial = document.getElementById('mode-dial-' + id) as HTMLDivElement;
-			if (DialEnabled) {
-				modeDial.classList.add('enabled');
-			} else {
-				modeDial.classList.remove('enabled');
-			}
-		}
-	});
 
 	const handleDialClick = () => {
 		const ModeDial = document.getElementById('mode-dial-' + id) as HTMLDivElement;
@@ -141,7 +127,6 @@
 	}
 
 	onMount(() => {
-		mounted = true;
 		addModes();
 		modeChange(CurrentModeIndex);
 	});
@@ -156,7 +141,7 @@
 		<div id={'mode-center-div-' + id} class="absolute m-auto" style="top: 50%; left: 50%;"></div>
 		<div
 			id={'mode-dial-' + id}
-			class="mode-dial w-20 h-20 flex border-2 rounded-full"
+			class={['mode-dial w-20 h-20 flex border-2 rounded-full', DialEnabled && 'enabled']}
 			onclick={handleDialClick}
 			onkeydown={handleDialClick}
 			aria-label="Mode Dial"
@@ -235,7 +220,7 @@
 		cursor: pointer;
 	}
 
-	:globa(.mode-dial .enabled) {
+	:global(.mode-dial.enabled) {
 		box-shadow: rgb(255, 255, 255) 0px 0px 20px -5px;
 	}
 </style>

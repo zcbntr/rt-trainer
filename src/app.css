@@ -78,9 +78,12 @@ html:has(.appbar--viewport-locked) body {
 	grid-area: footer;
 }
 
-/* Leaflet map container */
+/* Leaflet map container — position + isolation trap internal pane z-index (400–1000)
+   so app overlays (dialogs, drawers) render above the map. */
 :global(.leaflet-container) {
+	position: relative;
+	isolation: isolate;
+	z-index: 0;
 	height: 100%;
 	width: 100%;
-	z-index: 0;
 }

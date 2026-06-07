@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import {
 		AllAirportsStore,
 		AllAirspacesStore,
@@ -12,9 +10,13 @@
 	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import { init } from '@paralleldrive/cuid2';
 	import { get } from 'svelte/store';
-
+	import { resolve } from '$app/paths';
+	
 	interface Props {
-		parent: any;
+		parent: {
+			regionFooter: string;
+			buttonPositive: string;
+		};
 	}
 
 	let { parent }: Props = $props();
@@ -42,7 +44,7 @@
 		if (routeData) {
 			loadRouteData(routeData);
 		} else {
-			validSettings = false;
+			failedRouteSeed = formData.routeSeed;
 		}
 	}
 
@@ -50,31 +52,14 @@
 	const cHeader = 'text-2xl font-bold';
 	const cForm = 'space-y-4 rounded-container';
 
-	let validSettings = $state(false);
-	let cRouteSeedInput = $state('');
-	let cRouteSeedInputErrorMessage = $state('hidden');
-
-	run(() => {
-		if (
-			formData.scenarioSeed &&
-			formData.scenarioSeed.length > 0 &&
-			formData.routeSeed &&
-			formData.routeSeed.length > 0
-		) {
-			validSettings = true;
-		} else {
-			validSettings = false;
-		}
-	});
-	run(() => {
-		if (validSettings) {
-			cRouteSeedInput = '';
-			cRouteSeedInputErrorMessage = 'hidden';
-		} else {
-			cRouteSeedInput = 'input-error';
-			cRouteSeedInputErrorMessage = '';
-		}
-	});
+	let failedRouteSeed = $state<string | null>(null);
+	let validSettings = $derived(
+		formData.scenarioSeed.length > 0 &&
+			formData.routeSeed.length > 0 &&
+			formData.routeSeed !== failedRouteSeed
+	);
+	let cRouteSeedInput = $derived(validSettings ? '' : 'input-error');
+	let cRouteSeedInputErrorMessage = $derived(validSettings ? 'hidden' : '');
 </script>
 
 <div class={cBase} title="Quick Generation" aria-label="Quick Generation modal">
@@ -115,7 +100,7 @@
 	</form>
 	<footer class="flex flex-row justify-between {parent.regionFooter}">
 		<div class="flex flex-col place-content-center">
-			<a href="/scenario-planner" class="anchor">Scenario Planner</a>
+			<a href={resolve('/scenario-planner')} class="anchor">Scenario Planner</a>
 		</div>
 		<button
 			class="btn text-sm {parent.buttonPositive}"

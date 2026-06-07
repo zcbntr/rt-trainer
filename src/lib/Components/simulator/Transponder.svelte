@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import { onMount } from 'svelte';
 	import FrequencyDial from './FrequencyDial.svelte';
 	import Dial from './ModeDial.svelte';
@@ -99,7 +97,7 @@
 		}
 	}
 
-	function onTransponderFrequencyIncrease(event: Event) {
+	function onTransponderFrequencyIncrease() {
 		if (digitArr[displayDigitSelected] == 7) {
 			digitArr[displayDigitSelected] = 0;
 		} else {
@@ -107,7 +105,7 @@
 		}
 	}
 
-	function onTransponderFrequencyReduce(event: Event) {
+	function onTransponderFrequencyReduce() {
 		if (digitArr[displayDigitSelected] == 0) {
 			digitArr[displayDigitSelected] = 7;
 		} else {
@@ -118,20 +116,21 @@
 	onMount(() => {
 		mounted = true;
 	});
-	run(() => {
+
+	$effect(() => {
 		if (mounted) {
 			frequency = digitArr.join('');
 			TransponderStateStore.update((state) => ({ ...state, frequency }));
 		}
 	});
-	// Trigger onTransponderDialModeChange when transponderDialMode changes
-	run(() => {
+
+	$effect(() => {
 		onTransponderDialModeChange(dialModeIndex);
 	});
 </script>
 
 <div
-	class="flex flex-row card gap-2 bg-neutral-600 text-white grow place-content-evenly p-3 max-w-screen-lg flex-wrap"
+	class="flex max-w-5xl grow flex-row flex-wrap place-content-evenly gap-2 card bg-neutral-600 p-3 text-white"
 >
 	<Dial
 		Modes={transponderDialModes}
@@ -139,14 +138,14 @@
 		bind:CurrentModeIndex={dialModeIndex}
 	/>
 
-	<div class="display-panel flex flex-col justify-center items-center grow order-first sm:order-2">
+	<div class="display-panel order-first flex grow flex-col items-center justify-center sm:order-2">
 		<TransponderDisplay
 			DisplayOn={displayOn}
 			mode={transponderDialModes[dialModeIndex]}
 			{digitArr}
 			DigitSelected={displayDigitSelected}
 		/>
-		<div class="pt-1 flex flex-row items-center gap-2">
+		<div class="flex flex-row items-center gap-2 pt-1">
 			<button class="button" id="button-ident" onclick={handleIDENTButtonClick}>IDENT</button>
 			<button class="button" id="button-vfr" onclick={handleVFRButtonClick}>VFR</button>
 			<button class="button" id="button-enter" onclick={handleENTERButtonClick}>ENT</button>
@@ -154,7 +153,7 @@
 		</div>
 	</div>
 
-	<div class="flex flex-row mx-4 order-3">
+	<div class="order-3 mx-4 flex flex-row">
 		<FrequencyDial
 			dialAntiClockwiseTurn={onTransponderFrequencyReduce}
 			dialClockwiseTurn={onTransponderFrequencyIncrease}

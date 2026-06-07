@@ -20,8 +20,8 @@
 	role={isAlert ? 'alertdialog' : 'dialog'}
 >
 	<Portal>
-		<Dialog.Backdrop class="fixed inset-0 z-[60] bg-surface-50-950/50" />
-		<Dialog.Positioner class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+		<Dialog.Backdrop class="fixed inset-0 z-[1100] bg-surface-50-950/50" />
+		<Dialog.Positioner class="fixed inset-0 z-[1100] flex items-center justify-center p-4">
 			{#if componentOptions}
 				{@const Component = componentOptions.component}
 				<Dialog.Content

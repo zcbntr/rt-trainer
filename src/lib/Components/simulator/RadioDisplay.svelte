@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	interface Props {
 		DisplayOn?: boolean;
 		mode?: string;
@@ -18,7 +16,8 @@
 	}: Props = $props();
 
 	let showDisplayText = $derived(DisplayOn ? 'displayon' : 'displayoff');
-	run(() => {
+
+	$effect(() => {
 		if (!DisplayOn) {
 			mode = 'COM';
 		}

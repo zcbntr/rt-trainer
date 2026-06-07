@@ -8,7 +8,7 @@
 	import { toaster } from '$lib/components/singletons/toaster';
 	import { drawer } from '$lib/components/singletons/drawer.svelte';
 	import { afterNavigate } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import Navigation from '$lib/components/NAVSidebar.svelte';
 	import ScenarioPlanSidebar from '$lib/components/ScenarioPlanSidebar.svelte';
 	import SvelteSeo from 'svelte-seo';
@@ -20,7 +20,7 @@
 	let { children }: Props = $props();
 
 	const layoutShell = $derived.by(() => {
-		const path = $page.url.pathname;
+		const path = page.url.pathname;
 
 		if (path === '/') {
 			return {
@@ -157,7 +157,7 @@
 		{@render children?.()}
 	</main>
 	<footer>
-		{#if $page.url.pathname === '/'}
+		{#if page.url.pathname === '/'}
 			<div class="flex grow-0 flex-col place-items-center p-2">
 				<p class="text-slate-600">
 					Homepage image by <a
