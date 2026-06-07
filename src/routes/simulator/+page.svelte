@@ -409,6 +409,7 @@
 			transponderState.frequency !=
 			scenario?.getCurrentPoint().updateData.currentTransponderFrequency
 		) {
+			console.log('Transponder frequency incorrect', transponderState.frequency, scenario?.getCurrentPoint().updateData.currentTransponderFrequency);
 			dialog.trigger({
 				type: 'alert',
 				title: 'Error',

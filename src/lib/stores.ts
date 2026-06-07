@@ -32,7 +32,7 @@ const initialRadioState: RadioState = {
 
 const initialTransponderState: TransponderState = {
 	dialMode: 'OFF',
-	frequency: '0000',
+	frequency: '7000',
 	identEnabled: false,
 	vfrHasExecuted: false
 };

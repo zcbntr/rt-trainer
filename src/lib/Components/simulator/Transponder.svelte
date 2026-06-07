@@ -28,10 +28,13 @@
 	let dialModeIndex: number = $state(0);
 	let displayOn: boolean = $state(false);
 	let digitArr = $state([7, 0, 0, 0]);
-	let frequency: string = $state('7000');
 	let frequencyDialEnabled: boolean = $state(false);
 	let displayDigitSelected: number = $state(0);
-	let mounted: boolean = $state(false);
+
+	function syncFrequencyToStore() {
+		const squawk = digitArr.join('');
+		TransponderStateStore.update((state) => ({ ...state, frequency: squawk }));
+	}
 
 	// Click handlers
 	const handleIDENTButtonClick = () => {
@@ -94,6 +97,7 @@
 				...state,
 				dialMode: dialModes[newModeIndex] ?? 'SBY'
 			}));
+			syncFrequencyToStore();
 		}
 	}
 
@@ -103,6 +107,7 @@
 		} else {
 			digitArr[displayDigitSelected] += 1;
 		}
+		syncFrequencyToStore();
 	}
 
 	function onTransponderFrequencyReduce() {
@@ -111,17 +116,11 @@
 		} else {
 			digitArr[displayDigitSelected] -= 1;
 		}
+		syncFrequencyToStore();
 	}
 
 	onMount(() => {
-		mounted = true;
-	});
-
-	$effect(() => {
-		if (mounted) {
-			frequency = digitArr.join('');
-			TransponderStateStore.update((state) => ({ ...state, frequency }));
-		}
+		syncFrequencyToStore();
 	});
 
 	$effect(() => {
