@@ -14,8 +14,6 @@
 
 	let { class: className = '' }: Props = $props();
 
-	const switchControlClass =
-		'inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors preset-filled-secondary-50-950 data-[state=checked]:preset-filled-primary-500';
 
 	const currentContextDisplay = $derived(
 		$CurrentScenarioContextStore === ''
@@ -41,13 +39,15 @@
 					<div class="flex flex-row place-content-start gap-2">
 						<Switch
 							checked={$SpeechOutputEnabledStore}
+							name="enabled-audio-messages"
+							ids={{ hiddenInput: 'enabled-audio-messages' }}
 							aria-label="Toggle text-to-speech audio messages"
 							onCheckedChange={(e) => SpeechOutputEnabledStore.set(e.checked)}
 						>
-							<Switch.Control class={switchControlClass}>
+							<Switch.Control>
 								<Switch.Thumb />
 							</Switch.Control>
-							<Switch.HiddenInput id="enabled-audio-messages" name="enabled-audio-messages" />
+							<Switch.HiddenInput />
 						</Switch>
 						<HoverTooltip label="Read Aloud Received Calls">
 							<p>Audio messages read aloud when you receive a call from ATC or another aircraft.</p>
@@ -56,17 +56,16 @@
 					<div class="flex flex-row place-content-start gap-2">
 						<Switch
 							checked={$SpeechNoiseStore > 0}
+							name="enabled-audio-messages-noise"
+							ids={{ hiddenInput: 'enabled-audio-messages-noise' }}
 							disabled={!$SpeechOutputEnabledStore}
 							aria-label="Toggle interference noise"
 							onCheckedChange={(e) => SpeechNoiseStore.set(e.checked ? 0.1 : 0)}
 						>
-							<Switch.Control class={switchControlClass}>
+							<Switch.Control>
 								<Switch.Thumb />
 							</Switch.Control>
-							<Switch.HiddenInput
-								id="enabled-audio-messages-noise"
-								name="enabled-audio-messages-noise"
-							/>
+							<Switch.HiddenInput />
 						</Switch>
 						<HoverTooltip label="Interference Noise">
 							<p>

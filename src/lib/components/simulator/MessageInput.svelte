@@ -25,8 +25,6 @@
 	let mounted = $state(false);
 	let message = $state('');
 
-	const switchControlClass =
-		'inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors preset-filled-secondary-50-950 data-[state=checked]:preset-filled-primary-500';
 
 	$effect(() => {
 		if (!mounted) return;
@@ -106,13 +104,15 @@
 			<div class="flex flex-row place-content-start gap-2">
 				<Switch
 					checked={$LiveFeedbackStore}
+					name="enable-live-feedback"
+					ids={{ hiddenInput: 'enable-live-feedback' }}
 					aria-label="Toggle live feedback"
 					onCheckedChange={(e) => LiveFeedbackStore.set(e.checked)}
 				>
-					<Switch.Control class={switchControlClass}>
+					<Switch.Control>
 						<Switch.Thumb />
 					</Switch.Control>
-					<Switch.HiddenInput id="enable-live-feedback" name="enable-live-feedback" />
+					<Switch.HiddenInput />
 				</Switch>
 				<HoverTooltip label="Feedback">
 					<p>Shows feedback immediately, instead of just at the end of the scenario.</p>
@@ -125,6 +125,8 @@
 				<div class="flex flex-row place-content-start gap-2">
 					<Switch
 						checked={$SpeechInputEnabledStore}
+						name="enable-voice-input"
+						ids={{ hiddenInput: 'enable-voice-input' }}
 						aria-label="Toggle speech input"
 						onCheckedChange={(e) => {
 							SpeechInputEnabledStore.set(e.checked);
@@ -137,10 +139,10 @@
 							}
 						}}
 					>
-						<Switch.Control class={switchControlClass}>
+						<Switch.Control>
 							<Switch.Thumb />
 						</Switch.Control>
-						<Switch.HiddenInput id="enable-voice-input" name="enable-voice-input" />
+						<Switch.HiddenInput />
 					</Switch>
 					<HoverTooltip label="Voice Input">
 						<p>Speech recognition is experimental, you may need to correct the recorded text.</p>
@@ -150,11 +152,17 @@
 		{:else}
 			<div class="flex flex-col py-2">
 				<div class="flex flex-row place-content-start gap-2">
-					<Switch checked={$SpeechInputEnabledStore} disabled aria-label="Toggle speech input">
-						<Switch.Control class={switchControlClass}>
+					<Switch
+						checked={$SpeechInputEnabledStore}
+						name="enable-voice-input"
+						ids={{ hiddenInput: 'enable-voice-input' }}
+						disabled
+						aria-label="Toggle speech input"
+					>
+						<Switch.Control>
 							<Switch.Thumb />
 						</Switch.Control>
-						<Switch.HiddenInput id="enable-voice-input" name="enable-voice-input" />
+						<Switch.HiddenInput />
 					</Switch>
 					<HoverTooltip label="Voice Input">
 						<p>
