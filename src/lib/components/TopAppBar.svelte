@@ -49,7 +49,7 @@
 			</AppBar.Lead>
 			<AppBar.Trail>
 				<a
-					class="btn-icon-lg btn"
+					class="btn btn-icon-lg"
 					href="https://github.com/zcbntr/rt-trainer"
 					target="_blank"
 					rel="noreferrer"

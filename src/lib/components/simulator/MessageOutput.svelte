@@ -14,7 +14,6 @@
 
 	let { class: className = '' }: Props = $props();
 
-
 	const currentContextDisplay = $derived(
 		$CurrentScenarioContextStore === ''
 			? 'Context for your current point in the scenario will appear here'

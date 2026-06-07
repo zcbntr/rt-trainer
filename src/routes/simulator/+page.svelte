@@ -712,7 +712,7 @@
 </script>
 
 <div class="flex" style="justify-content: center;">
-	<div class="w-full max-w-screen-lg p-5">
+	<div class="w-full max-w-5xl p-5">
 		<div class="flex flex-row flex-wrap place-content-center gap-5">
 			{#if $TutorialStore && !tutorialComplete}
 				<div class="card rounded-lg bg-primary-900 p-3 text-white sm:mx-10 sm:w-7/12">

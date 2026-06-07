@@ -25,7 +25,6 @@
 	let mounted = $state(false);
 	let message = $state('');
 
-
 	$effect(() => {
 		if (!mounted) return;
 		const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
