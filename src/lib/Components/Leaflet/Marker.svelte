@@ -6,7 +6,11 @@
 	import { getLeaflet } from './leaflet';
 	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
 	import type Airport from '$lib/logic/aeronautics/Airport';
-	import type { MapContext, MarkerLayerDetail } from '$lib/components/leaflet/types';
+	import type {
+		MapContext,
+		MarkerLayerDetail,
+		RotatableLeafletMarker
+	} from '$lib/components/leaflet/types';
 
 	interface Props {
 		width: number;
@@ -80,6 +84,13 @@
 	$effect(() => {
 		if (!marker) return;
 		marker.setZIndexOffset(zIndexOffset);
+	});
+
+	$effect(() => {
+		if (!marker) return;
+		// leaflet-rotatedmarker treats 0 as falsy and skips applying rotation
+		const angle = rotation === 0 ? 360 : rotation;
+		(marker as RotatableLeafletMarker).setRotationAngle(angle);
 	});
 
 	onMount(async () => {

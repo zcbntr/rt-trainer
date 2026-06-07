@@ -14,6 +14,10 @@ export type MapContext = {
 
 export type MarkerAeroObject = Waypoint | Airport | undefined;
 
+export type RotatableLeafletMarker = Leaflet.Marker & {
+	setRotationAngle(angle: number): Leaflet.Marker;
+};
+
 export type MarkerLayerDetail = {
 	event: Leaflet.LeafletEvent;
 	aeroObject: MarkerAeroObject;

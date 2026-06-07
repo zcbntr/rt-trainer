@@ -326,11 +326,7 @@
 		return toLeafletLatLng(pos);
 	});
 
-	const displayHeading = $derived(
-		$CurrentScenarioPointStore?.pose.trueHeading
-			? $CurrentScenarioPointStore.pose.trueHeading - 45
-			: 0
-	);
+	const displayHeading = $derived($CurrentScenarioPointStore?.pose.trueHeading ?? 0);
 
 	const currentRouteSegmentIndex = $derived.by(() => {
 		const position = $CurrentScenarioPointStore?.pose.position;
@@ -887,27 +883,25 @@
 							/>
 						{/each}
 
-						{#key aircraftPosition}
-							<Marker
-								latLng={aircraftPosition}
-								width={AIRCRAFT_MARKER_DEFAULTS.size}
-								height={AIRCRAFT_MARKER_DEFAULTS.size}
-								iconAnchor={aircraftMarkerAnchor()}
-								rotation={displayHeading}
-								zIndexOffset={AIRCRAFT_MARKER_Z_INDEX_OFFSET}
-							>
-								<AircraftMarkerIcon />
+						<Marker
+							latLng={aircraftPosition}
+							width={AIRCRAFT_MARKER_DEFAULTS.size}
+							height={AIRCRAFT_MARKER_DEFAULTS.size}
+							iconAnchor={aircraftMarkerAnchor()}
+							rotation={displayHeading}
+							zIndexOffset={AIRCRAFT_MARKER_Z_INDEX_OFFSET}
+						>
+							<AircraftMarkerIcon />
 
-								<Popup
-									><div class="flex flex-col gap-2">
-										<div>
-											<div>{$CurrentScenarioPointStore?.pose.position[1].toFixed(6)}</div>
-											<div>{$CurrentScenarioPointStore?.pose.position[0].toFixed(6)}</div>
-										</div>
-									</div></Popup
-								>
-							</Marker>
-						{/key}
+							<Popup
+								><div class="flex flex-col gap-2">
+									<div>
+										<div>{$CurrentScenarioPointStore?.pose.position[1].toFixed(6)}</div>
+										<div>{$CurrentScenarioPointStore?.pose.position[0].toFixed(6)}</div>
+									</div>
+								</div></Popup
+							>
+						</Marker>
 					</Map>
 				</div>
 			</div>
