@@ -53,7 +53,8 @@
 	import RouteSegment from '$lib/components/leaflet/RouteSegment.svelte';
 	import FixWaypointMarkerIcon, {
 		FIX_WAYPOINT_MARKER_DEFAULTS,
-		fixWaypointMarkerAnchor
+		fixWaypointMarkerAnchor,
+		isRouteEndpoint
 	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
 	import AirportMarker from '$lib/components/leaflet/AirportMarker.svelte';
 	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
@@ -803,13 +804,14 @@
 				<div class="h-full w-full">
 					<Map view={mapView} zoom={9}>
 						{#if $WaypointPointsMapStore.length > 0}
-							{#each $WaypointsStore as waypoint (waypoint.index)}
+							{#each $WaypointsStore as waypoint, index (waypoint.index)}
 								{#if waypoint.type == WaypointType.Airport}
 									<AirportMarker
 										latLng={toLeafletLatLng(waypoint.location)}
 										aeroObject={waypoint}
 										baseSize={36}
 										runways={runwaysToSymbolInput(getAirportForWaypoint(waypoint)?.runways)}
+										showRouteEndpoint={isRouteEndpoint(index, $WaypointsStore.length)}
 										mouseover={(detail: MarkerLayerDetail) => {
 											detail.marker.openPopup();
 										}}
@@ -837,7 +839,9 @@
 											detail.marker.closePopup();
 										}}
 									>
-										<FixWaypointMarkerIcon />
+										<FixWaypointMarkerIcon
+											showRouteEndpoint={isRouteEndpoint(index, $WaypointsStore.length)}
+										/>
 
 										<Popup
 											><div class="flex flex-col gap-2">

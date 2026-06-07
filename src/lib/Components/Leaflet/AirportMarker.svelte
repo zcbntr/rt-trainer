@@ -18,6 +18,7 @@
 		runways?: RunwaySymbolInput[];
 		baseSize?: number;
 		showIcon?: boolean;
+		showRouteEndpoint?: boolean;
 		draggable?: boolean;
 		children?: import('svelte').Snippet;
 		drag?: (detail: MarkerLayerDetail) => void;
@@ -34,6 +35,7 @@
 		runways = [],
 		baseSize = AIRPORT_MARKER_DEFAULTS.size,
 		showIcon = true,
+		showRouteEndpoint = false,
 		draggable = false,
 		children,
 		drag = () => {},
@@ -63,7 +65,7 @@
 	{dragend}
 >
 	{#if showIcon}
-		<AirportMarkerIcon size={iconSize} {runways} />
+		<AirportMarkerIcon size={iconSize} {runways} {showRouteEndpoint} />
 	{/if}
 
 	{@render children?.()}

@@ -34,12 +34,18 @@ export function runwaysToSymbolInput(runways: Runway[] | undefined): RunwaySymbo
 </script>
 
 <script lang="ts">
+	import {
+		routeEndpointDotRadius,
+		ROUTE_ENDPOINT_DOT_DEFAULTS
+	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
+
 	interface Props {
 		runways?: RunwaySymbolInput[];
 		size?: number;
 		strokeWidth?: number;
 		fill?: string;
 		stroke?: string;
+		showRouteEndpoint?: boolean;
 	}
 
 	let {
@@ -47,7 +53,8 @@ export function runwaysToSymbolInput(runways: Runway[] | undefined): RunwaySymbo
 		size = AIRPORT_MARKER_DEFAULTS.size,
 		strokeWidth = AIRPORT_MARKER_DEFAULTS.strokeWidth,
 		fill = AIRPORT_MARKER_DEFAULTS.fill,
-		stroke = AIRPORT_MARKER_DEFAULTS.stroke
+		stroke = AIRPORT_MARKER_DEFAULTS.stroke,
+		showRouteEndpoint = false
 	}: Props = $props();
 
 	const filterId = `airport-marker-outline-${crypto.randomUUID()}`;
@@ -55,6 +62,7 @@ export function runwaysToSymbolInput(runways: Runway[] | undefined): RunwaySymbo
 	const circleRadius = $derived(getAirportCircleRadius(size, strokeWidth));
 	const runwayRects = $derived(getRunwaySymbolRects(runways, size, strokeWidth));
 	const outlineRadius = $derived(strokeWidth / 2);
+	const routeEndpointRadius = $derived(routeEndpointDotRadius(size));
 </script>
 
 <svg
@@ -109,4 +117,13 @@ export function runwaysToSymbolInput(runways: Runway[] | undefined): RunwaySymbo
 			</g>
 		{/each}
 	</g>
+
+	{#if showRouteEndpoint}
+		<circle
+			cx={center}
+			cy={center}
+			r={routeEndpointRadius}
+			fill={ROUTE_ENDPOINT_DOT_DEFAULTS.fill}
+		/>
+	{/if}
 </svg>

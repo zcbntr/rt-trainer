@@ -25,25 +25,38 @@
 	import Polyline from './Polyline.svelte';
 	import Marker from './Marker.svelte';
 	import { getRouteSegmentArrows } from './routeSegmentDecorations';
+	import type { PolylineLayerDetail } from '$lib/components/leaflet/types';
 	import type * as Leaflet from 'leaflet';
+
+	const ROUTE_HIT_AREA_WEIGHT = 16;
 
 	interface Props {
 		latLngArray: Leaflet.LatLngExpression[];
+		segmentIndex?: number;
+		insertable?: boolean;
 		highlighted?: boolean;
 		colour?: string;
 		weight?: number;
 		centerLineColour?: string;
 		centerLineWeight?: number;
+		insertDragStart?: (segmentIndex: number, detail: PolylineLayerDetail) => void;
 	}
 
 	let {
 		latLngArray,
+		segmentIndex = 0,
+		insertable = false,
 		highlighted = false,
 		colour = ROUTE_SEGMENT_DEFAULTS.colour,
 		weight = ROUTE_SEGMENT_DEFAULTS.weight,
 		centerLineColour = ROUTE_SEGMENT_DEFAULTS.centerLineColour,
-		centerLineWeight = ROUTE_SEGMENT_DEFAULTS.centerLineWeight
+		centerLineWeight = ROUTE_SEGMENT_DEFAULTS.centerLineWeight,
+		insertDragStart = () => {}
 	}: Props = $props();
+
+	function onHitAreaMouseDown(detail: PolylineLayerDetail) {
+		insertDragStart(segmentIndex, detail);
+	}
 
 	const arrowAnchor = routeSegmentArrowAnchor(
 		ROUTE_SEGMENT_DEFAULTS.arrowMarkerWidth,
@@ -59,9 +72,26 @@
 	});
 </script>
 
-<Polyline {latLngArray} {colour} fillOpacity={1} {weight} />
+<Polyline {latLngArray} {colour} fillOpacity={1} {weight} interactive={false} />
 {#if highlighted}
-	<Polyline {latLngArray} colour={centerLineColour} fillOpacity={1} weight={centerLineWeight} />
+	<Polyline
+		{latLngArray}
+		colour={centerLineColour}
+		fillOpacity={1}
+		weight={centerLineWeight}
+		interactive={false}
+	/>
+{/if}
+{#if insertable}
+	<Polyline
+		{latLngArray}
+		colour="transparent"
+		fillOpacity={0}
+		weight={ROUTE_HIT_AREA_WEIGHT}
+		opacity={0}
+		className="route-segment-hit-area"
+		mousedown={onHitAreaMouseDown}
+	/>
 {/if}
 {#each arrows as arrow, index (`${arrow.latLng[0]}-${arrow.latLng[1]}-${index}`)}
 	<Marker
@@ -89,3 +119,13 @@
 		</svg>
 	</Marker>
 {/each}
+
+<style>
+	:global(.route-segment-hit-area) {
+		cursor: grab;
+	}
+
+	:global(.route-segment-hit-area:active) {
+		cursor: grabbing;
+	}
+</style>

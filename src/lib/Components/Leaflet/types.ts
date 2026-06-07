@@ -25,3 +25,9 @@ export type PolygonLayerDetail = {
 	waypoint: Airspace | undefined;
 	polygon: Leaflet.Polygon;
 };
+
+export type PolylineLayerDetail = {
+	event: Leaflet.LeafletMouseEvent;
+	polyline: Leaflet.Polyline;
+	map: Leaflet.Map;
+};

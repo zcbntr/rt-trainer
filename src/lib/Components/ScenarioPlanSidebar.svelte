@@ -25,7 +25,7 @@
 	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { get } from 'svelte/store';
-	import FixWaypointMarkerIcon from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
+	import FixWaypointMarkerIcon, { isRouteEndpoint } from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
 	import AirportMarkerIcon, {
 		runwaysToSymbolInput
 	} from '$lib/components/leaflet/AirportMarkerIcon.svelte';
@@ -141,7 +141,7 @@
 					</p>
 				</div>
 			{/if}
-			{#each $WaypointsStore as waypoint (waypoint.id)}
+			{#each $WaypointsStore as waypoint, index (waypoint.id)}
 				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					class="flex flex-row place-content-center gap-2 card p-2"
@@ -165,9 +165,13 @@
 							<AirportMarkerIcon
 								size={SIDEBAR_WAYPOINT_ICON_SIZE}
 								runways={runwaysToSymbolInput(getAirportForWaypoint(waypoint)?.runways)}
+								showRouteEndpoint={isRouteEndpoint(index, $WaypointsStore.length)}
 							/>
 						{:else}
-							<FixWaypointMarkerIcon size={SIDEBAR_WAYPOINT_ICON_SIZE} />
+							<FixWaypointMarkerIcon
+								size={SIDEBAR_WAYPOINT_ICON_SIZE}
+								showRouteEndpoint={isRouteEndpoint(index, $WaypointsStore.length)}
+							/>
 						{/if}
 					</div>
 					<div class="flex flex-col place-content-center">

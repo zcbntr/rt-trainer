@@ -35,11 +35,12 @@
 		ukPracticeAreaRejectionMessage
 	} from '$lib/logic/aeronautics/ukPracticeArea';
 	import type * as Leaflet from 'leaflet';
-	import type { MarkerLayerDetail, PolygonLayerDetail } from '$lib/components/leaflet/types';
+	import type { MarkerLayerDetail, PolygonLayerDetail, PolylineLayerDetail } from '$lib/components/leaflet/types';
 	import RouteSegment from '$lib/components/leaflet/RouteSegment.svelte';
 	import FixWaypointMarkerIcon, {
 		FIX_WAYPOINT_MARKER_DEFAULTS,
-		fixWaypointMarkerAnchor
+		fixWaypointMarkerAnchor,
+		isRouteEndpoint
 	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
 	import AirportMarker from '$lib/components/leaflet/AirportMarker.svelte';
 	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
@@ -52,6 +53,11 @@
 	let showAllAirspaces = $state(true);
 	let unnamedWaypointCount = $state(1);
 	let dismissedBannerIds = $state<string[]>([]);
+	let suppressNextMapClick = $state(false);
+	let insertDragMap: Leaflet.Map | undefined;
+	let insertingWaypoint = $state<{ segmentIndex: number; lat: number; lng: number } | undefined>(
+		undefined
+	);
 
 	$effect(() => {
 		if ($AllAirportsStore.length === 0) {
@@ -119,12 +125,101 @@
 	}
 
 	function onMapClick(event: Leaflet.LeafletMouseEvent) {
+		if (suppressNextMapClick) {
+			suppressNextMapClick = false;
+			return;
+		}
 		if ($AwaitingServerResponseStore) return;
 
 		tryAddWaypoint(
 			+parseFloat(event.latlng.lat.toFixed(6)),
 			+parseFloat(event.latlng.lng.toFixed(6))
 		);
+	}
+
+	function roundCoord(value: number) {
+		return +parseFloat(value.toFixed(6));
+	}
+
+	function insertWaypointAt(index: number, lat: number, lng: number) {
+		const waypoints = get(WaypointsStore);
+		const waypoint = new Waypoint(
+			'Waypoint ' + getNthPhoneticAlphabetLetter(unnamedWaypointCount++),
+			[lng, lat],
+			WaypointType.Fix,
+			index
+		);
+		const updated = [...waypoints];
+		updated.splice(index, 0, waypoint);
+		updated.forEach((wp, wpIndex) => {
+			wp.index = wpIndex;
+		});
+		WaypointsStore.set(updated);
+	}
+
+	function cleanupInsertDrag() {
+		if (insertDragMap) {
+			insertDragMap.dragging.enable();
+			insertDragMap.off('mousemove', onInsertDragMove);
+			insertDragMap.off('mouseup', onInsertDragEnd);
+			insertDragMap = undefined;
+		}
+	}
+
+	function finishInsertDrag(finalLat: number, finalLng: number) {
+		if (!insertingWaypoint) return;
+
+		const segmentIndex = insertingWaypoint.segmentIndex;
+		const lat = roundCoord(finalLat);
+		const lng = roundCoord(finalLng);
+
+		insertingWaypoint = undefined;
+		suppressNextMapClick = true;
+		cleanupInsertDrag();
+
+		if (!isValidUkPracticeWaypoint([lng, lat])) {
+			alert(ukPracticeAreaRejectionMessage);
+			return;
+		}
+
+		insertWaypointAt(segmentIndex + 1, lat, lng);
+	}
+
+	function onRouteSegmentInsertStart(segmentIndex: number, detail: PolylineLayerDetail) {
+		if ($AwaitingServerResponseStore) return;
+
+		detail.event.originalEvent.preventDefault();
+		detail.event.originalEvent.stopPropagation();
+
+		insertingWaypoint = {
+			segmentIndex,
+			lat: roundCoord(detail.event.latlng.lat),
+			lng: roundCoord(detail.event.latlng.lng)
+		};
+
+		insertDragMap = detail.map;
+		detail.map.dragging.disable();
+		detail.map.on('mousemove', onInsertDragMove);
+		detail.map.on('mouseup', onInsertDragEnd);
+	}
+
+	function onInsertDragMove(event: Leaflet.LeafletMouseEvent) {
+		if (!insertingWaypoint) return;
+
+		insertingWaypoint = {
+			...insertingWaypoint,
+			lat: roundCoord(event.latlng.lat),
+			lng: roundCoord(event.latlng.lng)
+		};
+	}
+
+	function onInsertDragEnd(event: Leaflet.LeafletMouseEvent) {
+		finishInsertDrag(event.latlng.lat, event.latlng.lng);
+	}
+
+	function onInsertDragWindowMouseUp() {
+		if (!insertingWaypoint) return;
+		finishInsertDrag(insertingWaypoint.lat, insertingWaypoint.lng);
 	}
 
 	function tryAddWaypoint(lat: number, lng: number) {
@@ -267,6 +362,8 @@
 	}
 </script>
 
+<svelte:window onmouseup={onInsertDragWindowMouseUp} />
+
 <div class="flex min-h-0 flex-1 flex-col">
 	<div class="flex min-h-0 flex-1 flex-col">
 		<WarningBannerStack
@@ -334,13 +431,14 @@
 					{/if}
 				{/each}
 
-				{#each $WaypointsStore as waypoint (waypoint.id)}
+				{#each $WaypointsStore as waypoint, index (waypoint.id)}
 					{#key waypoint.location}
 						{#if waypoint.type == WaypointType.Airport}<AirportMarker
 								latLng={toLeafletLatLng(waypoint.location)}
 								aeroObject={waypoint}
 								baseSize={36}
 								runways={runwaysToSymbolInput(getAirportForWaypoint(waypoint)?.runways)}
+								showRouteEndpoint={isRouteEndpoint(index, $WaypointsStore.length)}
 							>
 								<Popup
 									><div class="flex flex-col gap-2">
@@ -367,7 +465,9 @@
 								dragend={onWaypointDragEnd}
 								draggable={true}
 							>
-								<FixWaypointMarkerIcon />
+								<FixWaypointMarkerIcon
+									showRouteEndpoint={isRouteEndpoint(index, $WaypointsStore.length)}
+								/>
 
 								<Popup
 									><div class="flex flex-col gap-2">
@@ -402,10 +502,24 @@
 									$WaypointPointsMapStore[index - 1] as [number, number],
 									$WaypointPointsMapStore[index] as [number, number]
 								]}
+								segmentIndex={index - 1}
+								insertable={true}
+								insertDragStart={onRouteSegmentInsertStart}
 							/>
 						{/key}
 					{/if}
 				{/each}
+
+				{#if insertingWaypoint}
+					<Marker
+						latLng={[insertingWaypoint.lat, insertingWaypoint.lng]}
+						width={FIX_WAYPOINT_MARKER_DEFAULTS.size}
+						height={FIX_WAYPOINT_MARKER_DEFAULTS.size}
+						iconAnchor={fixWaypointMarkerAnchor()}
+					>
+						<FixWaypointMarkerIcon />
+					</Marker>
+				{/if}
 			</Map>
 		</div>
 		<div class="flex h-20 w-full flex-row">
