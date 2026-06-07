@@ -15,6 +15,11 @@ import axios from 'axios';
 import type { AirportData, AirspaceData } from './logic/aeronautics/OpenAIPTypes';
 import { airspaceFromPlain, airportFromPlain } from './logic/transform';
 import { countAirspaceCrossings, toLeafletLatLng } from './logic/utils';
+import {
+	describeUnsupportedRouteRegions,
+	getRouteUnsupportedRegions,
+	type UnsupportedPracticeRegion
+} from './logic/aeronautics/ukPracticeArea';
 
 const initialAircraftDetails: AircraftDetails = {
 	prefix: 'STUDENT',
@@ -110,6 +115,21 @@ export const RouteDistanceDisplayStore = derived(
 		}
 	}
 );
+
+export const RouteUnsupportedRegionsStore = derived(WaypointsStore, ($WaypointsStore) => {
+	return getRouteUnsupportedRegions($WaypointsStore.map((waypoint) => waypoint.location));
+});
+
+export const RouteUnsupportedRegionsWarningStore = derived(
+	RouteUnsupportedRegionsStore,
+	($RouteUnsupportedRegionsStore): string | undefined => {
+		if ($RouteUnsupportedRegionsStore.length === 0) return undefined;
+
+		return describeUnsupportedRouteRegions($RouteUnsupportedRegionsStore);
+	}
+);
+
+export type { UnsupportedPracticeRegion };
 
 export const AllAirspacesStore = writable<Airspace[]>([]);
 

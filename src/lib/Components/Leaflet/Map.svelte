@@ -15,6 +15,7 @@
 		view?: Leaflet.LatLngExpression | undefined;
 		zoom?: number | undefined;
 		fitPadding?: number | [number, number];
+		maxBounds?: Leaflet.LatLngBoundsExpression | undefined;
 		/** Change when map overlays change so the map can recalculate its size. */
 		resizeKey?: unknown;
 		children?: import('svelte').Snippet;
@@ -26,6 +27,7 @@
 		view = [52.33, -1.42],
 		zoom = 8,
 		fitPadding = 32,
+		maxBounds = undefined,
 		resizeKey = undefined,
 		children,
 		click = () => {}
@@ -92,7 +94,12 @@
 			const center = hasViewZoom() ? view! : ([54, -4] as Leaflet.LatLngExpression);
 			const initialZoom = hasViewZoom() ? zoom! : 6;
 
-			map = L.map(mapElement, { center, zoom: initialZoom })
+			map = L.map(mapElement, {
+				center,
+				zoom: initialZoom,
+				maxBounds,
+				maxBoundsViscosity: maxBounds ? 1 : undefined
+			})
 				.on('click', (e: Leaflet.LeafletMouseEvent) => click(e))
 				.on('popupopen', async (e: Leaflet.PopupEvent) => {
 					await tick();

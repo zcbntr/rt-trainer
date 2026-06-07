@@ -10,6 +10,7 @@
 		OnRouteAirspacesStore,
 		OnRouteAirspaceCrossingsStore,
 		RouteDistanceDisplayStore,
+		RouteUnsupportedRegionsWarningStore,
 		ScenarioSeedStore,
 		WaypointPointsMapStore,
 		WaypointsStore,
@@ -26,8 +27,13 @@
 		getNthPhoneticAlphabetLetter,
 		lngLatBoundsToLeaflet,
 		toLeafletLatLng,
+		ukPlannerBounds,
 		wellesbourneMountfordLatLng
 	} from '$lib/logic/utils';
+	import {
+		isValidUkPracticeWaypoint,
+		ukPracticeAreaRejectionMessage
+	} from '$lib/logic/aeronautics/ukPracticeArea';
 	import type * as Leaflet from 'leaflet';
 	import type { MarkerLayerDetail, PolygonLayerDetail } from '$lib/components/leaflet/types';
 	import Polyline from '$lib/components/leaflet/Polyline.svelte';
@@ -35,10 +41,13 @@
 	import { BsAirplaneFill } from 'svelte-icons-pack/bs';
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
+	import WarningBannerStack from '$lib/components/WarningBannerStack.svelte';
+	import type { WarningBannerItem } from '$lib/components/WarningBanner.types';
 
 	let showAllAirports = $state(true);
 	let showAllAirspaces = $state(true);
 	let unnamedWaypointCount = $state(1);
+	let dismissedBannerIds = $state<string[]>([]);
 
 	$effect(() => {
 		if ($AllAirportsStore.length === 0) {
@@ -49,7 +58,9 @@
 		}
 	});
 
-	const durationEstimate = $derived($OnRouteAirportsStore.length * 8 + $OnRouteAirspacesStore.length * 5);
+	const durationEstimate = $derived(
+		$OnRouteAirportsStore.length * 8 + $OnRouteAirspacesStore.length * 5
+	);
 
 	const routeBounds = $derived.by((): Leaflet.LatLngBoundsExpression | undefined => {
 		const waypoints = $WaypointsStore;
@@ -75,13 +86,47 @@
 			$AwaitingServerResponseStore
 	);
 
+	const plannerBanners = $derived.by((): WarningBannerItem[] => {
+		const banners: WarningBannerItem[] = [
+			{
+				id: 'student-project-disclaimer',
+				message:
+					'RT Trainer is a student project and may have inaccuracies. Do not rely on just this tool for your practice.',
+				variant: 'info'
+			}
+		];
+
+		if ($RouteUnsupportedRegionsWarningStore) {
+			banners.push({
+				id: 'unsupported-route',
+				title: 'Unsupported route areas',
+				message: $RouteUnsupportedRegionsWarningStore,
+				variant: 'warning',
+				dismissible: true
+			});
+		}
+
+		return banners;
+	});
+
+	function dismissBanner(id: string) {
+		if (dismissedBannerIds.includes(id)) return;
+		dismissedBannerIds = [...dismissedBannerIds, id];
+	}
+
 	function onMapClick(event: Leaflet.LeafletMouseEvent) {
 		if ($AwaitingServerResponseStore) return;
 
-		addWaypoint(
+		tryAddWaypoint(
 			+parseFloat(event.latlng.lat.toFixed(6)),
 			+parseFloat(event.latlng.lng.toFixed(6))
 		);
+	}
+
+	function tryAddWaypoint(lat: number, lng: number) {
+		if (!isValidUkPracticeWaypoint([lng, lat])) return;
+
+		addWaypoint(lat, lng);
 	}
 
 	function addWaypoint(lat: number, lng: number) {
@@ -114,9 +159,19 @@
 		const waypoint = waypoints.find((wp) => wp.id === detail.aeroObject!.id);
 		if (!waypoint) return;
 
+		const previousLocation: [number, number] = [waypoint.location[0], waypoint.location[1]];
 		const { lat, lng } = detail.marker.getLatLng();
-		waypoint.location[0] = +parseFloat(lng.toFixed(6));
-		waypoint.location[1] = +parseFloat(lat.toFixed(6));
+		const nextLng = +parseFloat(lng.toFixed(6));
+		const nextLat = +parseFloat(lat.toFixed(6));
+
+		if (!isValidUkPracticeWaypoint([nextLng, nextLat])) {
+			detail.marker.setLatLng(toLeafletLatLng(previousLocation));
+			alert(ukPracticeAreaRejectionMessage);
+			return;
+		}
+
+		waypoint.location[0] = nextLng;
+		waypoint.location[1] = nextLat;
 		WaypointsStore.set([...waypoints]);
 	}
 
@@ -145,9 +200,17 @@
 			lngStringElement?.value &&
 			parseFloat(lngStringElement.value)
 		) {
+			const nextLng = +parseFloat(parseFloat(lngStringElement.value).toFixed(6));
+			const nextLat = +parseFloat(parseFloat(latStringElement.value).toFixed(6));
+
+			if (!isValidUkPracticeWaypoint([nextLng, nextLat])) {
+				alert(ukPracticeAreaRejectionMessage);
+				return;
+			}
+
 			waypoint.name = nameElement.value;
-			waypoint.location[0] = +parseFloat(parseFloat(lngStringElement.value).toFixed(6));
-			waypoint.location[1] = +parseFloat(parseFloat(latStringElement.value).toFixed(6));
+			waypoint.location[0] = nextLng;
+			waypoint.location[1] = nextLat;
 			WaypointsStore.set([...get(WaypointsStore)]);
 		}
 	}
@@ -197,12 +260,18 @@
 
 <div class="flex min-h-0 flex-1 flex-col">
 	<div class="flex min-h-0 flex-1 flex-col">
+		<WarningBannerStack
+			banners={plannerBanners}
+			dismissedIds={dismissedBannerIds}
+			ondismiss={dismissBanner}
+		/>
 		<div class="xs:pr-3 flex min-h-0 flex-1 flex-col">
 			<Map
 				bounds={routeBounds}
 				view={wellesbourneMountfordLatLng}
 				zoom={8}
 				fitPadding={40}
+				maxBounds={ukPlannerBounds}
 				resizeKey={`${$WaypointsStore.length}-${$WaypointPointsMapStore.length}`}
 				click={onMapClick}
 			>
@@ -240,7 +309,7 @@
 							airspaceType={airspace.type}
 							aeroObject={airspace}
 							click={(detail: PolygonLayerDetail) => {
-								addWaypoint(
+								tryAddWaypoint(
 									+parseFloat(detail.event.latlng.lat.toFixed(6)),
 									+parseFloat(detail.event.latlng.lng.toFixed(6))
 								);
