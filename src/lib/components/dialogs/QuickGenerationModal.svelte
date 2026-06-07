@@ -6,7 +6,7 @@
 		fetchAirports,
 		fetchAirspaces
 	} from '$lib/stores';
-	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
+	import { generatePracticeRoute } from '$lib/logic/RouteGeneration';
 	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import { init } from '@paralleldrive/cuid2';
 	import { get } from 'svelte/store';
@@ -35,14 +35,16 @@
 	});
 
 	function onFormSubmit() {
-		const routeData = generateFRTOLRouteFromSeed(
+		const result = generatePracticeRoute(
 			formData.routeSeed,
+			formData.scenarioSeed,
 			get(AllAirportsStore),
 			get(AllAirspacesStore),
-			DEFAULT_MAX_FLIGHT_LEVEL
+			DEFAULT_MAX_FLIGHT_LEVEL,
+			formData.hasEmergencies
 		);
-		if (routeData) {
-			loadRouteData(routeData);
+		if (result) {
+			loadRouteData(result.routeData);
 		} else {
 			failedRouteSeed = formData.routeSeed;
 		}

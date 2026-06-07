@@ -69,8 +69,8 @@ export default class Airport {
 		this.private = privateAerodrome;
 		this.skydiveActivity = skydiveActivity;
 		this.winchOnly = winchOnly;
-		this.runways = runways;
-		this.frequencies = frequencies;
+		this.runways = runways ?? [];
+		this.frequencies = frequencies ?? [];
 		// All airports should have coordinates and elevation but for some reason one is always undefined so this gets around it
 		if (coordinates != undefined && elevation != undefined) {
 			this.metorData = this.generateMETORData(coordinates[1], elevation);
@@ -103,13 +103,29 @@ export default class Airport {
 		return this.metorData.getSample(seed);
 	}
 
+	public hasTakeoffRunway(): boolean {
+		return this.getUsableTakeoffRunways().length > 0;
+	}
+
+	public hasLandingRunway(): boolean {
+		return this.getUsableLandingRunways().length > 0;
+	}
+
+	private getUsableTakeoffRunways(): Runway[] {
+		return this.runways.filter((runway) => !runway.landingOnly);
+	}
+
+	private getUsableLandingRunways(): Runway[] {
+		return this.runways.filter((runway) => !runway.takeOffOnly);
+	}
+
 	public getTakeoffRunway(seed: number): Runway {
-		let index = seed % this.runways.length;
-		while (this.runways[index].landingOnly) {
-			index = (index + 1) % this.runways.length;
+		const runways = this.getUsableTakeoffRunways();
+		if (runways.length === 0) {
+			throw new Error(`No takeoff runway available for ${this.name}`);
 		}
 
-		return this.runways[index];
+		return runways[Math.abs(seed) % runways.length];
 	}
 
 	// Needs to be implemented for each aerodrome depending on when pilots move to next frequency from takeoff
@@ -118,12 +134,12 @@ export default class Airport {
 	}
 
 	public getLandingRunway(seed: number): Runway {
-		let index = seed % this.runways.length;
-		while (this.runways[index].takeOffOnly) {
-			index = (index + 1) % this.runways.length;
+		const runways = this.getUsableLandingRunways();
+		if (runways.length === 0) {
+			throw new Error(`No landing runway available for ${this.name}`);
 		}
 
-		return this.runways[index];
+		return runways[Math.abs(seed) % runways.length];
 	}
 
 	/**

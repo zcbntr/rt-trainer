@@ -26,8 +26,7 @@ export async function getAllValidAirspaceData(): Promise<Airspace[]> {
 export async function getAllValidAirportData(): Promise<Airport[]> {
 	const airportData = await getAllUKAirportsFromOpenAIP();
 	const airports = airportData.map((airportData) => airportDataToAirport(airportData));
-	airports.filter((airport) => airport.runways && airport.runways.length > 0);
-	return airports;
+	return airports.filter((airport) => airport.runways.length > 0);
 }
 
 export function airportDataToAirport(airportData: AirportData): Airport {
@@ -77,7 +76,7 @@ export function airportDataToAirport(airportData: AirportData): Airport {
 				runway.lightingSystem,
 				runway.visualApproachAids
 			);
-		}),
+		}) ?? [],
 		airportData.frequencies?.map((frequency) => {
 			return new Frequency(
 				frequency.value,
@@ -86,7 +85,7 @@ export function airportDataToAirport(airportData: AirportData): Airport {
 				frequency.type,
 				frequency.primary
 			);
-		})
+		}) ?? []
 	);
 }
 

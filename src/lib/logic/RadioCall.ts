@@ -5,6 +5,7 @@ import {
 	getAbbreviatedCallsign,
 	getCompassDirectionFromHeading,
 	isCallsignStandardRegistration,
+	normalizeAviationNumberWords,
 	processString,
 	removePunctuation,
 	replaceWithPhoneticAlphabet,
@@ -198,21 +199,14 @@ export default class RadioCall {
 
 	// Eventually implement a way of checking for different spellings of phonetic alphabet words and having r on the end of five and nine, maybe map fiver and niner to five and nine
 	private radioFrequencyStatedEqualsCurrent(): boolean {
-		const radioFrequencyPhonetics = processString(
-			replaceWithPhoneticAlphabet(this.currentRadioFrequency)
+		const radioFrequencyPhonetics = normalizeAviationNumberWords(
+			processString(replaceWithPhoneticAlphabet(this.currentRadioFrequency))
 		);
-		const radioFrequencyPhoneticsNoDecimal = processString(
-			radioFrequencyPhonetics.replace('decimal', '')
-		);
+		const radioFrequencyPhoneticsNoDecimal = radioFrequencyPhonetics.replace('decimal', '');
+		const normalizedCall = normalizeAviationNumberWords(this.getRadioCall());
 		return (
-			this.getRadioCall()
-				.replace('five ', 'fiver ')
-				.replace('nine ', 'niner ')
-				.includes(radioFrequencyPhonetics) ||
-			this.getRadioCall()
-				.replace('five ', 'fiver ')
-				.replace('nine ', 'niner ')
-				.includes(radioFrequencyPhoneticsNoDecimal)
+			normalizedCall.includes(radioFrequencyPhonetics) ||
+			normalizedCall.includes(radioFrequencyPhoneticsNoDecimal)
 		);
 	}
 
@@ -399,7 +393,7 @@ export default class RadioCall {
 	}
 
 	public getTargetCallsignWords(): string[] {
-		return this.currentTarget.split(' ');
+		return processString(this.currentTarget).split(' ');
 	}
 
 	public callContainsTargetCallsign(): boolean {

@@ -206,6 +206,11 @@ export function getAbbreviatedCallsign(
 	return abbreviatedCallsign;
 }
 
+/* Normalise optional aviation pronunciations (fiver/niner) to standard number words. */
+export function normalizeAviationNumberWords(str: string): string {
+	return str.replace(/\bfiver\b/g, 'five').replace(/\bniner\b/g, 'nine');
+}
+
 export function replacePhoneticAlphabetDecimalWithNumber(str: string): string {
 	return str.replace(/(\d{3}) decimal (\d{3})/g, '$1.$2');
 }

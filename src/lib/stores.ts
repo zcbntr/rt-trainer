@@ -30,9 +30,9 @@ const initialAircraftDetails: AircraftDetails = {
 const initialRadioState: RadioState = {
 	mode: 'OFF',
 	dialMode: 'OFF',
-	activeFrequency: '000.000',
-	standbyFrequency: '000.000',
-	tertiaryFrequency: '000.000'
+	activeFrequency: '121.800',
+	standbyFrequency: '129.800',
+	tertiaryFrequency: '177.200'
 };
 
 const initialTransponderState: TransponderState = {

@@ -3,7 +3,45 @@ import type Airspace from './aeronautics/Airspace';
 import { simpleHash } from './utils';
 import type Airport from './aeronautics/Airport';
 import type { RouteData } from './scenarioRoute';
+import { generateScenario } from './ScenarioGenerator';
 import * as turf from '@turf/turf';
+
+const PRACTICE_ROUTE_MAX_ATTEMPTS = 10;
+
+function getAirportsWithTakeoffRunways(airports: Airport[]): Airport[] {
+	return airports.filter((airport) => airport.hasTakeoffRunway());
+}
+
+export function generatePracticeRoute(
+	routeSeed: string,
+	scenarioSeed: string,
+	airports: Airport[],
+	airspaces: Airspace[],
+	maxFL: number,
+	hasEmergencies: boolean,
+	maxAttempts: number = PRACTICE_ROUTE_MAX_ATTEMPTS
+): { routeData: RouteData; routeSeed: string } | undefined {
+	for (let attempt = 0; attempt < maxAttempts; attempt++) {
+		const seed = attempt === 0 ? routeSeed : `${routeSeed}-${attempt}`;
+		const routeData = generateFRTOLRouteFromSeed(seed, airports, airspaces, maxFL);
+		if (!routeData) continue;
+
+		try {
+			generateScenario(
+				scenarioSeed,
+				routeData.waypoints,
+				routeData.airports,
+				routeData.airspaces,
+				hasEmergencies
+			);
+			return { routeData, routeSeed: seed };
+		} catch (error) {
+			console.warn(`Skipping route seed "${seed}" due to scenario generation failure`, error);
+		}
+	}
+
+	return undefined;
+}
 
 export function generateFRTOLRouteFromSeed(
 	seedString: string,
@@ -19,6 +57,11 @@ export function generateFRTOLRouteFromSeed(
 		!airspaces ||
 		airspaces.length === 0
 	) {
+		return undefined;
+	}
+
+	const airportsWithTakeoffRunways = getAirportsWithTakeoffRunways(airports);
+	if (airportsWithTakeoffRunways.length === 0) {
 		return undefined;
 	}
 
@@ -40,7 +83,10 @@ export function generateFRTOLRouteFromSeed(
 		validRoute = true;
 
 		startAirport =
-			airports[Math.floor(Math.abs(seed * 987654321 + iterations * 123456789)) % airports.length];
+			airportsWithTakeoffRunways[
+				Math.floor(Math.abs(seed * 987654321 + iterations * 123456789)) %
+					airportsWithTakeoffRunways.length
+			];
 		const currentStartAirport = startAirport;
 		if (startAirport.type == 3 || startAirport.type == 9) {
 			startAirportIsControlled = true;
@@ -83,6 +129,7 @@ export function generateFRTOLRouteFromSeed(
 
 			if (
 				(airport.type == 0 || airport.type == 2 || airport.type == 3 || airport.type == 9) &&
+				airport.hasLandingRunway() &&
 				distance < 100
 			)
 				possibleDestinations.push(airport);
@@ -169,9 +216,13 @@ export function generateFRTOLRouteFromSeed(
 		}
 	}
 
-	if (iterations >= maxIterations || !chosenMATZ || !startAirport) {
+	if (iterations >= maxIterations || !chosenMATZ || !startAirport || !destinationAirport) {
 		console.log(`Could not find a valid route after ${iterations} iterations`);
 		return;
+	}
+
+	if (!startAirport.hasTakeoffRunway() || !destinationAirport.hasLandingRunway()) {
+		return undefined;
 	}
 
 	console.log('Route generated in ' + iterations + ' iterations');

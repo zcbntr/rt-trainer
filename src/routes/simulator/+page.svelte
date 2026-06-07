@@ -5,7 +5,7 @@
 	import { dialog } from '$lib/components/singletons/dialog.svelte';
 	import { toaster } from '$lib/components/singletons/toaster';
 	import QuickLoadScenarioDataModal from '$lib/components/dialogs/QuickLoadScenarioDataModal.svelte';
-	import { generateFRTOLRouteFromSeed } from '$lib/logic/RouteGeneration';
+	import { generatePracticeRoute } from '$lib/logic/RouteGeneration';
 	import { generateScenario } from '$lib/logic/ScenarioGenerator';
 	import { loadRouteData } from '$lib/logic/scenarioRoute';
 	import 'leaflet/dist/leaflet.css';
@@ -216,14 +216,16 @@
 		try {
 			await ensureAeronauticalData();
 
-			const routeData = generateFRTOLRouteFromSeed(
+			const result = generatePracticeRoute(
 				data.routeSeed,
+				data.scenarioSeed,
 				get(AllAirportsStore),
 				get(AllAirspacesStore),
-				get(maxFlightLevelStore)
+				get(maxFlightLevelStore),
+				data.hasEmergencies
 			);
 
-			if (!routeData) {
+			if (!result) {
 				dialog.trigger({
 					type: 'alert',
 					title: 'Route generation failed',
@@ -232,7 +234,7 @@
 				return;
 			}
 
-			loadRouteData(routeData);
+			loadRouteData(result.routeData);
 			seed = data.scenarioSeed;
 			hasEmergencies = data.hasEmergencies;
 			criticalDataMissing = false;
@@ -302,8 +304,7 @@
 		'Get Started!',
 		'Turning on your Radio Stack',
 		'Setting Your Radio Frequency',
-		'Make your first Radio Call',
-		'Well Done!'
+		'Make your first Radio Call'
 	];
 
 	// Server state
@@ -540,6 +541,9 @@
 		}
 
 		tutorialStep4Valid = true;
+		if (get(TutorialStore)) {
+			cancelTutorial();
+		}
 		// Reset failed attempts
 		failedAttempts = 0;
 
@@ -715,7 +719,7 @@
 	<div class="w-full max-w-5xl p-5">
 		<div class="flex flex-row flex-wrap place-content-center gap-5">
 			{#if $TutorialStore && !tutorialComplete}
-				<div class="card rounded-lg bg-primary-900 p-3 text-white sm:mx-10 sm:w-7/12">
+				<div class="w-xl card rounded-lg bg-primary-900 p-3 text-white">
 					<Steps
 						class="w-full"
 						count={tutorialStepCount}
@@ -768,11 +772,6 @@
 								</li>
 							</ul>
 						</Steps.Content>
-						<Steps.Content index={4}>
-							<h3 class="mb-2 h3">{tutorialStepTitles[4]}</h3>
-							You have completed the basic tutorial. Familiarise yourself with the rest of the simulator
-							and complete the route.
-						</Steps.Content>
 
 						<div class="mt-4 flex items-center justify-between gap-2">
 							<Steps.PrevTrigger class="btn preset-tonal">Back</Steps.PrevTrigger>
@@ -785,7 +784,9 @@
 										Skip Tutorial
 									</button>
 								{/if}
-								<Steps.NextTrigger class="btn preset-tonal">Next</Steps.NextTrigger>
+								<Steps.NextTrigger class="btn preset-tonal">
+									{tutorialCurrentStep === tutorialStepCount - 1 ? 'Complete' : 'Next'}
+								</Steps.NextTrigger>
 							</div>
 						</div>
 					</Steps>
@@ -908,7 +909,7 @@
 
 			<Altimeter />
 
-			<div class="flex w-full flex-row flex-wrap gap-5 p-2 text-neutral-600/50">
+			<div class="flex w-full flex-row flex-wrap gap-5 p-2 text-neutral-300">
 				<div>
 					Your callsign: {$AircraftDetailsStore.prefix}
 					{$AircraftDetailsStore.callsign}

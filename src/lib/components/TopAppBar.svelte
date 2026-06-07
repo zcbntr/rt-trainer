@@ -19,7 +19,9 @@
 <!-- Hide app bar if not enabled -->
 {#if enabled}
 	<AppBar>
-		<AppBar.Toolbar class="grid w-full grid-cols-[1fr_auto] items-center px-4 py-2 sm:p-4">
+		<AppBar.Toolbar
+			class="grid w-full grid-cols-[1fr_auto] items-center px-3 py-1 sm:px-4 sm:py-1.5"
+		>
 			<AppBar.Lead>
 				<div class="flex items-center">
 					<button
@@ -41,7 +43,7 @@
 					<strong
 						><a
 							href={resolve('/')}
-							class="btn text-xl uppercase sm:text-2xl"
+							class="btn text-lg uppercase sm:text-xl"
 							data-sveltekit-preload-data="hover">RT Trainer</a
 						></strong
 					>
@@ -49,12 +51,12 @@
 			</AppBar.Lead>
 			<AppBar.Trail>
 				<a
-					class="btn btn-icon-lg"
+					class="btn-icon btn"
 					href="https://github.com/zcbntr/rt-trainer"
 					target="_blank"
 					rel="noreferrer"
 				>
-					<GithubSolid class="size-9" />
+					<GithubSolid class="size-6" />
 				</a>
 			</AppBar.Trail>
 		</AppBar.Toolbar>

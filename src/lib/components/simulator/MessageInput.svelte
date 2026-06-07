@@ -6,7 +6,6 @@
 		SpeechInputEnabledStore,
 		UserMessageStore
 	} from '$lib/stores';
-	import { onMount } from 'svelte';
 	import { Switch } from '@skeletonlabs/skeleton-svelte';
 	import HoverTooltip from '$lib/components/HoverTooltip.svelte';
 	import { dialog } from '$lib/components/singletons/dialog.svelte';
@@ -22,41 +21,23 @@
 		speechRecognitionSupported = false,
 		submit: onSubmit = () => {}
 	}: Props = $props();
-	let mounted = $state(false);
 	let message = $state('');
-
-	$effect(() => {
-		if (!mounted) return;
-		const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
-		if (inputBox?.value != null) {
-			message = inputBox.value;
-		}
-	});
 
 	const handleDelete = () => {
 		resetBox();
 	};
 
 	const resetBox = () => {
-		const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
-		inputBox.value = '';
 		message = '';
-		UserMessageStore.set(message);
+		UserMessageStore.set('');
 	};
 
 	const submit = () => {
-		const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
-		message = inputBox.value;
 		UserMessageStore.set(message);
 		onSubmit();
 	};
 
 	function fillInputFromStore(value: string) {
-		resetBox();
-		const inputBox = document.getElementById('call-input') as HTMLTextAreaElement;
-		if (inputBox) {
-			inputBox.value = value;
-		}
 		message = value;
 		UserMessageStore.set(value);
 	}
@@ -76,10 +57,6 @@
 			SpeechBufferStore.set('');
 		}
 	});
-
-	onMount(() => {
-		mounted = true;
-	});
 </script>
 
 <div
@@ -94,8 +71,8 @@
 			cols="50"
 			maxlength="200"
 			placeholder="Enter your radio message here."
-		>
-		</textarea>
+			bind:value={message}
+		></textarea>
 	</div>
 
 	<div class="flex flex-row flex-wrap place-content-evenly gap-x-1 pb-1 lg:flex-nowrap">
