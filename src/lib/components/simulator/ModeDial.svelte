@@ -97,38 +97,49 @@
 		centerDiv.appendChild(ModeDiv);
 	}
 
-	function setMode(modeIndex: number) {
-		// goes from -150 to 150
+	function applyVisualMode(modeIndex: number): void {
 		const modesMultiplier = Math.round(300 / Modes.length);
 		const ModeDial = document.getElementById('mode-dial-' + id) as HTMLDivElement;
-		if (ModeDial != null) {
-			if (Modes.length == 2) {
-				if (modeIndex == 0) {
-					ModeDial.style.transform = 'rotate(-150deg)';
-					DialEnabled = false;
-				} else {
-					ModeDial.style.transform = 'rotate(0deg)';
-					DialEnabled = true;
-				}
+		if (ModeDial == null) return;
+
+		if (Modes.length == 2) {
+			if (modeIndex == 0) {
+				ModeDial.style.transform = 'rotate(-150deg)';
+				DialEnabled = false;
 			} else {
-				if (modeIndex == 0) {
-					ModeDial.style.transform = 'rotate(-150deg)';
-					DialEnabled = false;
-				} else {
-					var newRotation = modeIndex * modesMultiplier - 150;
-					ModeDial.style.transform = 'rotate(' + newRotation + 'deg)';
-					DialEnabled = true;
-				}
+				ModeDial.style.transform = 'rotate(0deg)';
+				DialEnabled = true;
 			}
+			return;
 		}
 
+		if (modeIndex == 0) {
+			ModeDial.style.transform = 'rotate(-150deg)';
+			DialEnabled = false;
+		} else {
+			const newRotation = modeIndex * modesMultiplier - 150;
+			ModeDial.style.transform = 'rotate(' + newRotation + 'deg)';
+			DialEnabled = true;
+		}
+	}
+
+	function setMode(modeIndex: number) {
+		applyVisualMode(modeIndex);
 		CurrentModeIndex = modeIndex;
 		modeChange(modeIndex);
 	}
 
+	let modesAdded = $state(false);
+
 	onMount(() => {
 		addModes();
-		modeChange(CurrentModeIndex);
+		modesAdded = true;
+		applyVisualMode(CurrentModeIndex);
+	});
+
+	$effect(() => {
+		if (!modesAdded) return;
+		applyVisualMode(CurrentModeIndex);
 	});
 </script>
 
@@ -147,7 +158,6 @@
 			aria-label="Mode Dial"
 			tabindex="0"
 			role="button"
-			style="transform: rotate(-150deg);"
 		>
 			{#if Modes.length > 2}
 				<div class="absolute" style="left: 8px; top: 30%; width: 14px; pointer-events: none;">

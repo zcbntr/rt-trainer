@@ -87,6 +87,9 @@ export const ScenarioPointsStore = derived(ScenarioStore, ($ScenarioStore) => {
 
 export const WaypointsStore = writable<Waypoint[]>([]);
 
+/** Used by the scenario planner page and sidebar when persisting unnamed fix labels. */
+export const PlannerUnnamedWaypointCountStore = writable(1);
+
 export const WaypointPointsMapStore = derived(WaypointsStore, ($WaypointsStore) => {
 	return $WaypointsStore.map((waypoint) => toLeafletLatLng(waypoint.location));
 });
@@ -282,6 +285,18 @@ export const NullRouteStore = writable<boolean>(false);
 // Server response stores - for blocking repeated server requests
 export const AwaitingServerResponseStore = writable<boolean>(false);
 
+export function ResetSimulatorProgressStores(): void {
+	CurrentScenarioPointIndexStore.set(get(StartPointIndexStore));
+	RadioStateStore.set({ ...initialRadioState });
+	TransponderStateStore.set({ ...initialTransponderState });
+	AltimeterStateStore.set({ ...initialAltimeterState });
+	UserMessageStore.set('');
+	ExpectedUserMessageStore.set('');
+	MostRecentlyReceivedMessageStore.set('');
+	RadioCallsHistoryStore.set([]);
+	ScenarioStore.set(undefined);
+}
+
 export function ClearSimulationStores(): void {
 	AircraftDetailsStore.set(initialAircraftDetails);
 	ScenarioSeedStore.set('');
@@ -299,7 +314,9 @@ export function ClearSimulationStores(): void {
 	ScenarioStore.set(undefined);
 	WaypointsStore.set([]);
 	CurrentScenarioPointIndexStore.set(0);
+	StartPointIndexStore.set(0);
 	EndPointIndexStore.set(0);
+	RadioCallsHistoryStore.set([]);
 	NullRouteStore.set(false);
 }
 

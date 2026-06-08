@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import SvgDisplay from '$lib/components/SVGDisplay.svelte';
+	import { clearSimulatorPersistedState } from '$lib/persistence/localStorageState';
 	import { ClearSimulationStores } from '$lib/stores';
 	import { resolve } from '$app/paths';
 	import { CheckOutline } from 'flowbite-svelte-icons';
@@ -57,6 +58,7 @@
 			<div class="flex flex-wrap gap-4">
 				<button
 					onclick={() => {
+						clearSimulatorPersistedState();
 						ClearSimulationStores();
 						goto(resolve('/simulator?tutorial=true'));
 					}}

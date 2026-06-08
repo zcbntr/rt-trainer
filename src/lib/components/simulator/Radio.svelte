@@ -21,6 +21,19 @@
 
 	const radioPowered = $derived($RadioStateStore.dialMode !== 'OFF');
 
+	function radioDialIndexForMode(dialMode: 'OFF' | 'SBY'): number {
+		return dialMode === 'OFF' ? 0 : 1;
+	}
+
+	let radioDialModeIndex = $state(radioDialIndexForMode(get(RadioStateStore).dialMode));
+
+	$effect(() => {
+		const nextIndex = radioDialIndexForMode($RadioStateStore.dialMode);
+		if (radioDialModeIndex !== nextIndex) {
+			radioDialModeIndex = nextIndex;
+		}
+	});
+
 	function parseFrequency(value: string): number {
 		const parsed = parseFloat(value);
 		return Number.isFinite(parsed) ? parsed : 0;
@@ -56,10 +69,16 @@
 
 	function onDialModeChange(newDialModeIndex: number) {
 		const isOff = newDialModeIndex === 0;
+		const targetDialMode = isOff ? 'OFF' : 'SBY';
+		const current = get(RadioStateStore);
+
+		if (current.dialMode === targetDialMode && (isOff || current.mode !== 'OFF')) {
+			return;
+		}
 
 		RadioStateStore.update((state) => ({
 			...state,
-			dialMode: isOff ? 'OFF' : 'SBY',
+			dialMode: targetDialMode,
 			...(!isOff && state.mode === 'OFF' ? { mode: 'COM' as const } : {})
 		}));
 	}
@@ -100,11 +119,11 @@
 </script>
 
 <div
-	class="flex max-w-screen-lg grow flex-row flex-wrap place-content-evenly gap-2 card bg-neutral-600 p-3 text-white"
+	class="flex max-w-5xl grow flex-row flex-wrap place-content-evenly gap-2 card bg-neutral-600 p-3 text-white"
 >
 	<Dial
 		Modes={RadioDialModes}
-		CurrentModeIndex={0}
+		bind:CurrentModeIndex={radioDialModeIndex}
 		id="radio-mode-dial"
 		modeChange={onDialModeChange}
 	/>

@@ -1,42 +1,45 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import FrequencyDial from './FrequencyDial.svelte';
 	import Dial from './ModeDial.svelte';
 	import TransponderDisplay from './TransponderDisplay.svelte';
 	import { TransponderStateStore } from '$lib/stores';
+	import type { TransponderState } from '$lib/logic/SimulatorTypes';
 	import { get } from 'svelte/store';
 
-	const transponderDialModes: ArrayMaxLength7MinLength2 = [
-		'OFF',
-		'SBY',
-		'GND',
-		'ON',
-		'ALT',
-		'TEST'
-	];
+	const transponderDialModes = ['OFF', 'SBY', 'GND', 'ON', 'ALT', 'TEST'] as const;
 
-	type ArrayMaxLength7MinLength2 = readonly [
-		string,
-		string,
-		string?,
-		string?,
-		string?,
-		string?,
-		string?
-	];
+	function dialIndexForMode(dialMode: string): number {
+		const index = transponderDialModes.indexOf(dialMode as (typeof transponderDialModes)[number]);
+		return index >= 0 ? index : 0;
+	}
 
-	let dialModeIndex: number = $state(0);
-	let displayOn: boolean = $state(false);
-	let digitArr = $state([7, 0, 0, 0]);
-	let frequencyDialEnabled: boolean = $state(false);
-	let displayDigitSelected: number = $state(0);
+	function digitsForFrequency(frequency: string): number[] {
+		return frequency
+			.padStart(4, '0')
+			.slice(-4)
+			.split('')
+			.map((digit) => Number.parseInt(digit, 10));
+	}
 
-	function syncFrequencyToStore() {
+	function applyTransponderUi(state: TransponderState): void {
+		dialModeIndex = dialIndexForMode(state.dialMode);
+		displayOn = state.dialMode !== 'OFF';
+		digitArr = digitsForFrequency(state.frequency);
+		frequencyDialEnabled = state.dialMode !== 'OFF';
+	}
+
+	const initialTransponderState = get(TransponderStateStore);
+	let dialModeIndex = $state(dialIndexForMode(initialTransponderState.dialMode));
+	let displayOn = $state(initialTransponderState.dialMode !== 'OFF');
+	let digitArr = $state(digitsForFrequency(initialTransponderState.frequency));
+	let frequencyDialEnabled = $state(initialTransponderState.dialMode !== 'OFF');
+	let displayDigitSelected = $state(0);
+
+	function syncFrequencyToStore(): void {
 		const squawk = digitArr.join('');
 		TransponderStateStore.update((state) => ({ ...state, frequency: squawk }));
 	}
 
-	// Click handlers
 	const handleIDENTButtonClick = () => {
 		if (get(TransponderStateStore).dialMode != 'OFF') {
 			const IDENTModeButton = document.getElementById('button-ident') as HTMLInputElement;
@@ -76,7 +79,9 @@
 		}
 	};
 
-	function onTransponderDialModeChange(newModeIndex: number) {
+	function onTransponderDialModeChange(newModeIndex: number): void {
+		const targetDialMode = transponderDialModes[newModeIndex] ?? 'SBY';
+
 		if (newModeIndex == 0) {
 			if (get(TransponderStateStore).identEnabled) {
 				const IDENTModeButton = document.getElementById('button-ident') as HTMLInputElement;
@@ -84,21 +89,22 @@
 			}
 			displayOn = false;
 			frequencyDialEnabled = false;
-			TransponderStateStore.update((state) => ({
-				...state,
+			TransponderStateStore.set({
 				dialMode: 'OFF',
-				identEnabled: false
-			}));
-		} else {
-			const dialModes = ['OFF', 'SBY', 'GND', 'ON', 'ALT', 'TEST'] as const;
-			displayOn = true;
-			frequencyDialEnabled = true;
-			TransponderStateStore.update((state) => ({
-				...state,
-				dialMode: dialModes[newModeIndex] ?? 'SBY'
-			}));
-			syncFrequencyToStore();
+				frequency: digitArr.join(''),
+				identEnabled: false,
+				vfrHasExecuted: get(TransponderStateStore).vfrHasExecuted
+			});
+			return;
 		}
+
+		displayOn = true;
+		frequencyDialEnabled = true;
+		TransponderStateStore.update((state) => ({
+			...state,
+			dialMode: targetDialMode
+		}));
+		syncFrequencyToStore();
 	}
 
 	function onTransponderFrequencyIncrease() {
@@ -119,12 +125,8 @@
 		syncFrequencyToStore();
 	}
 
-	onMount(() => {
-		syncFrequencyToStore();
-	});
-
 	$effect(() => {
-		onTransponderDialModeChange(dialModeIndex);
+		applyTransponderUi($TransponderStateStore);
 	});
 </script>
 
@@ -135,6 +137,7 @@
 		Modes={transponderDialModes}
 		id="transponder-mode-dial"
 		bind:CurrentModeIndex={dialModeIndex}
+		modeChange={onTransponderDialModeChange}
 	/>
 
 	<div class="display-panel order-first flex grow flex-col items-center justify-center sm:order-2">

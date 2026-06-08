@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import type { WaypointURLObject } from '$lib/logic/ScenarioTypes';
 	import Waypoint from '$lib/logic/aeronautics/Waypoint';
 	import { dialog } from '$lib/components/singletons/dialog.svelte';
 	import { toaster } from '$lib/components/singletons/toaster';
@@ -36,10 +35,21 @@
 		AllAirspacesStore,
 		OnRouteAirportsStore,
 		StartPointIndexStore,
+		ResetSimulatorProgressStores,
 		ensureAeronauticalData,
 		getAirspacesAlongRoute,
 		maxFlightLevelStore
 	} from '$lib/stores';
+	import {
+		collectSimulatorState,
+		hasUsableSimulatorRoute,
+		restoreSimulatorSessionIfMatching,
+		saveSimulatorPersistedState
+	} from '$lib/persistence/localStorageState';
+	import {
+		applySimulatorPageInitToStores,
+		initializeSimulatorPage
+	} from '$lib/logic/simulatorPageInit';
 	import {
 		findRouteSegmentIndex,
 		isCallsignStandardRegistration,
@@ -47,7 +57,7 @@
 		toLeafletLatLng,
 		wellesbourneMountfordLatLng
 	} from '$lib/logic/utils';
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
 	import { get } from 'svelte/store';
 	import RadioCall from '$lib/logic/RadioCall';
 	import RouteSegment from '$lib/components/leaflet/RouteSegment.svelte';
@@ -79,109 +89,26 @@
 	import Map from '$lib/components/leaflet/Map.svelte';
 	import { Steps } from '@skeletonlabs/skeleton-svelte';
 	import { resolve } from '$app/paths';
+	import { buildSimulatorSearchParams } from '$lib/logic/simulatorUrl';
+
+	const pageInit = initializeSimulatorPage();
 
 	// Scenario settings
-	let seed: string = '';
-	let hasEmergencies: boolean = false;
-	let callsign: string = 'G-OFLY';
-	let prefix: string = '';
-	let aircraftType: string = 'Cessna 172';
+	let seed = $state(pageInit.seed);
+	let hasEmergencies = $state(pageInit.hasEmergencies);
+	let startPointIndex = $state(pageInit.startPointIndex);
+	let endPointIndex = $state(pageInit.endPointIndex);
 
 	// Flag to check if critical data is missing and the user must be prompted to enter it
-	let criticalDataMissing: boolean = $state(false);
+	let criticalDataMissing = $state(pageInit.criticalDataMissing);
+	let cockpitStateRestored = $state(pageInit.cockpitStateRestored);
 
-	// Check whether the seed is specified - if not then warn user
-	const seedString: string | null = page.url.searchParams.get('seed');
-	if (seedString != null && seedString != '') {
-		seed = seedString;
-	} else {
-		criticalDataMissing = true;
+	function syncScenarioSettingsFromStores(): void {
+		startPointIndex = get(StartPointIndexStore);
+		endPointIndex = get(EndPointIndexStore);
 	}
 
-	const hasEmergenciesString: string | null = page.url.searchParams.get('hasEmergencies');
-	if (hasEmergenciesString != null) {
-		hasEmergencies = hasEmergenciesString === 'true';
-	}
-
-	// Get waypoints from the URL's JSON.stringify form
-	const waypointsString: string | null = page.url.searchParams.get('waypoints');
-	if (waypointsString != null) {
-		const waypointsDataArray: WaypointURLObject[] = JSON.parse(waypointsString);
-		WaypointsStore.set(
-			waypointsDataArray.map(
-				(waypoint) =>
-					new Waypoint(
-						waypoint.name,
-						waypoint.location,
-						waypoint.type,
-						waypoint.index,
-						waypoint.referenceObjectId
-					)
-			)
-		);
-	} else {
-		criticalDataMissing = true;
-	}
-
-	// Get airports from the URL's JSON.stringify form
-	const airportsString: string | null = page.url.searchParams.get('airports');
-	if (airportsString == null) {
-		criticalDataMissing = true;
-	}
-
-	// Check whether the callsign is specified
-	const callsignString: string | null = page.url.searchParams.get('callsign');
-	if (callsignString != null && callsignString != '') {
-		callsign = callsignString;
-	}
-
-	// Check whether the prefix is specified
-	const prefixString: string | null = page.url.searchParams.get('prefix');
-	if (prefixString != null) {
-		if (
-			prefixString == '' ||
-			prefixString == 'STUDENT' ||
-			prefixString == 'HELICOPTER' ||
-			prefixString == 'POLICE' ||
-			prefixString == 'SUPER' ||
-			prefixString == 'FASTJET' ||
-			prefixString == 'FASTPROP'
-		) {
-			prefix = prefixString;
-		}
-	}
-
-	// Check whether the aircraft type is specified
-	const aircraftTypeString: string | null = page.url.searchParams.get('aircraftType');
-	if (aircraftTypeString != null && aircraftTypeString != '') {
-		aircraftType = aircraftTypeString;
-	}
-
-	// Check whether start point index has been set
-	let startPointIndex: number = 0;
-	const startPointIndexString: string | null = page.url.searchParams.get('startPoint');
-	if (startPointIndexString != null) {
-		startPointIndex = parseInt(startPointIndexString);
-		if (startPointIndex < 0) {
-			startPointIndex = 0;
-		}
-	}
-
-	// Check whether end point index has been set
-	let endPointIndex: number = -1;
-	const endPointIndexString: string | null = page.url.searchParams.get('endPoint');
-	if (endPointIndexString != null) {
-		endPointIndex = parseInt(endPointIndexString);
-		if (endPointIndex < 0 || endPointIndex >= startPointIndex) {
-			endPointIndex = -1;
-		}
-	}
-
-	let tutorial: boolean = false;
-	const tutorialString: string | null = page.url.searchParams.get('tutorial');
-	if (tutorialString != null) {
-		tutorial = tutorialString === 'true';
-	}
+	applySimulatorPageInitToStores(pageInit);
 
 	type QuickLoadScenarioData = {
 		routeSeed: string;
@@ -238,7 +165,13 @@
 			seed = data.scenarioSeed;
 			hasEmergencies = data.hasEmergencies;
 			criticalDataMissing = false;
+			startPointIndex = 0;
+			endPointIndex = -1;
+			StartPointIndexStore.set(0);
+			CurrentScenarioPointIndexStore.set(0);
 			loadScenario();
+			syncSimulatorUrl();
+			persistSimulatorState();
 		} catch (e) {
 			console.error(e);
 			dialog.trigger({
@@ -278,16 +211,53 @@
 		}
 	}
 
-	ScenarioStore.set(undefined);
-	CurrentScenarioPointIndexStore.set(startPointIndex);
-	StartPointIndexStore.set(startPointIndex);
+	function persistSimulatorState(): void {
+		if (criticalDataMissing || !hasUsableSimulatorRoute(get(WaypointsStore))) return;
 
-	TutorialStore.set(tutorial);
-	AircraftDetailsStore.set({
-		callsign: callsign,
-		prefix: prefix,
-		aircraftType: aircraftType
-	});
+		saveSimulatorPersistedState(
+			collectSimulatorState({
+				seed,
+				hasEmergencies
+			})
+		);
+	}
+
+	function syncSimulatorUrl(): void {
+		if (!hasUsableSimulatorRoute(get(WaypointsStore)) || !seed) return;
+
+		replaceState(
+			resolve(
+				`/simulator?${buildSimulatorSearchParams({
+					seed,
+					hasEmergencies,
+					waypoints: get(WaypointsStore),
+					airportIds: get(OnRouteAirportsStore).map((airport) => airport.id),
+					tutorial: get(TutorialStore)
+				}).toString()}`
+			),
+			page.state
+		);
+	}
+
+	function resetSimulatorProgress(): void {
+		ResetSimulatorProgressStores();
+		failedAttempts = 0;
+		endPointIndex = -1;
+		loadScenario();
+		persistSimulatorState();
+	}
+
+	function resetSimulator(): void {
+		dialog.trigger({
+			type: 'confirm',
+			title: 'Restart scenario?',
+			body: 'This will reset your progress and cockpit settings for the current scenario. Your route and seed will be kept.',
+			response: (confirmed) => {
+				if (!confirmed) return;
+				resetSimulatorProgress();
+			}
+		});
+	}
 
 	let failedAttempts: number = 0;
 	let currentRadioCall: RadioCall;
@@ -637,6 +607,7 @@
 			return value;
 		});
 		MostRecentlyReceivedMessageStore.set(response.responseCall);
+		persistSimulatorState();
 	}
 
 	function isTutorialStepValid(index: number): boolean {
@@ -682,6 +653,21 @@
 	});
 
 	$effect(() => {
+		if (criticalDataMissing || !$ScenarioStore || cockpitStateRestored) return;
+
+		if (
+			restoreSimulatorSessionIfMatching({
+				seed,
+				hasEmergencies,
+				waypoints: get(WaypointsStore)
+			})
+		) {
+			cockpitStateRestored = true;
+			syncScenarioSettingsFromStores();
+		}
+	});
+
+	$effect(() => {
 		if (serverNotResponding) {
 			dialog.trigger({
 				type: 'alert',
@@ -705,6 +691,26 @@
 		if ($SpeechOutputEnabledStore && $MostRecentlyReceivedMessageStore) {
 			TTSWithNoise($SpeechNoiseStore);
 		}
+	});
+
+	$effect(() => {
+		if (criticalDataMissing) return;
+
+		void [
+			seed,
+			hasEmergencies,
+			startPointIndex,
+			$WaypointsStore,
+			$CurrentScenarioPointIndexStore,
+			$RadioStateStore,
+			$TransponderStateStore,
+			$AltimeterStateStore,
+			$AircraftDetailsStore,
+			$MostRecentlyReceivedMessageStore,
+			$EndPointIndexStore
+		];
+
+		persistSimulatorState();
 	});
 	let tutorialStep2Valid = $derived(
 		$TransponderStateStore?.dialMode == 'SBY' && $RadioStateStore?.dialMode == 'SBY'
@@ -909,7 +915,7 @@
 
 			<Altimeter />
 
-			<div class="flex w-full flex-row flex-wrap gap-5 p-2 text-neutral-300">
+			<div class="flex w-full flex-row flex-wrap items-center gap-x-5 gap-y-2 p-2 text-neutral-300">
 				<div>
 					Your callsign: {$AircraftDetailsStore.prefix}
 					{$AircraftDetailsStore.callsign}
@@ -917,6 +923,13 @@
 				<div>
 					Your aircraft type: {$AircraftDetailsStore.aircraftType}
 				</div>
+				<button
+					type="button"
+					class="text-sm text-neutral-400 underline decoration-neutral-500 underline-offset-2 hover:text-neutral-200"
+					onclick={resetSimulator}
+				>
+					Restart scenario
+				</button>
 			</div>
 		</div>
 	</div>

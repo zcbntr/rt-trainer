@@ -9,6 +9,7 @@
 		OnRouteAirportsStore,
 		OnRouteAirspacesStore,
 		OnRouteAirspaceCrossingsStore,
+		PlannerUnnamedWaypointCountStore,
 		RouteDistanceDisplayStore,
 		RouteUnsupportedRegionsWarningStore,
 		ScenarioSeedStore,
@@ -51,12 +52,13 @@
 	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
+	import { buildSimulatorSearchParams } from '$lib/logic/simulatorUrl';
+	import { resolve } from '$app/paths';
 	import WarningBannerStack from '$lib/components/WarningBannerStack.svelte';
 	import type { WarningBannerItem } from '$lib/components/WarningBanner.types';
 
 	let showAllAirports = $state(true);
 	let showAllAirspaces = $state(true);
-	let unnamedWaypointCount = $state(1);
 	let dismissedBannerIds = $state<string[]>([]);
 	let suppressNextMapClick = $state(false);
 	let insertDragMap: Leaflet.Map | undefined;
@@ -146,14 +148,15 @@
 		return +parseFloat(value.toFixed(6));
 	}
 
+	function nextUnnamedWaypointName(): string {
+		const count = get(PlannerUnnamedWaypointCountStore);
+		PlannerUnnamedWaypointCountStore.set(count + 1);
+		return 'Waypoint ' + getNthPhoneticAlphabetLetter(count);
+	}
+
 	function insertWaypointAt(index: number, lat: number, lng: number) {
 		const waypoints = get(WaypointsStore);
-		const waypoint = new Waypoint(
-			'Waypoint ' + getNthPhoneticAlphabetLetter(unnamedWaypointCount++),
-			[lng, lat],
-			WaypointType.Fix,
-			index
-		);
+		const waypoint = new Waypoint(nextUnnamedWaypointName(), [lng, lat], WaypointType.Fix, index);
 		const updated = [...waypoints];
 		updated.splice(index, 0, waypoint);
 		updated.forEach((wp, wpIndex) => {
@@ -236,7 +239,7 @@
 	function addWaypoint(lat: number, lng: number) {
 		const waypoints = get(WaypointsStore);
 		const waypoint = new Waypoint(
-			'Waypoint ' + getNthPhoneticAlphabetLetter(unnamedWaypointCount++),
+			nextUnnamedWaypointName(),
 			[lng, lat],
 			WaypointType.Fix,
 			waypoints.length
@@ -352,18 +355,16 @@
 			}
 		}
 
-		const scenarioURLString =
-			'/simulator?seed=' +
-			get(ScenarioSeedStore) +
-			'&hasEmergencies=' +
-			get(HasEmergenciesStore) +
-			'&waypoints=' +
-			JSON.stringify(waypoints) +
-			'&airports=' +
-			onRouteAirports.map((airport) => airport.id).toString();
-
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		goto(scenarioURLString);
+		goto(
+			resolve(
+				`/simulator?${buildSimulatorSearchParams({
+					seed: get(ScenarioSeedStore),
+					hasEmergencies: get(HasEmergenciesStore),
+					waypoints,
+					airportIds: onRouteAirports.map((airport) => airport.id)
+				}).toString()}`
+			)
+		);
 	}
 </script>
 
