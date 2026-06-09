@@ -147,6 +147,10 @@ export function airspaceDataToAirspace(airspaceData: AirspaceData): Airspace {
 		airspaceData.lowerLimit.value,
 		airspaceData.upperLimitMax?.value,
 		airspaceData.lowerLimitMin?.value,
+		airspaceData.lowerLimit.unit,
+		airspaceData.upperLimit.unit,
+		airspaceData.lowerLimit.referenceDatum,
+		airspaceData.upperLimit.referenceDatum,
 		airspaceData.frequencies?.map((frequency) => {
 			return new Frequency(frequency.value, frequency.unit, frequency.name, 0, frequency.primary);
 		})

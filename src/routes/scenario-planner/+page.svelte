@@ -28,6 +28,7 @@
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import AirspacePolygon from '$lib/components/leaflet/AirspacePolygon.svelte';
+	import AirspaceLabelsOverlay from '$lib/components/leaflet/AirspaceLabelsOverlay.svelte';
 	import {
 		getNthPhoneticAlphabetLetter,
 		lngLatBoundsToLeaflet,
@@ -491,6 +492,8 @@
 						</Marker>
 					{/each}
 				{/if}
+
+				<AirspaceLabelsOverlay airspaces={$FilteredAirspacesStore} enabled={showAllAirspaces} />
 
 				{#each $FilteredAirspacesStore as airspace (airspace.id)}
 					{#if showAllAirspaces}

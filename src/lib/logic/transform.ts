@@ -68,6 +68,10 @@ export function airspaceFromPlain(plain: unknown): Airspace {
 	const data = toPlainRecord(plain);
 	return plainToInstance(Airspace, {
 		...data,
+		lowerLimitUnit: data.lowerLimitUnit ?? 6,
+		upperLimitUnit: data.upperLimitUnit ?? 6,
+		lowerLimitReferenceDatum: data.lowerLimitReferenceDatum ?? 2,
+		upperLimitReferenceDatum: data.upperLimitReferenceDatum ?? 2,
 		frequencies: fromPlainArray(Frequency, data.frequencies as unknown[] | undefined)
 	});
 }

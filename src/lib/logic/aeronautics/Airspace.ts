@@ -1,4 +1,5 @@
 import type { Frequency } from '../Frequency';
+import { getAirspaceMapLabel } from './airspaceDisplay';
 import { isInAirspace, isAirspaceIncludedInRoute } from '../utils';
 
 export default class Airspace {
@@ -18,6 +19,10 @@ export default class Airspace {
 	public lowerLimit: number;
 	public upperLimitMax: number;
 	public lowerLimitMin: number;
+	public lowerLimitUnit: number;
+	public upperLimitUnit: number;
+	public lowerLimitReferenceDatum: number;
+	public upperLimitReferenceDatum: number;
 	public frequencies: Frequency[];
 
 	constructor(
@@ -37,6 +42,10 @@ export default class Airspace {
 		lowerLimit: number,
 		upperLimitMax: number,
 		lowerLimitMin: number,
+		lowerLimitUnit: number,
+		upperLimitUnit: number,
+		lowerLimitReferenceDatum: number,
+		upperLimitReferenceDatum: number,
 		frequencies: Frequency[]
 	) {
 		this.id = id;
@@ -55,6 +64,10 @@ export default class Airspace {
 		this.lowerLimit = lowerLimit;
 		this.upperLimitMax = upperLimitMax;
 		this.lowerLimitMin = lowerLimitMin;
+		this.lowerLimitUnit = lowerLimitUnit;
+		this.upperLimitUnit = upperLimitUnit;
+		this.lowerLimitReferenceDatum = lowerLimitReferenceDatum;
+		this.upperLimitReferenceDatum = upperLimitReferenceDatum;
 		this.frequencies = frequencies;
 	}
 
@@ -63,6 +76,10 @@ export default class Airspace {
 			return this.name + ' MATZ';
 		}
 		return this.name + ' ATZ';
+	}
+
+	public getMapLabel(): string {
+		return getAirspaceMapLabel(this);
 	}
 
 	public pointInsideATZ(point: [number, number]): boolean {

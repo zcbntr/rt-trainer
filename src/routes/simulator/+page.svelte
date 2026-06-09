@@ -88,6 +88,7 @@
 	} from '$lib/components/leaflet/NavaidMarkerIcon.svelte';
 	import type Airport from '$lib/logic/aeronautics/Airport';
 	import AirspacePolygon from '$lib/components/leaflet/AirspacePolygon.svelte';
+	import AirspaceLabelsOverlay from '$lib/components/leaflet/AirspaceLabelsOverlay.svelte';
 	import Popup from '$lib/components/leaflet/Popup.svelte';
 	import Marker from '$lib/components/leaflet/Marker.svelte';
 	import { WaypointType } from '$lib/logic/aeronautics/Waypoint';
@@ -944,10 +945,13 @@
 							</Marker>
 						{/each}
 
+						<AirspaceLabelsOverlay airspaces={$OnRouteAirspacesStore} />
+
 						{#each $OnRouteAirspacesStore as airspace (airspace.id)}
 							<AirspacePolygon
 								coordinates={airspace.coordinates[0]}
 								airspaceType={airspace.type}
+								aeroObject={airspace}
 								mouseover={(detail: PolygonLayerDetail) => {
 									detail.polygon.openPopup();
 								}}
