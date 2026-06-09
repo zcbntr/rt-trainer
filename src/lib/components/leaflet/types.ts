@@ -2,6 +2,8 @@ import type * as Leaflet from 'leaflet';
 import type Waypoint from '$lib/logic/aeronautics/Waypoint';
 import type Airport from '$lib/logic/aeronautics/Airport';
 import type Airspace from '$lib/logic/aeronautics/Airspace';
+import type ReportingPoint from '$lib/logic/aeronautics/ReportingPoint';
+import type Navaid from '$lib/logic/aeronautics/Navaid';
 
 export type MapUiState = {
 	zoom: number;
@@ -12,7 +14,12 @@ export type MapContext = {
 	mapUi: MapUiState;
 };
 
-export type MarkerAeroObject = Waypoint | Airport | undefined;
+export type MarkerAeroObject =
+	| Waypoint
+	| Airport
+	| ReportingPoint
+	| Navaid
+	| undefined;
 
 export type RotatableLeafletMarker = Leaflet.Marker & {
 	setRotationAngle(angle: number): Leaflet.Marker;

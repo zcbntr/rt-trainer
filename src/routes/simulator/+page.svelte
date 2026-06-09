@@ -33,6 +33,8 @@
 		SpeechNoiseStore,
 		AllAirportsStore,
 		AllAirspacesStore,
+		AllNavaidsStore,
+		AllReportingPointsStore,
 		OnRouteAirportsStore,
 		StartPointIndexStore,
 		ResetSimulatorProgressStores,
@@ -74,6 +76,16 @@
 	} from '$lib/components/leaflet/AircraftMarkerIcon.svelte';
 	import AirportMarker from '$lib/components/leaflet/AirportMarker.svelte';
 	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
+	import ReportingPointMarkerIcon, {
+		REPORTING_POINT_MARKER_DEFAULTS,
+		REPORTING_POINT_MARKER_Z_INDEX_OFFSET,
+		reportingPointMarkerAnchor
+	} from '$lib/components/leaflet/ReportingPointMarkerIcon.svelte';
+	import NavaidMarkerIcon, {
+		NAVAID_MARKER_DEFAULTS,
+		NAVAID_MARKER_Z_INDEX_OFFSET,
+		navaidMarkerAnchor
+	} from '$lib/components/leaflet/NavaidMarkerIcon.svelte';
 	import type Airport from '$lib/logic/aeronautics/Airport';
 	import AirspacePolygon from '$lib/components/leaflet/AirspacePolygon.svelte';
 	import Popup from '$lib/components/leaflet/Popup.svelte';
@@ -875,6 +887,61 @@
 									/>
 								{/key}
 							{/if}
+						{/each}
+
+						{#each $AllReportingPointsStore as reportingPoint (reportingPoint.id)}
+							<Marker
+								latLng={toLeafletLatLng(reportingPoint.coordinates)}
+								width={REPORTING_POINT_MARKER_DEFAULTS.size}
+								height={REPORTING_POINT_MARKER_DEFAULTS.size}
+								aeroObject={reportingPoint}
+								iconAnchor={reportingPointMarkerAnchor()}
+								zIndexOffset={REPORTING_POINT_MARKER_Z_INDEX_OFFSET}
+								mouseover={(detail: MarkerLayerDetail) => {
+									detail.marker.openPopup();
+								}}
+								mouseout={(detail: MarkerLayerDetail) => {
+									detail.marker.closePopup();
+								}}
+							>
+								<ReportingPointMarkerIcon compulsory={reportingPoint.compulsory} />
+								<Popup>
+									<div class="flex flex-col gap-1">
+										<div>{reportingPoint.name}</div>
+										<div class="text-sm opacity-80">
+											{reportingPoint.compulsory ? 'Compulsory reporting point' : 'Reporting point'}
+										</div>
+									</div>
+								</Popup>
+							</Marker>
+						{/each}
+
+						{#each $AllNavaidsStore as navaid (navaid.id)}
+							<Marker
+								latLng={toLeafletLatLng(navaid.coordinates)}
+								width={NAVAID_MARKER_DEFAULTS.size}
+								height={NAVAID_MARKER_DEFAULTS.size}
+								aeroObject={navaid}
+								iconAnchor={navaidMarkerAnchor()}
+								zIndexOffset={NAVAID_MARKER_Z_INDEX_OFFSET}
+								mouseover={(detail: MarkerLayerDetail) => {
+									detail.marker.openPopup();
+								}}
+								mouseout={(detail: MarkerLayerDetail) => {
+									detail.marker.closePopup();
+								}}
+							>
+								<NavaidMarkerIcon identifier={navaid.identifier} type={navaid.type} />
+								<Popup>
+									<div class="flex flex-col gap-1">
+										<div>{navaid.getDisplayLabel()}</div>
+										<div class="text-sm opacity-80">{navaid.getTypeName()}</div>
+										{#if navaid.frequency}
+											<div class="text-sm opacity-80">{navaid.frequency}</div>
+										{/if}
+									</div>
+								</Popup>
+							</Marker>
 						{/each}
 
 						{#each $OnRouteAirspacesStore as airspace (airspace.id)}

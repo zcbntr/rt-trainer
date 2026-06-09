@@ -2,9 +2,13 @@
 	import {
 		AllAirportsStore,
 		AllAirspacesStore,
+		AllNavaidsStore,
+		AllReportingPointsStore,
 		DEFAULT_MAX_FLIGHT_LEVEL,
 		fetchAirports,
-		fetchAirspaces
+		fetchAirspaces,
+		fetchNavaids,
+		fetchReportingPoints
 	} from '$lib/stores';
 	import { generatePracticeRoute } from '$lib/logic/RouteGeneration';
 	import { loadRouteData } from '$lib/logic/scenarioRoute';
@@ -26,6 +30,8 @@
 	$effect(() => {
 		if ($AllAirportsStore.length === 0) fetchAirports();
 		if ($AllAirspacesStore.length === 0) fetchAirspaces();
+		if ($AllReportingPointsStore.length === 0) fetchReportingPoints();
+		if ($AllNavaidsStore.length === 0) fetchNavaids();
 	});
 
 	const formData = $state({

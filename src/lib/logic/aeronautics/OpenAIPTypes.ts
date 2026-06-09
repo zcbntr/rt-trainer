@@ -153,20 +153,60 @@ export type AirportReportingPointData = {
 	name: string;
 	compulsory: boolean;
 	country: string;
-	point: [number, number];
-	elevation: {
+	geometry: {
+		type: 'Point';
+		coordinates: [number, number];
+	};
+	elevation?: {
 		value: number;
 		unit: number;
 		referenceDatum: number;
 	};
-	elevationGeoid: {
+	elevationGeoid?: {
 		hae: number;
 		geoidHeight: number;
 	};
-	airports: string[];
-	remarks: string;
-	createdBy: string;
-	updatedBy: string;
-	createdAt: string;
-	updatedAt: string;
+	airports?: string[];
+	remarks?: string;
+	createdBy?: string;
+	updatedBy?: string;
+	createdAt?: string;
+	updatedAt?: string;
+};
+
+export type NavaidData = {
+	_id: string;
+	name: string;
+	type: number;
+	identifier: string;
+	country: string;
+	geometry: {
+		type: 'Point';
+		coordinates: [number, number];
+	};
+	elevation?: {
+		value: number;
+		unit: number;
+		referenceDatum: number;
+	};
+	elevationGeoid?: {
+		hae: number;
+		geoidHeight: number;
+	};
+	magneticDeclination?: number;
+	alignedTrueNorth?: boolean;
+	channel?: string;
+	frequency?: {
+		value: string;
+		unit: number;
+	};
+	range?: {
+		value: number;
+		unit: number;
+	};
+	remarks?: string;
+	createdBy?: string;
+	updatedBy?: string;
+	createdAt?: string;
+	updatedAt?: string;
 };

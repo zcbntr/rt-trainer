@@ -10,10 +10,22 @@ import type Scenario from './logic/Scenario';
 import Airspace from './logic/aeronautics/Airspace';
 import type Waypoint from './logic/aeronautics/Waypoint';
 import Airport from './logic/aeronautics/Airport';
+import ReportingPoint from './logic/aeronautics/ReportingPoint';
+import Navaid from './logic/aeronautics/Navaid';
 import * as turf from '@turf/turf';
 import axios from 'axios';
-import type { AirportData, AirspaceData } from './logic/aeronautics/OpenAIPTypes';
-import { airspaceFromPlain, airportFromPlain } from './logic/transform';
+import type {
+	AirportData,
+	AirportReportingPointData,
+	AirspaceData,
+	NavaidData
+} from './logic/aeronautics/OpenAIPTypes';
+import {
+	airspaceFromPlain,
+	airportFromPlain,
+	navaidFromPlain,
+	reportingPointFromPlain
+} from './logic/transform';
 import { countAirspaceCrossings, toLeafletLatLng } from './logic/utils';
 import {
 	describeUnsupportedRouteRegions,
@@ -186,6 +198,10 @@ export const OnRouteAirspaceCrossingsStore = derived(
 
 export const AllAirportsStore = writable<Airport[]>([]);
 
+export const AllReportingPointsStore = writable<ReportingPoint[]>([]);
+
+export const AllNavaidsStore = writable<Navaid[]>([]);
+
 export const OnRouteAirportsStore = derived(
 	[AllAirportsStore, WaypointsStore],
 	([$AllAirportsStore, $WaypointStore]) => {
@@ -335,11 +351,18 @@ export function getAirspacesAlongRoute(): Airspace[] {
 }
 
 export async function ensureAeronauticalData(): Promise<void> {
-	await Promise.all([fetchAirports(), fetchAirspaces()]);
+	await Promise.all([
+		fetchAirports(),
+		fetchAirspaces(),
+		fetchReportingPoints(),
+		fetchNavaids()
+	]);
 }
 
 let airspacesFetchPromise: Promise<void> | null = null;
 let airportsFetchPromise: Promise<void> | null = null;
+let reportingPointsFetchPromise: Promise<void> | null = null;
+let navaidsFetchPromise: Promise<void> | null = null;
 
 export async function fetchAirspaces(): Promise<void> {
 	if (get(AllAirspacesStore).length > 0) return;
@@ -377,4 +400,44 @@ export async function fetchAirports(): Promise<void> {
 	}
 
 	await airportsFetchPromise;
+}
+
+export async function fetchReportingPoints(): Promise<void> {
+	if (get(AllReportingPointsStore).length > 0) return;
+
+	if (!reportingPointsFetchPromise) {
+		reportingPointsFetchPromise = axios
+			.get('/api/reporting-points')
+			.then((response) => {
+				AllReportingPointsStore.set(
+					response.data.map((reportingPoint: AirportReportingPointData) =>
+						reportingPointFromPlain(reportingPoint)
+					)
+				);
+			})
+			.finally(() => {
+				reportingPointsFetchPromise = null;
+			});
+	}
+
+	await reportingPointsFetchPromise;
+}
+
+export async function fetchNavaids(): Promise<void> {
+	if (get(AllNavaidsStore).length > 0) return;
+
+	if (!navaidsFetchPromise) {
+		navaidsFetchPromise = axios
+			.get('/api/navaids')
+			.then((response) => {
+				AllNavaidsStore.set(
+					response.data.map((navaid: NavaidData) => navaidFromPlain(navaid))
+				);
+			})
+			.finally(() => {
+				navaidsFetchPromise = null;
+			});
+	}
+
+	await navaidsFetchPromise;
 }

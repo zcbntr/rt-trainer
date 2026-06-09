@@ -3,6 +3,8 @@
 	import {
 		AllAirportsStore,
 		AllAirspacesStore,
+		AllNavaidsStore,
+		AllReportingPointsStore,
 		AwaitingServerResponseStore,
 		FilteredAirspacesStore,
 		HasEmergenciesStore,
@@ -16,7 +18,9 @@
 		WaypointPointsMapStore,
 		WaypointsStore,
 		fetchAirports,
-		fetchAirspaces
+		fetchAirspaces,
+		fetchNavaids,
+		fetchReportingPoints
 	} from '$lib/stores';
 	import Waypoint, { WaypointType } from '$lib/logic/aeronautics/Waypoint';
 	import { TrashBinOutline, PlayOutline } from 'flowbite-svelte-icons';
@@ -49,6 +53,16 @@
 		WAYPOINT_MARKER_Z_INDEX_OFFSET
 	} from '$lib/components/leaflet/FixWaypointMarkerIcon.svelte';
 	import AirportMarker from '$lib/components/leaflet/AirportMarker.svelte';
+	import ReportingPointMarkerIcon, {
+		REPORTING_POINT_MARKER_DEFAULTS,
+		REPORTING_POINT_MARKER_Z_INDEX_OFFSET,
+		reportingPointMarkerAnchor
+	} from '$lib/components/leaflet/ReportingPointMarkerIcon.svelte';
+	import NavaidMarkerIcon, {
+		NAVAID_MARKER_DEFAULTS,
+		NAVAID_MARKER_Z_INDEX_OFFSET,
+		navaidMarkerAnchor
+	} from '$lib/components/leaflet/NavaidMarkerIcon.svelte';
 	import { runwaysToSymbolInput } from '$lib/components/leaflet/AirportMarkerIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { get } from 'svelte/store';
@@ -59,6 +73,8 @@
 
 	let showAllAirports = $state(true);
 	let showAllAirspaces = $state(true);
+	let showReportingPoints = $state(true);
+	let showNavaids = $state(true);
 	let dismissedBannerIds = $state<string[]>([]);
 	let suppressNextMapClick = $state(false);
 	let insertDragMap: Leaflet.Map | undefined;
@@ -72,6 +88,12 @@
 		}
 		if ($AllAirspacesStore.length === 0) {
 			fetchAirspaces();
+		}
+		if ($AllReportingPointsStore.length === 0) {
+			fetchReportingPoints();
+		}
+		if ($AllNavaidsStore.length === 0) {
+			fetchNavaids();
 		}
 	});
 
@@ -410,6 +432,65 @@
 						</AirportMarker>
 					{/if}
 				{/each}
+
+				{#if showReportingPoints}
+					{#each $AllReportingPointsStore as reportingPoint (reportingPoint.id)}
+						<Marker
+							latLng={toLeafletLatLng(reportingPoint.coordinates)}
+							width={REPORTING_POINT_MARKER_DEFAULTS.size}
+							height={REPORTING_POINT_MARKER_DEFAULTS.size}
+							aeroObject={reportingPoint}
+							iconAnchor={reportingPointMarkerAnchor()}
+							zIndexOffset={REPORTING_POINT_MARKER_Z_INDEX_OFFSET}
+							mouseover={(detail: MarkerLayerDetail) => {
+								detail.marker.openPopup();
+							}}
+							mouseout={(detail: MarkerLayerDetail) => {
+								detail.marker.closePopup();
+							}}
+						>
+							<ReportingPointMarkerIcon compulsory={reportingPoint.compulsory} />
+							<Popup>
+								<div class="flex flex-col gap-1">
+									<div>{reportingPoint.name}</div>
+									<div class="text-sm opacity-80">
+										{reportingPoint.compulsory ? 'Compulsory reporting point' : 'Reporting point'}
+									</div>
+								</div>
+							</Popup>
+						</Marker>
+					{/each}
+				{/if}
+
+				{#if showNavaids}
+					{#each $AllNavaidsStore as navaid (navaid.id)}
+						<Marker
+							latLng={toLeafletLatLng(navaid.coordinates)}
+							width={NAVAID_MARKER_DEFAULTS.size}
+							height={NAVAID_MARKER_DEFAULTS.size}
+							aeroObject={navaid}
+							iconAnchor={navaidMarkerAnchor()}
+							zIndexOffset={NAVAID_MARKER_Z_INDEX_OFFSET}
+							mouseover={(detail: MarkerLayerDetail) => {
+								detail.marker.openPopup();
+							}}
+							mouseout={(detail: MarkerLayerDetail) => {
+								detail.marker.closePopup();
+							}}
+						>
+							<NavaidMarkerIcon identifier={navaid.identifier} type={navaid.type} />
+							<Popup>
+								<div class="flex flex-col gap-1">
+									<div>{navaid.getDisplayLabel()}</div>
+									<div class="text-sm opacity-80">{navaid.getTypeName()}</div>
+									{#if navaid.frequency}
+										<div class="text-sm opacity-80">{navaid.frequency}</div>
+									{/if}
+								</div>
+							</Popup>
+						</Marker>
+					{/each}
+				{/if}
 
 				{#each $FilteredAirspacesStore as airspace (airspace.id)}
 					{#if showAllAirspaces}

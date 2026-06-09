@@ -4,6 +4,8 @@ import { Frequency } from './Frequency';
 import { METORData } from './aeronautics/METORData';
 import Airport from './aeronautics/Airport';
 import Airspace from './aeronautics/Airspace';
+import ReportingPoint from './aeronautics/ReportingPoint';
+import Navaid from './aeronautics/Navaid';
 import Scenario from './Scenario';
 import ScenarioPoint from './ScenarioPoints';
 import Waypoint from './aeronautics/Waypoint';
@@ -72,6 +74,22 @@ export function airspaceFromPlain(plain: unknown): Airspace {
 
 export function airspaceToPlain(airspace: Airspace): Record<string, unknown> {
 	return instanceToPlain(airspace) as Record<string, unknown>;
+}
+
+export function reportingPointFromPlain(plain: unknown): ReportingPoint {
+	return fromPlain(ReportingPoint, plain);
+}
+
+export function reportingPointToPlain(reportingPoint: ReportingPoint): Record<string, unknown> {
+	return instanceToPlain(reportingPoint) as Record<string, unknown>;
+}
+
+export function navaidFromPlain(plain: unknown): Navaid {
+	return fromPlain(Navaid, plain);
+}
+
+export function navaidToPlain(navaid: Navaid): Record<string, unknown> {
+	return instanceToPlain(navaid) as Record<string, unknown>;
 }
 
 export function waypointFromPlain(plain: unknown): Waypoint {

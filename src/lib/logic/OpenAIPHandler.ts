@@ -4,12 +4,15 @@ import { getCachedOrFetch } from '$lib/server/openAIPCache';
 import type {
 	AirportData,
 	AirportReportingPointData,
-	AirspaceData
+	AirspaceData,
+	NavaidData
 } from './aeronautics/OpenAIPTypes';
 import Airport from './aeronautics/Airport';
 import Runway from './aeronautics/Runway';
 import { Frequency } from './Frequency';
 import Airspace from './aeronautics/Airspace';
+import ReportingPoint from './aeronautics/ReportingPoint';
+import Navaid from './aeronautics/Navaid';
 
 export type AirportReportingPointDBData = {
 	name: string;
@@ -27,6 +30,16 @@ export async function getAllValidAirportData(): Promise<Airport[]> {
 	const airportData = await getAllUKAirportsFromOpenAIP();
 	const airports = airportData.map((airportData) => airportDataToAirport(airportData));
 	return airports.filter((airport) => airport.runways.length > 0);
+}
+
+export async function getAllValidReportingPointData(): Promise<ReportingPoint[]> {
+	const reportingPointData = await getAllUKAirportReportingPointsFromOpenAIP();
+	return reportingPointData.map((data) => reportingPointDataToReportingPoint(data));
+}
+
+export async function getAllValidNavaidData(): Promise<Navaid[]> {
+	const navaidData = await getAllUKNavaidsFromOpenAIP();
+	return navaidData.map((data) => navaidDataToNavaid(data));
 }
 
 export function airportDataToAirport(airportData: AirportData): Airport {
@@ -86,6 +99,33 @@ export function airportDataToAirport(airportData: AirportData): Airport {
 				frequency.primary
 			);
 		}) ?? []
+	);
+}
+
+export function reportingPointDataToReportingPoint(
+	reportingPointData: AirportReportingPointData
+): ReportingPoint {
+	return new ReportingPoint(
+		reportingPointData._id,
+		reportingPointData.name,
+		reportingPointData.compulsory,
+		reportingPointData.geometry.coordinates,
+		reportingPointData.country,
+		reportingPointData.elevation?.value
+	);
+}
+
+export function navaidDataToNavaid(navaidData: NavaidData): Navaid {
+	return new Navaid(
+		navaidData._id,
+		navaidData.name,
+		navaidData.identifier,
+		navaidData.type,
+		navaidData.country,
+		navaidData.geometry.coordinates,
+		navaidData.frequency?.value,
+		navaidData.frequency?.unit,
+		navaidData.elevation?.value
 	);
 }
 
@@ -198,6 +238,32 @@ async function fetchUKReportingPointsFromOpenAIP(): Promise<AirportReportingPoin
 		console.log('Fetched all airport reporting points from OpenAIP');
 
 		return response.data.items as AirportReportingPointData[];
+	} catch (error: unknown) {
+		console.error('Error: ', error);
+	}
+	return [];
+}
+
+export async function getAllUKNavaidsFromOpenAIP(): Promise<NavaidData[]> {
+	return getCachedOrFetch('uk-navaids', fetchUKNavaidsFromOpenAIP);
+}
+
+async function fetchUKNavaidsFromOpenAIP(): Promise<NavaidData[]> {
+	try {
+		const response = await axios.get(`https://api.core.openaip.net/api/navaids`, {
+			headers: {
+				'Content-Type': 'application/json',
+				'x-openaip-api-key': OPENAIPKEY
+			},
+			params: {
+				country: 'GB',
+				sortBy: 'geometry.coordinates[0]'
+			}
+		});
+
+		console.log('Fetched all navaids from OpenAIP');
+
+		return response.data.items as NavaidData[];
 	} catch (error: unknown) {
 		console.error('Error: ', error);
 	}

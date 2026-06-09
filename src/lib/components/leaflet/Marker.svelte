@@ -4,10 +4,9 @@
 	import { onMount, onDestroy, getContext, setContext } from 'svelte';
 	import type * as Leaflet from 'leaflet';
 	import { getLeaflet } from './leaflet';
-	import type Waypoint from '$lib/logic/aeronautics/Waypoint';
-	import type Airport from '$lib/logic/aeronautics/Airport';
 	import type {
 		MapContext,
+		MarkerAeroObject,
 		MarkerLayerDetail,
 		RotatableLeafletMarker
 	} from '$lib/components/leaflet/types';
@@ -17,7 +16,7 @@
 		height: number;
 		rotation?: number;
 		latLng: Leaflet.LatLngExpression;
-		aeroObject?: Waypoint | Airport | undefined;
+		aeroObject?: MarkerAeroObject;
 		draggable?: boolean;
 		iconAnchor?: Leaflet.PointExpression;
 		zIndexOffset?: number;
