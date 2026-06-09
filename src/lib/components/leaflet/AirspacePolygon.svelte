@@ -8,7 +8,8 @@
 		ensureHatchPattern,
 		getAirspaceColor,
 		getAirspaceFillStyle,
-		getSharedSvgRenderer
+		getSharedSvgRenderer,
+		hideAirspaceFill
 	} from './airspaceHatch';
 	import { toLeafletLatLng } from '$lib/logic/utils';
 	import type Airspace from '$lib/logic/aeronautics/Airspace';
@@ -54,7 +55,10 @@
 		if (!mapInstance || !fillPolygon || !patternId) return;
 
 		const style = getAirspaceFillStyle(coordinates, mapInstance, isMatz, patternId);
-		if (!style) return;
+		if (!style) {
+			hideAirspaceFill(fillPolygon);
+			return;
+		}
 
 		applyAirspaceFillStyle(fillPolygon, style);
 	}
@@ -79,15 +83,15 @@
 		patternId = ensureHatchPattern(map, renderer, isMatz);
 
 		const initialStyle = getAirspaceFillStyle(coordinates, map, isMatz, patternId);
+		fillPolygon = L.polygon(initialStyle?.latLngs ?? outlineLatLngs, {
+			renderer,
+			stroke: false,
+			fill: false,
+			interactive: false
+		}).addTo(map);
+
 		if (initialStyle) {
-			fillPolygon = L.polygon(initialStyle.latLngs, {
-				renderer,
-				stroke: false,
-				fill: true,
-				fillColor: initialStyle.fillColor,
-				fillOpacity: initialStyle.fillOpacity,
-				interactive: false
-			}).addTo(map);
+			applyAirspaceFillStyle(fillPolygon, initialStyle);
 		}
 
 		const outline = L.polygon(outlineLatLngs, {

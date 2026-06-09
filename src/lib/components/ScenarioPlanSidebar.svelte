@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Accordion, Popover, SegmentedControl } from '@skeletonlabs/skeleton-svelte';
+	import { Accordion, Popover, Portal, SegmentedControl } from '@skeletonlabs/skeleton-svelte';
 	import { init } from '@paralleldrive/cuid2';
 	import {
 		RefreshOutline,
@@ -218,14 +218,26 @@
 						<textarea class="textarea" rows="1" placeholder={waypoint.name}></textarea>
 					</div>
 					<Popover>
-						<Popover.Trigger class="flex flex-col place-content-center">
+						<Popover.Trigger
+							type="button"
+							class="flex flex-col place-content-center"
+							ondragstart={(event) => event.preventDefault()}
+						>
 							<DotsHorizontalOutline />
 						</Popover.Trigger>
-						<Popover.Positioner>
-							<Popover.Content class="z-50 w-auto card p-4 shadow-xl">
-								<button onclick={() => deleteWaypoint(waypoint.id)}>Delete</button>
-							</Popover.Content>
-						</Popover.Positioner>
+						<Portal>
+							<Popover.Positioner class="z-50">
+								<Popover.Content class="w-auto card p-2 shadow-xl">
+									<Popover.CloseTrigger
+										type="button"
+										class="btn w-full preset-tonal-error text-sm"
+										onclick={() => deleteWaypoint(waypoint.id)}
+									>
+										Delete
+									</Popover.CloseTrigger>
+								</Popover.Content>
+							</Popover.Positioner>
+						</Portal>
 					</Popover>
 				</div>
 			{/each}

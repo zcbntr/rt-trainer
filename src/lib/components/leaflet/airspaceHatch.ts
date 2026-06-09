@@ -19,9 +19,11 @@ export const AIRSPACE_FILL_OPACITY = 0.1;
 const PATTERN_SIZE_PX = 8;
 
 /** Zoom at and above which the full hatch band is shown. */
-const HATCH_MIN_ZOOM = 10;
+export const HATCH_MIN_ZOOM = 10;
 /** Zoom at and below which the narrow fill-only band is used. */
 const FILL_BAND_MAX_ZOOM = 8;
+/** Zoom at and below which interior shading is hidden (outlines only). */
+export const FILL_MIN_ZOOM = HATCH_MIN_ZOOM - 2;
 
 /** When the band reaches this fraction of the airspace radius, merge to a full fill. */
 const MERGE_COVERAGE_THRESHOLD = 0.6;
@@ -142,12 +144,18 @@ function bandLatLngsFromRings(bands: {
 	return [bands.outer.map(toLeafletLatLng), bands.hole.map(toLeafletLatLng).reverse()];
 }
 
+export function isAirspaceFillVisibleAtZoom(zoom: number): boolean {
+	return zoom > FILL_MIN_ZOOM;
+}
+
 export function getAirspaceFillStyle(
 	ring: [number, number][],
 	map: Leaflet.Map,
 	isMatz: boolean,
 	patternId: string
 ): AirspaceFillStyle | null {
+	if (!isAirspaceFillVisibleAtZoom(map.getZoom())) return null;
+
 	const closedRing = closeRing(ring);
 	const color = getAirspaceColor(isMatz);
 	const bandWidthPixels = getEffectiveBandWidthPixels(map);
@@ -281,4 +289,8 @@ export function applyAirspaceFillStyle(polygon: Leaflet.Polygon, style: Airspace
 		fillColor: style.fillColor,
 		fillOpacity: style.fillOpacity
 	});
+}
+
+export function hideAirspaceFill(polygon: Leaflet.Polygon): void {
+	polygon.setStyle({ stroke: false, fill: false });
 }
