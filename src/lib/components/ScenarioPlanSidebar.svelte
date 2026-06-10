@@ -1,11 +1,8 @@
 <script lang="ts">
-	import { Accordion, Popover, Portal, SegmentedControl } from '@skeletonlabs/skeleton-svelte';
+	import { Popover, Portal, SegmentedControl } from '@skeletonlabs/skeleton-svelte';
 	import { init } from '@paralleldrive/cuid2';
-	import {
-		RefreshOutline,
-		WandMagicSparklesOutline,
-		DotsHorizontalOutline
-	} from 'flowbite-svelte-icons';
+	import { DotsHorizontalOutline, InfoCircleOutline, RefreshOutline } from 'flowbite-svelte-icons';
+	import HoverTooltip from '$lib/components/HoverTooltip.svelte';
 	import {
 		AllAirportsStore,
 		AllAirspacesStore,
@@ -250,7 +247,18 @@
 				<strong>Scenario Settings</strong>
 			</div>
 			<div class="flex flex-col gap-1">
-				<div class="label text-sm">Scenario Seed</div>
+				<div class="flex items-center gap-1.5">
+					<span class="label text-sm">Scenario Seed</span>
+					<HoverTooltip label="About scenario seed" placement="right">
+						{#snippet trigger()}
+							<InfoCircleOutline class="size-3.5 shrink-0 opacity-70" />
+						{/snippet}
+						<p>
+							Controls the ATC calls and events when you start practice. The same seed with the same
+							route produces the same scenario.
+						</p>
+					</HoverTooltip>
+				</div>
 				<div class="flex flex-row gap-2">
 					<textarea
 						id="scenario-seed-input"
@@ -271,15 +279,26 @@
 				</div>
 			</div>
 
-			<label class="flex items-center space-x-2">
-				<input
-					id="emergency-events-checkbox"
-					class="checkbox"
-					type="checkbox"
-					bind:checked={$HasEmergenciesStore}
-				/>
-				<p>Emergency Events</p>
-			</label>
+			<div class="flex items-center gap-2">
+				<label class="flex items-center gap-2" for="emergency-events-checkbox">
+					<input
+						id="emergency-events-checkbox"
+						class="checkbox"
+						type="checkbox"
+						bind:checked={$HasEmergenciesStore}
+					/>
+					Emergency Events
+				</label>
+				<HoverTooltip label="About emergency events" placement="right">
+					{#snippet trigger()}
+						<InfoCircleOutline class="size-3.5 shrink-0 opacity-70" />
+					{/snippet}
+					<p>
+						Includes emergency situations in the practice scenario, such as engine failure or other
+						aircraft in distress.
+					</p>
+				</HoverTooltip>
+			</div>
 		</div>
 
 		<div class="flex flex-col gap-2 p-2">
@@ -330,44 +349,40 @@
 
 		<div class="flex flex-col gap-2 p-2">
 			<div>
-				<strong>Tools</strong>
+				<strong>Auto-generate FRTOL Route</strong>
 			</div>
-
-			<Accordion multiple>
-				<Accordion.Item value="auto-generate-route">
-					<h3>
-						<Accordion.ItemTrigger class="flex items-center justify-between gap-2 font-bold">
-							Auto-generate Route
-							<Accordion.ItemIndicator class="group">
-								<WandMagicSparklesOutline />
-							</Accordion.ItemIndicator>
-						</Accordion.ItemTrigger>
-					</h3>
-					<Accordion.ItemContent>
-						<div class="flex flex-col gap-2">
-							<div class="label">Route Seed</div>
-							<div class="flex flex-row gap-2">
-								<textarea
-									id="route-seed-input"
-									class="textarea"
-									rows="1"
-									maxlength="20"
-									placeholder="Enter a seed"
-									bind:value={routeSeed}
-								></textarea>
-								<button
-									type="button"
-									class="btn w-10 preset-filled"
-									disabled={$AwaitingServerResponseStore}
-									onclick={() => {
-										routeSeed = shortCUID();
-									}}><RefreshOutline /></button
-								>
-							</div>
-						</div>
-					</Accordion.ItemContent>
-				</Accordion.Item>
-			</Accordion>
+			<div class="flex flex-col gap-1">
+				<div class="flex items-center gap-1.5">
+					<span class="label text-sm">Route Seed</span>
+					<HoverTooltip label="About route seed" placement="right">
+						{#snippet trigger()}
+							<InfoCircleOutline class="size-3.5 shrink-0 opacity-70" />
+						{/snippet}
+						<p>
+							Generates a new route on the map. Change or refresh the seed to try a different set of
+							waypoints.
+						</p>
+					</HoverTooltip>
+				</div>
+				<div class="flex flex-row gap-2">
+					<textarea
+						id="route-seed-input"
+						class="textarea"
+						rows="1"
+						maxlength="20"
+						placeholder="Enter a seed"
+						bind:value={routeSeed}
+					></textarea>
+					<button
+						type="button"
+						class="btn w-10 preset-filled"
+						disabled={$AwaitingServerResponseStore}
+						onclick={() => {
+							routeSeed = shortCUID();
+						}}><RefreshOutline /></button
+					>
+				</div>
+			</div>
 		</div>
 	</div>
 

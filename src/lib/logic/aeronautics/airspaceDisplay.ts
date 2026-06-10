@@ -119,8 +119,13 @@ export const AIRSPACE_LABEL_MIN_ZOOM = 10;
 /** Minimum on-screen size before a label is shown, even when zoom is high enough. */
 export const AIRSPACE_LABEL_MIN_SCREEN_PX = 100;
 
+/** Maximum arc span when drawing curved labels on circular airspaces. */
+export const AIRSPACE_LABEL_MAX_ARC_SPAN_DEG = 72;
+
 const CIRCULAR_COMPACTNESS_THRESHOLD = 0.62;
+const CIRCULAR_RADIUS_CV_THRESHOLD = 0.1;
 const CIRCULAR_MIN_VERTICES = 14;
+const CIRCULAR_ARC_VALIDATION_STEP_DEG = 8;
 /** Simplification tolerance in degrees (~70 m in southern UK). */
 const LABEL_RING_SIMPLIFY_TOLERANCE = 0.0006;
 const MIN_LABEL_EDGE_KM = 0.08;
@@ -142,9 +147,10 @@ type EdgeSegment = {
 };
 
 export function getCircularAirspaceGeometry(ring: LngLat[]): CircularLabelGeometry {
-	const vertices = closeRing(ring).slice(0, -1);
-	const center = turf.center(turf.points(vertices));
-	const centerCoords = toCoordinatePair(center.geometry.coordinates);
+	const closed = closeRing(ring);
+	const vertices = closed.slice(0, -1);
+	const centroid = turf.centroid(turf.polygon([closed]));
+	const centerCoords = toCoordinatePair(centroid.geometry.coordinates);
 
 	const distances = vertices.map((vertex) =>
 		turf.distance(centerCoords, vertex, { units: 'kilometers' })
@@ -162,18 +168,71 @@ export function insetRadiusKm(radiusKm: number): number {
 	return Math.max(radiusKm - AIRSPACE_LABEL_INSET_KM, radiusKm * 0.82);
 }
 
-function isRoughlyCircular(ring: LngLat[]): boolean {
-	if (ring.length < CIRCULAR_MIN_VERTICES) return false;
-
+function polygonCompactness(ring: LngLat[]): number | undefined {
 	const closed = closeRing(ring);
 	const polygon = turf.polygon([closed]);
 	const areaM2 = turf.area(polygon);
-	if (areaM2 <= 0) return false;
+	if (areaM2 <= 0) return undefined;
 
 	const perimeterM = turf.length(turf.lineString(closed), { units: 'meters' });
-	const compactness = (4 * Math.PI * areaM2) / (perimeterM * perimeterM);
+	return (4 * Math.PI * areaM2) / (perimeterM * perimeterM);
+}
 
-	return compactness >= CIRCULAR_COMPACTNESS_THRESHOLD;
+function radiusCoefficientOfVariation(ring: LngLat[]): number | undefined {
+	const closed = closeRing(ring);
+	const vertices = closed.slice(0, -1);
+	if (vertices.length === 0) return undefined;
+
+	const centroid = turf.centroid(turf.polygon([closed]));
+	const centerCoords = toCoordinatePair(centroid.geometry.coordinates);
+	const distances = vertices.map((vertex) =>
+		turf.distance(centerCoords, vertex, { units: 'kilometers' })
+	);
+	const mean = distances.reduce((sum, distance) => sum + distance, 0) / distances.length;
+	if (mean <= 0) return undefined;
+
+	const variance =
+		distances.reduce((sum, distance) => sum + (distance - mean) ** 2, 0) / distances.length;
+
+	return Math.sqrt(variance) / mean;
+}
+
+function isUniformlyCircular(ring: LngLat[]): boolean {
+	if (ring.length < CIRCULAR_MIN_VERTICES) return false;
+
+	const compactness = polygonCompactness(ring);
+	if (compactness == null || compactness < CIRCULAR_COMPACTNESS_THRESHOLD) return false;
+
+	const radiusCv = radiusCoefficientOfVariation(ring);
+	return radiusCv != null && radiusCv <= CIRCULAR_RADIUS_CV_THRESHOLD;
+}
+
+function isPointInsideRing(point: LngLat, ring: LngLat[]): boolean {
+	return turf.booleanPointInPolygon(turf.point(point), turf.polygon([closeRing(ring)]));
+}
+
+function validateCircularPlacement(ring: LngLat[], placement: AirspaceLabelPlacement): boolean {
+	if (!placement.circular) return false;
+
+	const polygon = turf.polygon([closeRing(ring)]);
+	if (!turf.booleanPointInPolygon(turf.point(placement.position), polygon)) return false;
+	if (!turf.booleanPointInPolygon(turf.point(placement.circular.center), polygon)) return false;
+
+	const insetKm = insetRadiusKm(placement.circular.radiusKm);
+	const halfArc = AIRSPACE_LABEL_MAX_ARC_SPAN_DEG / 2;
+
+	for (
+		let bearing = placement.circular.midBearing - halfArc;
+		bearing <= placement.circular.midBearing + halfArc;
+		bearing += CIRCULAR_ARC_VALIDATION_STEP_DEG
+	) {
+		const arcPoint = turf.destination(placement.circular.center, insetKm, bearing, {
+			units: 'kilometers'
+		});
+		if (!turf.booleanPointInPolygon(arcPoint, polygon)) return false;
+	}
+
+	return true;
 }
 
 function simplifyRingForLabeling(ring: LngLat[]): LngLat[] {
@@ -313,26 +372,34 @@ export function isAirspaceLabelVisibleAtZoom(zoom: number): boolean {
 	return zoom >= AIRSPACE_LABEL_MIN_ZOOM;
 }
 
-/** Places a label inside the airspace, parallel to a straight border where possible. */
-export function getAirspaceLabelPlacement(ring: LngLat[]): AirspaceLabelPlacement | undefined {
-	if (ring.length < 3) return undefined;
-
+function getStraightLabelPlacement(ring: LngLat[]): AirspaceLabelPlacement {
 	const closed = closeRing(ring);
 	const polygon = turf.polygon([closed]);
-
-	if (isRoughlyCircular(ring)) {
-		return getCircularLabelPlacement(ring);
-	}
-
 	const simplified = simplifyRingForLabeling(ring);
 	const labelEdge = findBestLabelEdge(simplified, polygon);
 
 	if (labelEdge) {
 		const edgePlacement = placementFromEdge(labelEdge, polygon);
-		if (edgePlacement) return edgePlacement;
+		if (edgePlacement && isPointInsideRing(edgePlacement.position, ring)) {
+			return edgePlacement;
+		}
 	}
 
 	return getInteriorLabelPlacement(ring, simplified);
+}
+
+/** Places a label inside the airspace, parallel to a straight border where possible. */
+export function getAirspaceLabelPlacement(ring: LngLat[]): AirspaceLabelPlacement | undefined {
+	if (ring.length < 3) return undefined;
+
+	if (isUniformlyCircular(ring)) {
+		const circularPlacement = getCircularLabelPlacement(ring);
+		if (validateCircularPlacement(ring, circularPlacement)) {
+			return circularPlacement;
+		}
+	}
+
+	return getStraightLabelPlacement(ring);
 }
 
 function getCircularLabelPlacement(ring: LngLat[]): AirspaceLabelPlacement {

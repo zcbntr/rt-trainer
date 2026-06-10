@@ -4,6 +4,7 @@ import { getLeaflet } from './leaflet';
 import type Airspace from '$lib/logic/aeronautics/Airspace';
 import {
 	AIRSPACE_LABEL_INSET_KM,
+	AIRSPACE_LABEL_MAX_ARC_SPAN_DEG,
 	AIRSPACE_LABEL_MIN_SCREEN_PX,
 	getAirspaceLabelPlacement,
 	getAirspaceMapLabel,
@@ -18,12 +19,11 @@ import { toCoordinatePair, toLeafletLatLng, type LngLat } from '$lib/logic/utils
 const LABEL_FONT = '600 10px system-ui, sans-serif';
 const LABEL_CHAR_WIDTH_PX = 5.8;
 const LABEL_PADDING_PX = 14;
-const MAX_ARC_SPAN_DEG = 72;
 const MIN_CIRCULAR_RADIUS_PX = 24;
 
 type ScreenPoint = { x: number; y: number };
 
-const PLACEMENT_CACHE_VERSION = 'v5';
+const PLACEMENT_CACHE_VERSION = 'v6';
 const placementCache = new Map<string, AirspaceLabelPlacement | undefined>();
 
 function getScreenParallelRotation(
@@ -181,7 +181,10 @@ function drawCircularLabel(
 	if (radiusPx < MIN_CIRCULAR_RADIUS_PX) return;
 
 	const arcLengthPx = text.length * LABEL_CHAR_WIDTH_PX + LABEL_PADDING_PX;
-	let arcSpanDeg = Math.min((arcLengthPx / radiusPx) * (180 / Math.PI), MAX_ARC_SPAN_DEG);
+	let arcSpanDeg = Math.min(
+		(arcLengthPx / radiusPx) * (180 / Math.PI),
+		AIRSPACE_LABEL_MAX_ARC_SPAN_DEG
+	);
 
 	const startPoint = turf.destination(
 		circular.center,

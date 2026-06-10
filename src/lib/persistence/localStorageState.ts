@@ -12,6 +12,7 @@ import {
 	StartPointIndexStore,
 	TransponderStateStore,
 	WaypointsStore,
+	DEFAULT_MAX_FLIGHT_LEVEL,
 	maxFlightLevelStore,
 	PlannerUnnamedWaypointCountStore
 } from '$lib/stores';
@@ -205,7 +206,7 @@ export function getDefaultPlannerState(scenarioSeed: string): PlannerPersistedSt
 		waypoints: [],
 		scenarioSeed,
 		hasEmergencies: true,
-		maxFlightLevel: 30,
+		maxFlightLevel: DEFAULT_MAX_FLIGHT_LEVEL,
 		routeDistanceDisplayUnit: 'Nautical Miles',
 		routeSeed: '',
 		unnamedWaypointCount: 1

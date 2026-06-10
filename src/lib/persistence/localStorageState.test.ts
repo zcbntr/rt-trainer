@@ -30,7 +30,7 @@ function makePlannerState(waypointCount: number): PlannerPersistedState {
 		waypoints: Array.from({ length: waypointCount }, (_, index) => makeWaypoint(index)),
 		scenarioSeed: 'abcd1234',
 		hasEmergencies: true,
-		maxFlightLevel: 30,
+		maxFlightLevel: 20,
 		routeDistanceDisplayUnit: 'Nautical Miles',
 		routeSeed: 'route-seed',
 		unnamedWaypointCount: waypointCount + 1

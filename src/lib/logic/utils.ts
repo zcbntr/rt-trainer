@@ -23,6 +23,42 @@ export function fromLeafletLatLng([lat, lng]: LatLng): LngLat {
 	return [lng, lat];
 }
 
+const FLIGHT_LEVEL_UNIT = 6;
+const FEET_UNIT = 1;
+const GROUND_REFERENCE_DATUM = 0;
+
+/** Normalises an airspace lower limit to FL hundreds (e.g. 20 => 2000 ft). */
+export function airspaceLowerLimitInFlHundreds(airspace: Airspace): number {
+	if (airspace.lowerLimitReferenceDatum === GROUND_REFERENCE_DATUM && airspace.lowerLimit === 0) {
+		return 0;
+	}
+
+	if (airspace.lowerLimitUnit === FLIGHT_LEVEL_UNIT) {
+		return airspace.lowerLimit;
+	}
+
+	if (airspace.lowerLimitUnit === FEET_UNIT) {
+		return Math.round(airspace.lowerLimit / 100);
+	}
+
+	return Math.round((airspace.lowerLimit * 3.28084) / 100);
+}
+
+/** Whether the airspace floor is at or below the planned maximum flight level. */
+export function isAirspaceWithinMaxFlightLevel(
+	airspace: Airspace,
+	maxFlightLevel: number
+): boolean {
+	return airspaceLowerLimitInFlHundreds(airspace) <= maxFlightLevel;
+}
+
+export function filterAirspacesForMaxFlightLevel(
+	airspaces: Airspace[],
+	maxFlightLevel: number
+): Airspace[] {
+	return airspaces.filter((airspace) => isAirspaceWithinMaxFlightLevel(airspace, maxFlightLevel));
+}
+
 /** Builds Leaflet bounds from internal coordinates */
 export function lngLatBoundsToLeaflet(
 	coordinates: LngLat[],
@@ -520,13 +556,17 @@ export interface Intersection {
  * @param airspaces - list of airspaces
  * @returns - list of intersections sorted by distance along the route
  */
-export function findIntersections(route: Position[], airspaces: Airspace[]): Intersection[] {
+export function findIntersections(
+	route: Position[],
+	airspaces: Airspace[],
+	maxFlightLevel: number = 20
+): Intersection[] {
 	const routeLine = turf.lineString(route);
 
 	const intersections: Intersection[] = [];
 
 	airspaces.forEach((airspace) => {
-		if (airspace.lowerLimit > 30) return;
+		if (!isAirspaceWithinMaxFlightLevel(airspace, maxFlightLevel)) return;
 
 		const airspacePolygon = turf.polygon(airspace.coordinates);
 		if (turf.booleanIntersects(routeLine, airspacePolygon)) {
@@ -612,9 +652,9 @@ export function countAirspaceCrossings(route: Position[], airspaces: Airspace[])
 export function isInAirspace(
 	point: Position,
 	airspace: Airspace,
-	maxFlightLevel: number = 30
+	maxFlightLevel: number = 20
 ): boolean {
-	if (airspace.lowerLimit > maxFlightLevel) return false;
+	if (!isAirspaceWithinMaxFlightLevel(airspace, maxFlightLevel)) return false;
 
 	return turf.booleanPointInPolygon(point, turf.polygon(airspace.coordinates));
 }
@@ -631,14 +671,14 @@ export function isInAirspace(
 export function isAirspaceIncludedInRoute(
 	route: Position[],
 	airspace: Airspace,
-	maxFlightLevel: number = 30
+	maxFlightLevel: number = 20
 ): boolean {
+	if (!isAirspaceWithinMaxFlightLevel(airspace, maxFlightLevel)) return false;
+
 	if (route.length > 1) {
 		const routeLine = turf.lineString(route);
 		if (turf.booleanIntersects(routeLine, turf.polygon(airspace.coordinates))) return true;
 	}
-
-	if (airspace.lowerLimit > maxFlightLevel) return false;
 
 	for (let i = 0; i < route.length; i++) {
 		if (turf.booleanContains(turf.polygon(airspace.coordinates), turf.point(route[i]))) return true;

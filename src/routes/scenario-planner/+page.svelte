@@ -131,7 +131,7 @@
 			{
 				id: 'student-project-disclaimer',
 				message:
-					'RT Trainer is a student project and may have inaccuracies. Do not rely on just this tool for your practice.',
+					'RT Trainer is a student project and may have inaccuracies. Do not rely solely on this tool for your practice.',
 				variant: 'info'
 			}
 		];

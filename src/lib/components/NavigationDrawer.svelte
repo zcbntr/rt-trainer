@@ -22,8 +22,8 @@
 
 <Dialog open={drawer.open} {onOpenChange}>
 	<Portal>
-		<Dialog.Backdrop class="fixed inset-0 z-50 bg-surface-50-950/50 {animBackdrop}" />
-		<Dialog.Positioner class="fixed inset-0 z-50 flex justify-start">
+		<Dialog.Backdrop class="fixed inset-0 z-[1100] bg-surface-50-950/50 {animBackdrop}" />
+		<Dialog.Positioner class="fixed inset-0 z-[1100] flex justify-start">
 			<Dialog.Content
 				class="h-screen space-y-4 card bg-surface-100-900 p-0 shadow-xl {width} {animPanel}"
 			>

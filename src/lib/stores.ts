@@ -12,6 +12,7 @@ import type Waypoint from './logic/aeronautics/Waypoint';
 import Airport from './logic/aeronautics/Airport';
 import ReportingPoint from './logic/aeronautics/ReportingPoint';
 import Navaid from './logic/aeronautics/Navaid';
+import { filterAirspacesForMaxFlightLevel } from './logic/utils';
 import * as turf from '@turf/turf';
 import axios from 'axios';
 import type {
@@ -148,22 +149,15 @@ export type { UnsupportedPracticeRegion };
 
 export const AllAirspacesStore = writable<Airspace[]>([]);
 
-/** Default max FL for FRTOL route generation and scenario filtering (FL30 = 3000 ft). */
-export const DEFAULT_MAX_FLIGHT_LEVEL = 30;
+/** Default max FL for FRTOL route generation and scenario filtering (FL20 = 2000 ft). */
+export const DEFAULT_MAX_FLIGHT_LEVEL = 20;
 
 export const maxFlightLevelStore = writable<number>(DEFAULT_MAX_FLIGHT_LEVEL);
 
 export const FilteredAirspacesStore = derived(
 	[AllAirspacesStore, maxFlightLevelStore],
-	([$AllAirspacesStore, $MaxFlightLevelStore]) => {
-		const filteredAirspaces: Airspace[] = [];
-		$AllAirspacesStore.forEach((airspace) => {
-			if (airspace.lowerLimit <= $MaxFlightLevelStore) {
-				filteredAirspaces.push(airspace);
-			}
-		});
-		return filteredAirspaces;
-	}
+	([$AllAirspacesStore, $MaxFlightLevelStore]) =>
+		filterAirspacesForMaxFlightLevel($AllAirspacesStore, $MaxFlightLevelStore)
 );
 
 export const OnRouteAirspacesStore = derived(
